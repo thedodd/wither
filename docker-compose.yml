@@ -1,0 +1,28 @@
+version: '2'
+services:
+  _base:
+    build: .
+    command: cargo test
+    working_dir: /wither
+
+  tests:
+    extends:
+      service: _base
+    links:
+      - mongodb.3-4
+
+  tests.with-mounts:
+    extends:
+      service: _base
+    depends_on:
+      - mongodb.3-4
+    volumes:
+      - ./Cargo.lock:/wither/Cargo.lock
+      - ./Cargo.toml:/wither/Cargo.toml
+      - ./src:/wither/src
+      - ./tests:/wither/tests
+
+  mongodb.3-4:
+    image: mongo:3.4.4
+    ports:
+      - 27017
