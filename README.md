@@ -1,6 +1,6 @@
 wither
 ======
-[![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://img.shields.io/crates/v/wither.svg) [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither) [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://crates.io/crates/wither) [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither) [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype).
 
