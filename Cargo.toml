@@ -6,6 +6,7 @@ version = "0.1.0"
 license = "Apache-2.0"
 license-file = "LICENSE"
 keywords = ["mongodb", "odm", "orm"]
+categories = ["database", "data-structures"]
 documentation = "https://github.com/thedodd/wither"
 homepage = "https://github.com/thedodd/wither"
 repository = "https://github.com/thedodd/wither"
