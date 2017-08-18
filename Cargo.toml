@@ -5,6 +5,7 @@ description = "An ODM for MongoDB built upon the mongo rust driver."
 version = "0.1.0"
 license = "Apache-2.0"
 license-file = "LICENSE"
+keywords = ["mongodb", "odm", "orm"]
 documentation = "https://github.com/thedodd/wither"
 homepage = "https://github.com/thedodd/wither"
 repository = "https://github.com/thedodd/wither"
