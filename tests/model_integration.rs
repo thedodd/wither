@@ -51,7 +51,7 @@ impl<'a> wither::Model<'a> for User {
 
 #[test]
 fn test_model_save_should_save_model_instance_and_add_id() {
-  let client = mongodb::Client::with_uri("mongodb://tests.mongodb:27017/").expect(BACKEND_ERR_MSG);
+  let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
   let db = client.db(TEST_DB);
   let mut user = User{id: None, email: "test@test.com".to_string()};
 
@@ -62,7 +62,7 @@ fn test_model_save_should_save_model_instance_and_add_id() {
 
 #[test]
 fn test_model_find_one_should_fetch_the_model_instance_matching_given_filter() {
-  let client = mongodb::Client::with_uri("mongodb://tests.mongodb:27017/").expect(BACKEND_ERR_MSG);
+  let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
   let db = client.db(TEST_DB);
   let mut user = User{id: None, email: "test@test.com".to_string()};
 

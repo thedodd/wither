@@ -29,7 +29,7 @@ use serde::{
 };
 
 /// The name of the default index created by MongoDB.
-static DEFAULT_INDEX: &'static str = "_id";
+pub const DEFAULT_INDEX: &str = "_id";
 
 /// A convenience function for basic index options. Everything else will default to `None`.
 pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, expire_after_seconds: Option<i32>, sparse: Option<bool>) -> IndexOptions {

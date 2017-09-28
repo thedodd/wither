@@ -1,4 +1,4 @@
-FROM rust:1.19
+FROM rust:1.20
 
 MAINTAINER Anthony Josiah Dodd <Dodd.AnthonyJosiah@gmail.com>
 
