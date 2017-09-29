@@ -61,7 +61,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
     type model: Serialize + Deserialize<'a>;
 
     /// The name of the collection where this model's data is stored.
-    fn collection_name() -> String;
+    const collection_name: &'static str;
 
     /// Get the ID for this model instance.
     fn id(&self) -> Option<ObjectId>;
@@ -110,13 +110,13 @@ pub trait Model<'a> where Self: Serialize + Sized {
     // Static Layer //
 
     /// Find all instances of this model matching the given query.
-    fn find() -> mongodb::error::Result<Vec<Self::model>> {
+    fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Vec<Self::model>> {
         Ok(vec![])
     }
 
     /// Find the one model record matching your query, returning a model instance.
     fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Option<Self::model>> {
-        let coll = db.collection(&Self::collection_name());
+        let coll = db.collection(Self::collection_name);
 
         // Unwrap result.
         let doc_option = match coll.find_one(filter, options) {
@@ -155,7 +155,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
     /// useful when the model has unique indexes on fields which need to be the target of the save
     /// operation.
     fn save(&mut self, db: Database, filter: Option<Document>) -> mongodb::error::Result<()> {
-        let coll = db.collection(&Self::collection_name());
+        let coll = db.collection(Self::collection_name);
         let instance_doc = match bson::to_bson(&self)? {
             bson::Bson::Document(doc) => doc,
             _ => return Err(DefaultError("Failed to convert struct to a bson document.".to_string())),
@@ -224,12 +224,12 @@ pub trait Model<'a> where Self: Serialize + Sized {
     /// - return before doing anything if index sync can not be executed safely.
     fn sync(db: Database) {
 
-        let coll = db.collection(&Self::collection_name());
-        println!("Synchronizing indexes for collection model: '{}'.", &Self::collection_name()); // TODO: logging: debug.
+        let coll = db.collection(Self::collection_name);
+        println!("Synchronizing indexes for collection model: '{}'.", Self::collection_name); // TODO: logging: debug.
 
         // Fetch current indexes.
         let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
-        let err_msg = format!("Error while fetching current indexes for '{}'.", Self::collection_name());
+        let err_msg = format!("Error while fetching current indexes for '{}'.", Self::collection_name);
         if let Ok(cursor) = coll.list_indexes() {
             for doc_opt in cursor {
                 let doc = doc_opt.expect(&err_msg);
@@ -296,7 +296,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_basic_index_options_returns_expected_output() {
+    fn basic_index_options_returns_expected_output() {
         let output = basic_index_options("testing", true, None, None, None);
 
         assert!(output.name == Some("testing".to_string()));
