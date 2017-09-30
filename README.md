@@ -1,10 +1,15 @@
 wither
 ======
-[![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://crates.io/crates/wither) [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither) [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Build Status](https://travis-ci.org/thedodd/wither.svg?branch=implement-find)](https://travis-ci.org/thedodd/wither)
+[![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://crates.io/crates/wither)
+[![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype).
 
-This project is quite nascent and is being built out as I continue to use it in my own projects.
+This project makes use of `associated constants` as of `0.2.0`, so you will need to be running rust `>= 1.20`.
+
+**NOTE:** this project is fairly nascent and is being built out as I continue to use it in my own projects.
 
 ### example
 An example of how you might use this library to define a model for a MongoDB collection.
@@ -21,11 +26,8 @@ pub struct User {
 }
 
 impl<'a> wither::Model<'a> for User {
-    type model = User;
 
-    fn collection_name() -> String {
-        "users".to_string()
-    }
+    const COLLECTION_NAME: &'static str = "users";
 
     fn id(&self) -> Option<bson::oid::ObjectId> {
         return self.id.clone();
