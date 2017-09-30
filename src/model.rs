@@ -61,7 +61,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
     type model: Serialize + Deserialize<'a>;
 
     /// The name of the collection where this model's data is stored.
-    const collection_name: &'static str;
+    const COLLECTION_NAME: &'static str;
 
     /// Get the ID for this model instance.
     fn id(&self) -> Option<ObjectId>;
@@ -111,12 +111,32 @@ pub trait Model<'a> where Self: Serialize + Sized {
 
     /// Find all instances of this model matching the given query.
     fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Vec<Self::model>> {
-        Ok(vec![])
+        let coll = db.collection(Self::COLLECTION_NAME);
+
+        // Unwrap cursor.
+        let mut cursor = match coll.find(filter, options) {
+            Ok(cursor) => cursor,
+            Err(err) => return Err(err),
+        };
+
+        // Collect all items in the cursor.
+        let bson_docs = match cursor.drain_current_batch() {
+            Ok(docs) => docs,
+            Err(err) => return Err(err),
+        };
+
+        // Deserialize bson docs onto struct models.
+        let mut instances: Vec<Self::model> = vec![];
+        for doc in bson_docs {
+            let inst = Self::instance_from_document(doc)?;
+            instances.push(inst);
+        }
+        Ok(instances)
     }
 
     /// Find the one model record matching your query, returning a model instance.
     fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Option<Self::model>> {
-        let coll = db.collection(Self::collection_name);
+        let coll = db.collection(Self::COLLECTION_NAME);
 
         // Unwrap result.
         let doc_option = match coll.find_one(filter, options) {
@@ -131,11 +151,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
         };
 
         // Deserialize bson onto struct model.
-        let instance = match bson::from_bson::<Self::model>(bson::Bson::Document(doc)) {
-            Ok(inst) => inst,
-            Err(err) => return Err(DecoderError(err)),
-        };
-
+        let instance = Self::instance_from_document(doc)?;
         Ok(Some(instance))
     }
 
@@ -155,7 +171,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
     /// useful when the model has unique indexes on fields which need to be the target of the save
     /// operation.
     fn save(&mut self, db: Database, filter: Option<Document>) -> mongodb::error::Result<()> {
-        let coll = db.collection(Self::collection_name);
+        let coll = db.collection(Self::COLLECTION_NAME);
         let instance_doc = match bson::to_bson(&self)? {
             bson::Bson::Document(doc) => doc,
             _ => return Err(DefaultError("Failed to convert struct to a bson document.".to_string())),
@@ -204,6 +220,17 @@ pub trait Model<'a> where Self: Serialize + Sized {
         return Ok(());
     }
 
+    /////////////////////////
+    // Convenience Methods //
+
+    /// Attempt to serialize the given bson document into an instance of this model.
+    fn instance_from_document(document: bson::Document) -> mongodb::error::Result<Self::model> {
+        match bson::from_bson::<Self::model>(bson::Bson::Document(document)) {
+            Ok(inst) => Ok(inst),
+            Err(err) => Err(DecoderError(err)),
+        }
+    }
+
     /////////////////
     // Index Layer //
 
@@ -224,12 +251,12 @@ pub trait Model<'a> where Self: Serialize + Sized {
     /// - return before doing anything if index sync can not be executed safely.
     fn sync(db: Database) {
 
-        let coll = db.collection(Self::collection_name);
-        println!("Synchronizing indexes for collection model: '{}'.", Self::collection_name); // TODO: logging: debug.
+        let coll = db.collection(Self::COLLECTION_NAME);
+        println!("Synchronizing indexes for collection model: '{}'.", Self::COLLECTION_NAME); // TODO: logging: debug.
 
         // Fetch current indexes.
         let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
-        let err_msg = format!("Error while fetching current indexes for '{}'.", Self::collection_name);
+        let err_msg = format!("Error while fetching current indexes for '{}'.", Self::COLLECTION_NAME);
         if let Ok(cursor) = coll.list_indexes() {
             for doc_opt in cursor {
                 let doc = doc_opt.expect(&err_msg);
