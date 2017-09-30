@@ -5,13 +5,13 @@ services:
     command: cargo test
     working_dir: /wither
 
-  tests:
+  test:
     extends:
       service: _base
     links:
       - mongodb.3-4
 
-  tests.with-mounts:
+  test.with-mounts:
     extends:
       service: _base
     depends_on:
