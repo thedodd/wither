@@ -57,8 +57,7 @@ pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, e
 ///
 /// This allows you to define a data model using a normal struct, and then interact with your
 /// MongoDB database collections using that struct.
-pub trait Model<'a> where Self: Serialize + Sized {
-    type model: Serialize + Deserialize<'a>;
+pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// The name of the collection where this model's data is stored.
     const COLLECTION_NAME: &'static str;
@@ -110,7 +109,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
     // Static Layer //
 
     /// Find all instances of this model matching the given query.
-    fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Vec<Self::model>> {
+    fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Vec<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
         // Unwrap cursor.
@@ -126,7 +125,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
         };
 
         // Deserialize bson docs onto struct models.
-        let mut instances: Vec<Self::model> = vec![];
+        let mut instances: Vec<Self> = vec![];
         for doc in bson_docs {
             let inst = Self::instance_from_document(doc)?;
             instances.push(inst);
@@ -135,7 +134,7 @@ pub trait Model<'a> where Self: Serialize + Sized {
     }
 
     /// Find the one model record matching your query, returning a model instance.
-    fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Option<Self::model>> {
+    fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Option<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
         // Unwrap result.
@@ -224,8 +223,8 @@ pub trait Model<'a> where Self: Serialize + Sized {
     // Convenience Methods //
 
     /// Attempt to serialize the given bson document into an instance of this model.
-    fn instance_from_document(document: bson::Document) -> mongodb::error::Result<Self::model> {
-        match bson::from_bson::<Self::model>(bson::Bson::Document(document)) {
+    fn instance_from_document(document: bson::Document) -> mongodb::error::Result<Self> {
+        match bson::from_bson::<Self>(bson::Bson::Document(document)) {
             Ok(inst) => Ok(inst),
             Err(err) => Err(DecoderError(err)),
         }

@@ -25,7 +25,6 @@ pub struct User {
 }
 
 impl<'a> wither::Model<'a> for User {
-    type model = User;
 
     const COLLECTION_NAME: &'static str = "users";
 
