@@ -2,7 +2,7 @@
 authors = ["Anthony Dodd <Dodd.AnthonyJosiah@gmail.com>"]
 name = "wither"
 description = "An ODM for MongoDB built upon the mongo rust driver."
-version = "0.2.0"
+version = "0.2.1"
 license = "Apache-2.0"
 readme = "README.md"
 keywords = ["mongodb", "odm", "orm"]

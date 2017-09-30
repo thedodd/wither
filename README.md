@@ -1,6 +1,6 @@
 wither
 ======
-[![Build Status](https://travis-ci.org/thedodd/wither.svg?branch=implement-find)](https://travis-ci.org/thedodd/wither)
+[![Build Status](https://travis-ci.org/thedodd/wither.svg?branch=master)](https://travis-ci.org/thedodd/wither)
 [![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://crates.io/crates/wither)
 [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
