@@ -1,3 +1,16 @@
+//! `Model` is the central type in this crate. The entire purpose of this create is to
+//! simplify the process of interfacing with MongoDB in Rust for patterns which should
+//! be simple.
+//!
+//! Implementing `Model` for your custom structs is quite simple.
+//! - define an associated constant in the impl for `COLLECTION_NAME` which will be the
+//!   name of the collection where the corresponding model's data will be read from and
+//!   written to.
+//! - provide an implementation for the `id`, `set_id` & `indexes` methods.
+//!
+//! That's it! Now you can easliy perform standard CRUD operations on MongoDB
+//! using your models.
+
 use std::collections::HashMap;
 use std::error::Error;
 
