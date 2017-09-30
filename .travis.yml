@@ -1,0 +1,19 @@
+sudo: required
+# env:
+#   - DOCKER_COMPOSE_VERSION=1.14.0
+services:
+  - docker
+before_install:
+#   # Update to specific version of docker.
+#   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+#   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+#   - sudo apt-get update
+#   - sudo apt-get -y install docker-ce
+#   # Get needed version of docker-compose in place. This is straight from the travis docs.
+#   - sudo rm /usr/local/bin/docker-compose
+#   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+#   - chmod +x docker-compose
+#   - sudo mv docker-compose /usr/local/bin
+  - docker-compose up -d mongodb.3-4
+script:
+  - docker-compose run test.with-mounts cargo test
