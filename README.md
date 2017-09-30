@@ -9,7 +9,9 @@ An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb
 
 This project makes use of `associated constants` as of `0.2.0`, so you will need to be running rust `>= 1.20`.
 
-**NOTE:** this project is fairly nascent and is being built out as I continue to use it in my own projects.
+**NOTE:** this project is fairly nascent and is being built out as I continue to use it in my own projects. For the time being, there may be backwards incompatible releases made from minor version to minor version until the best patterns for this library are found. It would be best to pin to an exact version in your `Cargo.toml`.
+
+Check out the [changelog](./CHANGELOG.md).
 
 ### example
 An example of how you might use this library to define a model for a MongoDB collection.
