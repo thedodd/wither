@@ -16,4 +16,4 @@ before_install:
 #   - sudo mv docker-compose /usr/local/bin
   - docker-compose up -d mongodb.3-4
 script:
-  - docker-compose run test.with-mounts cargo test
+  - docker-compose run test.with-mounts cargo test --lib --tests

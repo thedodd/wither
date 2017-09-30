@@ -15,4 +15,4 @@ COPY ./tests tests
 RUN cargo build
 
 # Use a CMD here (instead of ENTRYPOINT) for easy overwrite in docker ecosystem.
-CMD ["cargo", "test"]
+CMD ["cargo", "test", "--lib", "--tests"]
