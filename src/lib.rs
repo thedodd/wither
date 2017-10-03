@@ -4,7 +4,7 @@
 //!
 //! An example of how you might use this library to define a model for a MongoDB collection.
 //!
-//! ```
+//! ```rust,ignore
 //! #[derive(Serialize, Deserialize, Debug, Clone)]
 //! pub struct User {
 //!     /// The user's unique ID.

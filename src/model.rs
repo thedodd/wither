@@ -3,6 +3,7 @@
 //! be simple.
 //!
 //! Implementing `Model` for your custom structs is quite simple.
+//!
 //! - define an associated constant in the impl for `COLLECTION_NAME` which will be the
 //!   name of the collection where the corresponding model's data will be read from and
 //!   written to.
@@ -25,6 +26,7 @@ use mongodb::error::Error::{
     ResponseError,
 };
 use mongodb::coll::options::{
+    CountOptions,
     FindOneAndUpdateOptions,
     FindOptions,
     IndexModel,
@@ -120,6 +122,12 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     //////////////////
     // Static Layer //
+
+    /// Count the number of documents in this model's collection matching the given criteria.
+    fn count(db: Database, filter: Option<Document>, options: Option<CountOptions>) -> mongodb::error::Result<i64> {
+        let coll = db.collection(Self::COLLECTION_NAME);
+        coll.count(filter, options)
+    }
 
     /// Find all instances of this model matching the given query.
     fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Vec<Self>> {
@@ -259,6 +267,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// This routine should be called once per model, early on at boot time.
     ///
     /// TODO:
+    ///
     /// - build up a safe sync execution standpoint.
     /// - return before doing anything if index sync can not be executed safely.
     fn sync(db: Database) {

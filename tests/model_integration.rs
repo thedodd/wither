@@ -107,3 +107,18 @@ fn model_find_should_find_instances_of_model_matching_filter() {
     assert_eq!(&users_from_db[0].id, &user.id);
     assert_eq!(&users_from_db[0].email, &user.email);
 }
+
+#[test]
+fn model_count_should_return_expected_count_matching_filter() {
+    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
+    let db = client.db(TEST_DB);
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let doc = doc!{"_id" => (user.id.clone().unwrap())};
+
+    let count = User::count(db.clone(), Some(doc), None)
+        .expect("Expected a successful count operation.");
+
+    assert_eq!(count, 1);
+}
+
