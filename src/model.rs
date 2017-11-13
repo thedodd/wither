@@ -245,9 +245,9 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     ///
     /// As this method is simply a wrapper around MongoDB's
     /// [FindOneAndUpdate](https://docs.mongodb.com/v3.2/reference/method/db.collection.findOneAndUpdate/)
-    /// operation, the `update` argument must be a valid update document. No filter spec can be provided,
-    /// as this is a `Model` instance method, thus only the instance's ID will be used. If its ID is `None`,
-    /// this method will return an error. All other aspects of this method's input are passthrough.
+    /// operation, the `update` argument must be a valid update document. This operation targets the model,
+    /// instance by the instance's ID. If its ID is `None`, this method will return an error.
+    /// All other aspects of this method's input are passthrough.
     ///
     /// This method will consume `self`, and will return a new instance of `Self` based on the given
     /// return options (`ReturnDocument::Before | ReturnDocument:: After`).
