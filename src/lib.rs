@@ -45,8 +45,8 @@ extern crate bson;
 extern crate mongodb;
 extern crate serde;
 
-pub use bson::Document;
-pub use mongodb::coll::options::FindOptions;
+pub use bson::Document; // NOTE: TODO: no real need to `pub use` this. Remove in `1.0`.
+pub use mongodb::coll::options::FindOptions; // NOTE: TODO: no real need to `pub use` this. Remove in `1.0`.
 
 pub mod model;
 
