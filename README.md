@@ -5,13 +5,15 @@ wither
 [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
-An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype).
+An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype). Please ⭐ on [github](https://github.com/thedodd/wither)!
+
+A primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data modeling. And if at anypoint this system might get in your way, you have direct access to the underlying driver.
 
 This project makes use of `associated constants` as of `0.2.0`, so you will need to be running rust `>= 1.20`.
 
-**NOTE:** this project is fairly nascent and is being built out as I continue to use it in my own projects. For the time being, there may be backwards incompatible releases made from minor version to minor version until the best patterns for this library are found. It would be best to pin to an exact version in your `Cargo.toml`.
+**NOTE:** progress is being, but there is a lot more to be done! For the time being, there may be backwards incompatible releases made from minor version to minor version until the best patterns for this library are found. It would be best to pin to an exact version in your `Cargo.toml`. Any such backwords incompatible changes will be declared in the [changelog](./CHANGELOG.md).
 
-Check out the [changelog](./CHANGELOG.md).
+Check out the [changelog](./CHANGELOG.md) for more details on what has happened from release to release.
 
 ### example
 An example of how you might use this library to define a model for a MongoDB collection.

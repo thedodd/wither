@@ -6,7 +6,13 @@ extern crate serde;
 extern crate serde_derive;
 extern crate wither;
 
-use mongodb::coll::options::IndexModel;
+use std::error::Error;
+
+use mongodb::coll::options::{
+    FindOneAndUpdateOptions,
+    IndexModel,
+    ReturnDocument,
+};
 use mongodb::ThreadedClient;
 use wither::Model;
 
@@ -122,3 +128,35 @@ fn model_count_should_return_expected_count_matching_filter() {
     assert_eq!(count, 1);
 }
 
+//////////////////
+// Model.update //
+
+#[test]
+fn model_update_should_perform_expected_updates_against_self() {
+    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
+    let db = client.db(TEST_DB);
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let update_doc = doc!{"$set" => doc!{"email" => "new@test.com"}};
+    let mut opts = FindOneAndUpdateOptions::default();
+    opts.return_document = Some(ReturnDocument::After);
+
+    let user = user.update(db.clone(), update_doc, Some(opts))
+        .expect("Expected a successful update operation.");
+
+    assert_eq!(user.email, String::from("new@test.com"));
+}
+
+#[test]
+fn model_update_should_return_error_with_invalid_update_document() {
+    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
+    let db = client.db(TEST_DB);
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let update_doc = doc!{"invalid_update_key" => "should_fail"};
+
+    let err = user.update(db.clone(), update_doc, None)
+        .expect_err("Expected a successful update operation.");
+
+    assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
+}
