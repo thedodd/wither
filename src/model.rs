@@ -20,6 +20,7 @@ use bson::Document;
 use bson::oid::ObjectId;
 use mongodb;
 use mongodb::error::Error::{
+    ArgumentError,
     DecoderError,
     DefaultError,
     OIDError,
@@ -238,6 +239,70 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         };
 
         return Ok(());
+    }
+
+    /// Update the current model instance.
+    ///
+    /// As this method is simply a wrapper around MongoDB's
+    /// [FindOneAndUpdate](https://docs.mongodb.com/v3.2/reference/method/db.collection.findOneAndUpdate/)
+    /// operation, the `update` argument must be a valid update document. No filter spec can be provided,
+    /// as this is a `Model` instance method, thus only the instance's ID will be used. If its ID is `None`,
+    /// this method will return an error. All other aspects of this method's input are passthrough.
+    ///
+    /// This method will consume `self`, and will return a new instance of `Self` based on the given
+    /// return options (`ReturnDocument::Before | ReturnDocument:: After`).
+    ///
+    /// In order to provide consistent behavior, this method will also ensure that the operation's write
+    /// concern `journaling` is set to `true`, so that we can receive a complete output document.
+    ///
+    /// If this model instance was never written to the database, this operation will return an error.
+    fn update(self, db: Database, update: Document, opts: Option<FindOneAndUpdateOptions>) -> mongodb::error::Result<Self> {
+        let coll = db.collection(Self::COLLECTION_NAME);
+
+        // Extract model's ID & use as filter for this operation.
+        let id = match self.id() {
+            Some(id) => id,
+            None => {
+                return Err(ArgumentError("Model must have an ObjectId for this operation.".to_owned()));
+            }
+        };
+        let filter = doc!{"_id" => id};
+
+        // Ensure that journaling is set to true for this call for full output document.
+        // TODO: should probably encapsulate this as a unit-testable function.
+        let options = match opts {
+            Some(mut options) => {
+                options.write_concern = match options.write_concern {
+                    Some(mut wc) => {
+                        wc.j = true;
+                        Some(wc)
+                    },
+                    None => {
+                        let mut wc = Self::model_write_concern();
+                        wc.j = true;
+                        Some(wc)
+                    }
+                };
+                options
+            },
+            None => {
+                let mut options = FindOneAndUpdateOptions::default();
+                let mut wc = Self::model_write_concern();
+                wc.j = true;
+                options.write_concern = Some(wc);
+                options
+            }
+        };
+
+        // Perform a FindOneAndUpdate operation on this model's document by ID. Will fail if this
+        // model instance was never saved to the database to begin with.
+        let updated_doc = match coll.find_one_and_update(filter, update, Some(options))? {
+            Some(doc) => doc,
+            None => return Err(ResponseError("Server failed to return the updated document. Update may have failed.".to_owned())),
+        };
+
+        // Deserialize the return document into a model instance & return.
+        return Self::instance_from_document(updated_doc);
     }
 
     /////////////////////////
