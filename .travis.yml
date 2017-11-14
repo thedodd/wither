@@ -1,8 +1,11 @@
 sudo: required
+
 # env:
 #   - DOCKER_COMPOSE_VERSION=1.14.0
+
 services:
   - docker
+
 before_install:
 #   # Update to specific version of docker.
 #   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -15,5 +18,6 @@ before_install:
 #   - chmod +x docker-compose
 #   - sudo mv docker-compose /usr/local/bin
   - docker-compose up -d mongodb.3-4
+
 script:
   - docker-compose run test.with-mounts cargo test
