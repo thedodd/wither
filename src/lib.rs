@@ -1,6 +1,6 @@
 //! An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype). Please ⭐ on [github](https://github.com/thedodd/wither)!
 //!
-//! A primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data modeling. And if at anypoint this system might get in your way, you have direct access to the underlying driver.
+//! A primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver.
 //!
 //! This project makes use of `associated constants` as of `0.2.0`, so you will need to be running rust `>= 1.20`.
 //!
