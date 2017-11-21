@@ -1,24 +1,21 @@
 [package]
 authors = ["Anthony Dodd <Dodd.AnthonyJosiah@gmail.com>"]
-name = "wither"
-description = "An ODM for MongoDB built upon the mongo rust driver."
-version = "0.4.0"
-license = "Apache-2.0"
-readme = "README.md"
-keywords = ["mongodb", "odm", "orm"]
 categories = ["database", "data-structures"]
+description = "An ODM for MongoDB built upon the mongo rust driver."
 documentation = "https://github.com/thedodd/wither"
+exclude = [".git*", "target", "docker-compose.yml", "Dockerfile"]
 homepage = "https://github.com/thedodd/wither"
+keywords = ["mongodb", "odm", "orm"]
+license = "Apache-2.0"
+name = "wither"
+readme = "README.md"
 repository = "https://github.com/thedodd/wither"
-exclude = [
-    ".git*",
-    "target",
-    "docker-compose.yml",
-    "Dockerfile",
-]
+version = "0.4.0"
 
 [dependencies]
 bson = "<1.0"
+chrono = "0.4.0"
+log = "0.3.8"
 mongodb = "<1.0"
 serde = "^1.0"
 serde_derive = "^1.0"

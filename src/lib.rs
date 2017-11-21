@@ -42,12 +42,16 @@
 
 #[macro_use(doc, bson)]
 extern crate bson;
+extern crate chrono;
+#[macro_use]
+extern crate log;
 extern crate mongodb;
 extern crate serde;
 
 pub use bson::Document; // NOTE: TODO: no real need to `pub use` this. Remove in `1.0`.
 pub use mongodb::coll::options::FindOptions; // NOTE: TODO: no real need to `pub use` this. Remove in `1.0`.
 
+pub mod migration;
 pub mod model;
 
 // Expose lower symbols in the top level module.

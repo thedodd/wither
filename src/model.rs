@@ -1,17 +1,3 @@
-//! `Model` is the central type in this crate. The entire purpose of this create is to
-//! simplify the process of interfacing with MongoDB in Rust for patterns which should
-//! be simple.
-//!
-//! Implementing `Model` for your custom structs is quite simple.
-//!
-//! - define an associated constant in the impl for `COLLECTION_NAME` which will be the
-//!   name of the collection where the corresponding model's data will be read from and
-//!   written to.
-//! - provide an implementation for the `id`, `set_id` & `indexes` methods.
-//!
-//! That's it! Now you can easliy perform standard CRUD operations on MongoDB
-//! using your models.
-
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -26,6 +12,7 @@ use mongodb::error::Error::{
     OIDError,
     ResponseError,
 };
+use mongodb::coll::Collection;
 use mongodb::coll::options::{
     CountOptions,
     FindOneAndUpdateOptions,
@@ -43,6 +30,8 @@ use serde::{
     Serialize,
     Deserialize,
 };
+
+use migration::Migration;
 
 /// The name of the default index created by MongoDB.
 pub const DEFAULT_INDEX: &str = "_id";
@@ -73,6 +62,16 @@ pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, e
 ///
 /// This allows you to define a data model using a normal struct, and then interact with your
 /// MongoDB database collections using that struct.
+///
+/// Implementing `Model` for your custom structs is quite simple.
+///
+/// - define an associated constant in the impl for `COLLECTION_NAME` which will be the
+///   name of the collection where the corresponding model's data will be read from and
+///   written to.
+/// - provide an implementation for the `id`, `set_id` & `indexes` methods.
+///
+/// That's it! Now you can easliy perform standard CRUD operations on MongoDB
+/// using your models.
 pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// The name of the collection where this model's data is stored.
@@ -316,12 +315,16 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         }
     }
 
-    /////////////////
-    // Index Layer //
+    ///////////////////////
+    // Maintenance Layer //
 
     /// Get the vector of index models for this model.
     fn indexes() -> Vec<IndexModel> {
-        return vec![];
+        vec![]
+    }
+
+    fn migrations() -> Vec<Box<Migration>> {
+        vec![]
     }
 
     /// Synchronize this model with the backend.
@@ -335,73 +338,98 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     ///
     /// - build up a safe sync execution standpoint.
     /// - return before doing anything if index sync can not be executed safely.
-    fn sync(db: Database) {
-
+    fn sync(db: Database) -> mongodb::error::Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
-        println!("Synchronizing indexes for collection model: '{}'.", Self::COLLECTION_NAME); // TODO: logging: debug.
-
-        // Fetch current indexes.
-        let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
-        let err_msg = format!("Error while fetching current indexes for '{}'.", Self::COLLECTION_NAME);
-        if let Ok(cursor) = coll.list_indexes() {
-            for doc_opt in cursor {
-                let doc = doc_opt.expect(&err_msg);
-                let idx_keys = doc.get_document("key").expect("Returned index appears to be malformed.");
-                let key = idx_keys.keys().fold("".to_owned(), |acc, bkey| acc + bkey);
-                current_indexes_map.insert(key, doc.clone());
-            }
-        }
-
-        // Fetch target indexes for this model.
-        let mut target_indexes_map: HashMap<String, IndexModel> = HashMap::new();
-        for model in Self::indexes().iter() {
-            // Populate the 'target' indexes map for easy comparison later.
-            let key = model.keys.keys().fold("".to_owned(), |acc, bkey| acc + bkey);
-            target_indexes_map.insert(key, model.to_owned());
-        }
-
-        // Determine which indexes must be created on the collection.
-        let mut indexes_to_create = vec![];
-        for (key, index_model) in target_indexes_map.iter() {
-            // Check if key already exists.
-            if !current_indexes_map.contains_key(key) {
-                indexes_to_create.push(index_model)
-            }
-        }
-
-        // Determine which indexes to remove.
-        let mut indexes_to_remove = vec![];
-        for (key, index_doc) in current_indexes_map {
-            // Don't attempt to remove the default index.
-            if &key == DEFAULT_INDEX {
-                continue
-            }
-
-            // Check if key is not present in target indexes map. This means the index needs removal.
-            if !target_indexes_map.contains_key(&key) {
-                indexes_to_remove.push(index_doc);
-            }
-        }
-
-        // Create needed indexes.
-        for model in indexes_to_create {
-            println!("Syncing index: {:?}", model); // TODO: logging: debug.
-            match coll.create_index_model(model.clone()) {
-                Ok(_) => println!("Index synced: {:?}", model), // TODO: logging: debug.
-                Err(err) => panic!("Failed to create index: {}", err.description()),
-            };
-        }
-
-        // Remove old indexes.
-        for doc in indexes_to_remove {
-            println!("Removing index: {:?}", doc); // TODO: logging: debug.
-            match coll.drop_index_string(doc.get_str("name").expect("Expected to find index name.").to_owned()) {
-                Ok(_) => println!("Index removed: {:?}", doc), // TODO: logging: debug.
-                Err(err) => panic!("Failed to remove index: {}", err.description()),
-            };
-        }
-        println!("Finished synchronizing indexes."); // TODO: logging: debug.
+        sync_model_indexes(&coll, Self::indexes())?;
+        sync_model_migrations(&coll, Self::migrations())?;
+        Ok(())
     }
+}
+
+fn sync_model_indexes<'c>(coll: &'c Collection, indexes: Vec<IndexModel>) -> mongodb::error::Result<()> {
+    info!("Synchronizing indexes for '{}'.", coll.namespace);
+
+    // Fetch current indexes.
+    let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
+    let err_msg = format!("Error while fetching current indexes for '{}'.", coll.namespace);
+    if let Ok(cursor) = coll.list_indexes() {
+        for doc_opt in cursor {
+            let doc = doc_opt.expect(&err_msg);
+            let idx_keys = doc.get_document("key").expect("Returned index appears to be malformed.");
+            let key = idx_keys.keys().fold("".to_owned(), |acc, bkey| acc + bkey);
+            current_indexes_map.insert(key, doc.clone());
+        }
+    }
+
+    // Fetch target indexes for this model.
+    let mut target_indexes_map: HashMap<String, IndexModel> = HashMap::new();
+    for model in indexes.iter() {
+        // Populate the 'target' indexes map for easy comparison later.
+        let key = model.keys.keys().fold("".to_owned(), |acc, bkey| acc + bkey);
+        target_indexes_map.insert(key, model.to_owned());
+    }
+
+    // Determine which indexes must be created on the collection.
+    let mut indexes_to_create = vec![];
+    for (key, index_model) in target_indexes_map.iter() {
+        // Check if key already exists.
+        if !current_indexes_map.contains_key(key) {
+            indexes_to_create.push(index_model)
+        }
+    }
+
+    // Determine which indexes to remove.
+    let mut indexes_to_remove = vec![];
+    for (key, index_doc) in current_indexes_map {
+        // Don't attempt to remove the default index.
+        if &key == DEFAULT_INDEX {
+            continue
+        }
+
+        // Check if key is not present in target indexes map. This means the index needs removal.
+        if !target_indexes_map.contains_key(&key) {
+            indexes_to_remove.push(index_doc);
+        }
+    }
+
+    // Create needed indexes.
+    for model in indexes_to_create {
+        info!("Syncing index: {:?}", model);
+        match coll.create_index_model(model.clone()) {
+            Ok(_) => info!("Index synced: {:?}", model),
+            Err(err) => {
+                error!("Failed to create index: {}", err.description());
+                return Err(err);
+            },
+        };
+    }
+
+    // Remove old indexes.
+    for doc in indexes_to_remove {
+        info!("Removing index: {:?}", doc);
+        match coll.drop_index_string(doc.get_str("name").expect("Expected to find index name.").to_owned()) {
+            Ok(_) => info!("Index removed: {:?}", doc),
+            Err(err) => {
+                error!("Failed to remove index: {}", err.description());
+                return Err(err);
+            },
+        };
+    }
+
+    info!("Finished synchronizing indexes for '{}'.", coll.namespace);
+    Ok(())
+}
+
+fn sync_model_migrations<'c>(coll: &'c Collection, migrations: Vec<Box<Migration>>) -> mongodb::error::Result<()> {
+    info!("Starting migrations for '{}'.", coll.namespace);
+
+    // Execute each migration.
+    for migration in migrations {
+        migration.execute(coll)?;
+    }
+
+    info!("Finished migrations for '{}'.", coll.namespace);
+    Ok(())
 }
 
 #[cfg(test)]
