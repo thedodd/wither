@@ -1,65 +1,45 @@
 #[macro_use(doc, bson)]
 extern crate bson;
+extern crate chrono;
+#[macro_use]
+extern crate lazy_static;
 extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
 extern crate serde_derive;
 extern crate wither;
 
+mod fixtures;
+
 use std::error::Error;
 
-use mongodb::coll::options::{
-    FindOneAndUpdateOptions,
-    IndexModel,
-    ReturnDocument,
-};
-use mongodb::ThreadedClient;
+use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
 use wither::Model;
 
-static TEST_DB: &'static str = "witherTestDB";
-static BACKEND_ERR_MSG: &'static str = "Expected MongoDB instance to be available for testing.";
+use fixtures::{setup, User};
 
+//////////////////
+// Model::count //
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct User {
-    /// The user's unique ID.
-    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+#[test]
+fn model_count_should_return_expected_count_matching_filter() {
+    let db = setup();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let doc = doc!{"_id" => (user.id.clone().unwrap())};
 
-    /// The user's unique email.
-    pub email: String,
+    let count = User::count(db.clone(), Some(doc), None)
+        .expect("Expected a successful count operation.");
+
+    assert_eq!(count, 1);
 }
 
-impl<'a> wither::Model<'a> for User {
-
-    const COLLECTION_NAME: &'static str = "users";
-
-    fn id(&self) -> Option<bson::oid::ObjectId> {
-        return self.id.clone();
-    }
-
-    fn set_id(&mut self, oid: bson::oid::ObjectId) {
-        self.id = Some(oid);
-    }
-
-    fn indexes() -> Vec<IndexModel> {
-        return vec![
-            IndexModel{
-                keys: doc!{"email" => 1},
-                options: wither::basic_index_options("unique-email", true, Some(true), None, None),
-            },
-        ];
-    }
-}
-
-// TODO:
-// - sync indices first, before test suite.
-// - get decorators / test fixtures in place to clear out all documents between tests.
+////////////////
+// Model.save //
 
 #[test]
 fn model_save_should_save_model_instance_and_add_id() {
-    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
-    let db = client.db(TEST_DB);
+    let db = setup();
     let mut user = User{id: None, email: "test@test.com".to_string()};
 
     user.save(db.clone(), None).expect("Expected a successful save operation.");
@@ -67,10 +47,43 @@ fn model_save_should_save_model_instance_and_add_id() {
     assert!(user.id != None)
 }
 
+/////////////////
+// Model::find //
+
+#[test]
+fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
+    let db = setup();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+
+    let users_from_db = User::find(db.clone(), None, None)
+        .expect("Expected a successful lookup.");
+
+    assert_eq!((&users_from_db).len(), 1);
+    // assert!((&users_from_db).len() > 0);
+}
+
+#[test]
+fn model_find_should_find_instances_of_model_matching_filter() {
+    let db = setup();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let doc = doc!{"_id" => (user.id.clone().unwrap())};
+
+    let users_from_db = User::find(db.clone(), Some(doc), None)
+        .expect("Expected a successful lookup.");
+
+    assert_eq!((&users_from_db).len(), 1);
+    assert_eq!(&users_from_db[0].id, &user.id);
+    assert_eq!(&users_from_db[0].email, &user.email);
+}
+
+/////////////////////
+// Model::find_one //
+
 #[test]
 fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
-    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
-    let db = client.db(TEST_DB);
+    let db = setup();
     let mut user = User{id: None, email: "test@test.com".to_string()};
 
     user.save(db.clone(), None).expect("Expected a successful save operation.");
@@ -84,57 +97,12 @@ fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
     assert_eq!(&user_from_db.email, &user.email);
 }
 
-#[test]
-fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
-    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
-    let db = client.db(TEST_DB);
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-
-    let users_from_db = User::find(db.clone(), None, None)
-        .expect("Expected a successful lookup.");
-
-    // assert_eq!((&users_from_db).len(), 1); // TODO: once fixtures are in place, reinstate this line.
-    assert!((&users_from_db).len() > 0);
-}
-
-#[test]
-fn model_find_should_find_instances_of_model_matching_filter() {
-    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
-    let db = client.db(TEST_DB);
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let doc = doc!{"_id" => (user.id.clone().unwrap())};
-
-    let users_from_db = User::find(db.clone(), Some(doc), None)
-        .expect("Expected a successful lookup.");
-
-    assert_eq!((&users_from_db).len(), 1);
-    assert_eq!(&users_from_db[0].id, &user.id);
-    assert_eq!(&users_from_db[0].email, &user.email);
-}
-
-#[test]
-fn model_count_should_return_expected_count_matching_filter() {
-    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
-    let db = client.db(TEST_DB);
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let doc = doc!{"_id" => (user.id.clone().unwrap())};
-
-    let count = User::count(db.clone(), Some(doc), None)
-        .expect("Expected a successful count operation.");
-
-    assert_eq!(count, 1);
-}
-
 //////////////////
 // Model.update //
 
 #[test]
 fn model_update_should_perform_expected_updates_against_self() {
-    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
-    let db = client.db(TEST_DB);
+    let db = setup();
     let mut user = User{id: None, email: String::from("test@test.com")};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
     let update_doc = doc!{"$set" => doc!{"email" => "new@test.com"}};
@@ -149,8 +117,7 @@ fn model_update_should_perform_expected_updates_against_self() {
 
 #[test]
 fn model_update_should_return_error_with_invalid_update_document() {
-    let client = mongodb::Client::with_uri("mongodb://mongodb.3-4:27017/").expect(BACKEND_ERR_MSG);
-    let db = client.db(TEST_DB);
+    let db = setup();
     let mut user = User{id: None, email: String::from("test@test.com")};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
     let update_doc = doc!{"invalid_update_key" => "should_fail"};
@@ -160,3 +127,21 @@ fn model_update_should_return_error_with_invalid_update_document() {
 
     assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
 }
+
+/////////////////
+// Model::sync //
+
+// #[test]
+// fn model_sync_should_create_expected_indices_on_collection() {
+//     let db = setup();
+//     let coll = db.collection(User::COLLECTION_NAME);
+//     let initial_indices = coll.list_indexes().expect("Expected to successfully list indices.");
+//     // let mut user = User{id: None, email: String::from("test@test.com")};
+//     // user.save(db.clone(), None).expect("Expected a successful save operation.");
+//     // let update_doc = doc!{"invalid_update_key" => "should_fail"};
+//     //
+//     // let err = user.update(db.clone(), update_doc, None)
+//     //     .expect_err("Expected a successful update operation.");
+//     //
+//     // assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
+// }

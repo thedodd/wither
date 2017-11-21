@@ -1,6 +1,7 @@
 wither
 ======
 [![Build Status](https://travis-ci.org/thedodd/wither.svg?branch=master)](https://travis-ci.org/thedodd/wither)
+![](https://img.shields.io/badge/tested on-mongodb 3.2%2B-brightgreen.svg)
 [![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://crates.io/crates/wither)
 [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
@@ -52,13 +53,13 @@ impl<'a> wither::Model<'a> for User {
 }
 
 fn main() {
-  let client = mongodb::Client::with_uri("mongodb://tests.mongodb:27017/").unwrap();
-  let db = client.db("usersService");
+    let client = mongodb::Client::with_uri("mongodb://tests.mongodb:27017/").unwrap();
+    let db = client.db("usersService");
 
-  let mut user = User{id: None, email: "test@test.com".to_string()};
-  user.save(db.clone(), None).expect("Expected a successful save operation.");
-  let user_from_db = User.find_one(db.clone(), Some(doc!{"_id" => (user.id.clone().unwrap())}))
-      .expect("Expected a successful lookup.") // Unwraps the Result.
-      .expect("Expected a populated value from backend."); // Unwraps the optional model instance.
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let user_from_db = User.find_one(db.clone(), Some(doc!{"_id" => (user.id.clone().unwrap())}))
+        .expect("Expected a successful lookup.") // Unwraps the Result.
+        .expect("Expected a populated value from backend."); // Unwraps the optional model instance.
 }
 ```

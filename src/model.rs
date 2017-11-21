@@ -1,3 +1,19 @@
+//! Interface for defining & using data models.
+//!
+//! `Model` is the central type in this crate. The entire purpose of this create is to simplify
+//! the process of interfacing with MongoDB in Rust for patterns which should be simple. This
+//! system allows you to define a data model using a normal struct, and then interact with your
+//! MongoDB database collections using that struct.
+//!
+//! Implementing `Model` for your custom structs is quite simple.
+//!
+//! - define an associated constant `COLLECTION_NAME` in your impl which will be the name of the
+//!   collection where the corresponding model's data will be read from & written to.
+//! - provide an implementation for the `id`, `set_id` & `indexes` methods.
+//!
+//! That's it! Now you can easliy perform standard CRUD operations on MongoDB
+//! using your models.
+
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -59,19 +75,6 @@ pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, e
 }
 
 /// Model provides data modeling behaviors for interacting with MongoDB database collections.
-///
-/// This allows you to define a data model using a normal struct, and then interact with your
-/// MongoDB database collections using that struct.
-///
-/// Implementing `Model` for your custom structs is quite simple.
-///
-/// - define an associated constant in the impl for `COLLECTION_NAME` which will be the
-///   name of the collection where the corresponding model's data will be read from and
-///   written to.
-/// - provide an implementation for the `id`, `set_id` & `indexes` methods.
-///
-/// That's it! Now you can easliy perform standard CRUD operations on MongoDB
-/// using your models.
 pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// The name of the collection where this model's data is stored.
@@ -154,6 +157,13 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         Ok(instances)
     }
 
+    /// Delete any model instances matching the given query.
+    fn delete_many(db: Database, filter: Document) -> mongodb::error::Result<()> {
+        let coll = db.collection(Self::COLLECTION_NAME);
+        coll.delete_many(filter, Some(Self::model_write_concern()))?;
+        Ok(())
+    }
+
     /// Find the one model record matching your query, returning a model instance.
     fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Option<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
@@ -177,6 +187,16 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     ////////////////////
     // Instance Layer //
+
+    /// Delete this model instance by ID.
+    fn delete(&self, db: Database) -> mongodb::error::Result<()> {
+        // Return an error if the instance was never saved.
+        let id = self.id().ok_or(DefaultError("This instance has no ID. Can not be deleted.".to_string()))?;
+
+        let coll = db.collection(Self::COLLECTION_NAME);
+        coll.delete_one(doc!{"_id": id}, Some(Self::model_write_concern()))?;
+        Ok(())
+    }
 
     /// Save the current model instance.
     ///
@@ -346,7 +366,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     }
 }
 
-fn sync_model_indexes<'c>(coll: &'c Collection, indexes: Vec<IndexModel>) -> mongodb::error::Result<()> {
+fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> mongodb::error::Result<()> {
     info!("Synchronizing indexes for '{}'.", coll.namespace);
 
     // Fetch current indexes.
@@ -420,7 +440,7 @@ fn sync_model_indexes<'c>(coll: &'c Collection, indexes: Vec<IndexModel>) -> mon
     Ok(())
 }
 
-fn sync_model_migrations<'c>(coll: &'c Collection, migrations: Vec<Box<Migration>>) -> mongodb::error::Result<()> {
+fn sync_model_migrations<'a>(coll: &'a Collection, migrations: Vec<Box<Migration>>) -> mongodb::error::Result<()> {
     info!("Starting migrations for '{}'.", coll.namespace);
 
     // Execute each migration.
