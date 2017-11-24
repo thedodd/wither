@@ -20,7 +20,6 @@ use std::error::Error;
 use bson;
 use bson::Document;
 use bson::oid::ObjectId;
-use mongodb;
 use mongodb::error::Error::{
     ArgumentError,
     DecoderError,
@@ -28,6 +27,7 @@ use mongodb::error::Error::{
     OIDError,
     ResponseError,
 };
+use mongodb::error::Result;
 use mongodb::coll::Collection;
 use mongodb::coll::options::{
     CountOptions,
@@ -127,13 +127,13 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     // Static Layer //
 
     /// Count the number of documents in this model's collection matching the given criteria.
-    fn count(db: Database, filter: Option<Document>, options: Option<CountOptions>) -> mongodb::error::Result<i64> {
+    fn count(db: Database, filter: Option<Document>, options: Option<CountOptions>) -> Result<i64> {
         let coll = db.collection(Self::COLLECTION_NAME);
         coll.count(filter, options)
     }
 
     /// Find all instances of this model matching the given query.
-    fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Vec<Self>> {
+    fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> Result<Vec<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
         // Unwrap cursor.
@@ -158,14 +158,14 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     }
 
     /// Delete any model instances matching the given query.
-    fn delete_many(db: Database, filter: Document) -> mongodb::error::Result<()> {
+    fn delete_many(db: Database, filter: Document) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
         coll.delete_many(filter, Some(Self::model_write_concern()))?;
         Ok(())
     }
 
     /// Find the one model record matching your query, returning a model instance.
-    fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> mongodb::error::Result<Option<Self>> {
+    fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> Result<Option<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
         // Unwrap result.
@@ -189,7 +189,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     // Instance Layer //
 
     /// Delete this model instance by ID.
-    fn delete(&self, db: Database) -> mongodb::error::Result<()> {
+    fn delete(&self, db: Database) -> Result<()> {
         // Return an error if the instance was never saved.
         let id = self.id().ok_or(DefaultError("This instance has no ID. Can not be deleted.".to_string()))?;
 
@@ -210,7 +210,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// and the first document matching the filter will be replaced by this instance. This is
     /// useful when the model has unique indexes on fields which need to be the target of the save
     /// operation.
-    fn save(&mut self, db: Database, filter: Option<Document>) -> mongodb::error::Result<()> {
+    fn save(&mut self, db: Database, filter: Option<Document>) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
         let instance_doc = match bson::to_bson(&self)? {
             bson::Bson::Document(doc) => doc,
@@ -275,7 +275,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// concern `journaling` is set to `true`, so that we can receive a complete output document.
     ///
     /// If this model instance was never written to the database, this operation will return an error.
-    fn update(self, db: Database, update: Document, opts: Option<FindOneAndUpdateOptions>) -> mongodb::error::Result<Self> {
+    fn update(self, db: Database, update: Document, opts: Option<FindOneAndUpdateOptions>) -> Result<Self> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
         // Extract model's ID & use as filter for this operation.
@@ -328,7 +328,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     // Convenience Methods //
 
     /// Attempt to serialize the given bson document into an instance of this model.
-    fn instance_from_document(document: bson::Document) -> mongodb::error::Result<Self> {
+    fn instance_from_document(document: bson::Document) -> Result<Self> {
         match bson::from_bson::<Self>(bson::Bson::Document(document)) {
             Ok(inst) => Ok(inst),
             Err(err) => Err(DecoderError(err)),
@@ -358,7 +358,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     ///
     /// - build up a safe sync execution standpoint.
     /// - return before doing anything if index sync can not be executed safely.
-    fn sync(db: Database) -> mongodb::error::Result<()> {
+    fn sync(db: Database) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
         sync_model_indexes(&coll, Self::indexes())?;
         sync_model_migrations(&coll, Self::migrations())?;
@@ -366,26 +366,26 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     }
 }
 
-fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> mongodb::error::Result<()> {
+fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> Result<()> {
     info!("Synchronizing indexes for '{}'.", coll.namespace);
 
     // Fetch current indexes.
     let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
-    let err_msg = format!("Error while fetching current indexes for '{}'.", coll.namespace);
-    if let Ok(cursor) = coll.list_indexes() {
-        for doc_opt in cursor {
-            let doc = doc_opt.expect(&err_msg);
-            let idx_keys = doc.get_document("key").expect("Returned index appears to be malformed.");
-            let key = idx_keys.keys().fold("".to_owned(), |acc, bkey| acc + bkey);
-            current_indexes_map.insert(key, doc.clone());
-        }
+    let indices = coll.list_indexes()
+        .map_err(|err| DefaultError(format!("Error while fetching current indexes for '{}': {:?}", coll.namespace, err.description())))?
+        .filter_map(|doc_res| doc_res.ok());
+    for doc in indices {
+        let idx_keys = doc.get_document("key")
+            .map_err(|err| DefaultError(format!("Error extracting 'key' of index document: {:?}", err.description())))?;
+        let key = idx_keys.keys().fold(String::from(""), |acc, bkey| acc + bkey);
+        current_indexes_map.insert(key, doc.clone());
     }
 
     // Fetch target indexes for this model.
     let mut target_indexes_map: HashMap<String, IndexModel> = HashMap::new();
     for model in indexes.iter() {
         // Populate the 'target' indexes map for easy comparison later.
-        let key = model.keys.keys().fold("".to_owned(), |acc, bkey| acc + bkey);
+        let key = model.keys.keys().fold(String::from(""), |acc, bkey| acc + bkey);
         target_indexes_map.insert(key, model.to_owned());
     }
 
@@ -414,33 +414,24 @@ fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> mon
 
     // Create needed indexes.
     for model in indexes_to_create {
-        info!("Syncing index: {:?}", model);
-        match coll.create_index_model(model.clone()) {
-            Ok(_) => info!("Index synced: {:?}", model),
-            Err(err) => {
-                error!("Failed to create index: {}", err.description());
-                return Err(err);
-            },
-        };
+        coll.create_index_model(model.clone())
+            .map_err(|err| DefaultError(format!("Failed to create index: {}", err.description())))?;
     }
 
     // Remove old indexes.
     for doc in indexes_to_remove {
-        info!("Removing index: {:?}", doc);
-        match coll.drop_index_string(doc.get_str("name").expect("Expected to find index name.").to_owned()) {
-            Ok(_) => info!("Index removed: {:?}", doc),
-            Err(err) => {
-                error!("Failed to remove index: {}", err.description());
-                return Err(err);
-            },
-        };
+        let index_name = String::from(
+            doc.get_str("name").map_err(|err| DefaultError(format!("Failed to get index name: {:?}", err.description())))?
+        );
+        coll.drop_index_string(index_name)
+            .map_err(|err| DefaultError(format!("Failed to remove index: {}", err.description())))?;
     }
 
     info!("Finished synchronizing indexes for '{}'.", coll.namespace);
     Ok(())
 }
 
-fn sync_model_migrations<'a>(coll: &'a Collection, migrations: Vec<Box<Migration>>) -> mongodb::error::Result<()> {
+fn sync_model_migrations<'a>(coll: &'a Collection, migrations: Vec<Box<Migration>>) -> Result<()> {
     info!("Starting migrations for '{}'.", coll.namespace);
 
     // Execute each migration.

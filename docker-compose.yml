@@ -28,6 +28,9 @@ services:
       service: _base
     depends_on:
       - mongodb.3-4
+    environment:
+      BACKEND_HOST: mongodb.3-4
+      BACKEND_PORT: 27017
     volumes:
       - ./Cargo.lock:/wither/Cargo.lock
       - ./Cargo.toml:/wither/Cargo.toml

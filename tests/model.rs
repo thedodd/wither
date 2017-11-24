@@ -14,6 +14,7 @@ mod fixtures;
 use std::error::Error;
 
 use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
+use mongodb::db::ThreadedDatabase;
 use wither::Model;
 
 use fixtures::{setup, User};
@@ -131,17 +132,32 @@ fn model_update_should_return_error_with_invalid_update_document() {
 /////////////////
 // Model::sync //
 
-// #[test]
-// fn model_sync_should_create_expected_indices_on_collection() {
-//     let db = setup();
-//     let coll = db.collection(User::COLLECTION_NAME);
-//     let initial_indices = coll.list_indexes().expect("Expected to successfully list indices.");
-//     // let mut user = User{id: None, email: String::from("test@test.com")};
-//     // user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     // let update_doc = doc!{"invalid_update_key" => "should_fail"};
-//     //
-//     // let err = user.update(db.clone(), update_doc, None)
-//     //     .expect_err("Expected a successful update operation.");
-//     //
-//     // assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
-// }
+#[test]
+fn model_sync_should_create_expected_indices_on_collection() {
+    let db = setup();
+    let coll = db.collection(User::COLLECTION_NAME);
+    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor pre-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    let initial_indices_len = initial_indices.len();
+
+    let _ = User::sync(db.clone()).expect("Expected a successful sync operation.");
+    let output_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor post-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    let output_indices_len = output_indices.len();
+    let new_idx = output_indices[1].clone();
+
+    assert!(output_indices_len.clone() > initial_indices_len.clone());
+    assert_eq!(output_indices_len.clone(), 2);
+    assert_eq!(&new_idx, &doc!{
+        "v": 2i32,
+        "unique": true,
+        "key": doc!{"email": 1},
+        "name": "unique-email",
+        "ns": "witherTestDB.users",
+        "background": true,
+    });
+}

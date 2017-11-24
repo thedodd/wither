@@ -9,7 +9,7 @@ use std::env;
 use bson;
 use chrono::TimeZone;
 use mongodb::coll::options::IndexModel;
-use mongodb::db::{Database};
+use mongodb::db::{Database, ThreadedDatabase};
 use mongodb::ThreadedClient;
 use wither::Model;
 
@@ -71,6 +71,14 @@ impl<'a> Model<'a> for User {
 }
 
 pub fn setup() -> Database {
+    // Delete any records in the collection for respective models.
     User::delete_many(DB.clone(), doc!{}).expect("Expected to successfully delete all records for test fixture.");
+
+    // Clean up any indices.
+    let coll = DB.clone().collection(User::COLLECTION_NAME);
+    for idx in User::indexes().into_iter() {
+        let _ = (&coll).drop_index_model(idx);
+    }
+
     return DB.clone();
 }
