@@ -1,7 +1,7 @@
 wither
 ======
 [![Build Status](https://travis-ci.org/thedodd/wither.svg?branch=master)](https://travis-ci.org/thedodd/wither)
-![](https://img.shields.io/badge/tested on-mongodb 3.2%2B-brightgreen.svg)
+[![](https://img.shields.io/badge/tested%20on-mongodb%203.2%2B-brightgreen.svg)](#)
 [![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://crates.io/crates/wither)
 [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
