@@ -20,6 +20,17 @@ Check out the [changelog](./CHANGELOG.md) for more details on what has happened 
 An example of how you might use this library to define a model for a MongoDB collection.
 
 ```rust
+#[macro_use]
+extern crate bson;
+extern crate chrono;
+extern crate mongodb;
+extern crate serde;
+#[macro_use(Serialize, Deserialize)]
+extern crate serde_derive;
+extern crate wither;
+
+use mongodb::coll::options::IndexModel;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     /// The user's unique ID.
@@ -50,6 +61,18 @@ impl<'a> wither::Model<'a> for User {
             },
         ];
     }
+
+    fn migrations() -> Vec<Box<wither::Migration>> {
+        return vec![
+            Box::new(wither::IntervalMigration{
+                name: String::from("remove-oldfield"),
+                threshold: chrono::Utc.ymd(2100, 1, 1).and_hms(1, 0, 0),
+                filter: doc!{"oldfield": doc!{"$exists": true}},
+                set: None,
+                unset: Some(doc!{"oldfield": ""}),
+            }),
+        ];
+    }
 }
 
 fn main() {
@@ -63,3 +86,20 @@ fn main() {
         .expect("Expected a populated value from backend."); // Unwraps the optional model instance.
 }
 ```
+
+### migrations
+Please note that `Model`s defined in this system use [serde](https://serde.rs/), and as such, it is quite likely that no explicity schema migration is needed for changes to your model. Often times, [field defaults](https://serde.rs/field-attrs.html#serdedefault) can be used and no additional overhead would be required.
+
+With that said, schema migrations in this system:
+- are defined in Rust code. Allowing them to live as child elements of your data models.
+- are executed per model, whenever `Model::sync` is called — which should be once per system life cycle, early on at boottime. When dealing with an API service, this should occur before the API begins handling traffic.
+- require no downtime to perform.
+- require minimal configuration. The logic you use directly in your model for connecting to the backend is used for the migrations system as well.
+- require no imperative logic. Simply declare your `filter`, `$set` & `$unset` documents, and the rest will be taken care of.
+
+An important question which you should be asking at this point is _"Well, how is this going to work at scale?"._ This is an excellent question, of course. The answer is that it depends on how you write your migrations. Here are a few pointers & a few notes to help you succeed.
+- be sure that the queries used by your migrations are covered. Just add some new indexes to your `Model::indexes` implementation to be sure. Indexes will always be synced by `Model::sync` before migrations are executed for this reason.
+- when you are dealing with massive amounts of data, and every document needs to be touched, **indexing still matters!** Especially when using an `IntervalMigration`, as you may be under heavy write load, and new documents will potentially be introduced having the old schema after the first service performs the migration. Schema convergence will only take place after all service instances have been updated & have executed their migrations.
+
+##### IntervalMigration
+This migration type is based on a time window. The migration will be executed every time `Model::sync` is called, until the migration's time `threshold` is passed, which will cause the migration to no-op.

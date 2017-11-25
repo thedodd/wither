@@ -32,11 +32,12 @@
 //!   after the first service performs the migration. Schema convergence will only take place after
 //!   all service instances have been updated & have executed their migrations.
 
-use bson::Document;
+use bson::{Bson, Document};
 use chrono;
 use mongodb::coll::Collection;
 use mongodb::coll::options::UpdateOptions;
 use mongodb::common::WriteConcern;
+use mongodb::error::Error::DefaultError;
 use mongodb::error::Result;
 
 /// A trait definition of objects which can be used to manage schema migrations.
@@ -68,22 +69,34 @@ pub struct IntervalMigration {
     pub filter: Document,
 
     /// The document to be used for the `$set` operation of the update.
-    pub set: Document,
+    pub set: Option<Document>,
 
     /// The document to be used for the `$unset` operation of the update.
-    pub unset: Document,
+    pub unset: Option<Document>,
 }
 
 impl Migration for IntervalMigration {
     fn execute<'c>(&self, coll: &'c Collection) -> Result<()> {
+        info!("Executing migration '{}' against '{}'.", &self.name, coll.namespace);
         // If the migrations threshold has been passed, then no-op.
         if chrono::Utc::now() > self.threshold {
+            info!("Successfully executed migration '{}' against '{}'. No-op.", &self.name, coll.namespace);
             return Ok(());
         };
 
+        // Build update document.
+        let mut update = doc!{};
+        if self.set.clone().is_none() && self.unset.clone().is_none() {
+            return Err(DefaultError(String::from("One of '$set' or '$unset' must be specified.")));
+        };
+        if let Some(set) = self.set.clone() {
+            update.insert_bson(String::from("$set"), Bson::from(set));
+        }
+        if let Some(unset) = self.unset.clone() {
+            update.insert_bson(String::from("$unset"), Bson::from(unset));
+        }
+
         // Build up & execute the migration.
-        info!("Executing migration '{}' against '{}'.", &self.name, coll.namespace);
-        let update = doc!{"$set": self.set.clone(), "$unset": self.unset.clone()};
         let options = UpdateOptions{upsert: Some(false), write_concern: Some(WriteConcern{w: 1, w_timeout: 0, j: true, fsync: false})};
         let res = coll.update_many(self.filter.clone(), update, Some(options))?;
         info!("Successfully executed migration '{}' against '{}'. {} matched. {} modified.", &self.name, coll.namespace, res.matched_count, res.modified_count);

@@ -17,7 +17,7 @@ use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
 use mongodb::db::ThreadedDatabase;
 use wither::Model;
 
-use fixtures::{setup, User};
+use fixtures::{setup, User, UserModelBadMigrations};
 
 //////////////////
 // Model::count //
@@ -160,4 +160,34 @@ fn model_sync_should_create_expected_indices_on_collection() {
         "ns": "witherTestDB.users",
         "background": true,
     });
+}
+
+#[test]
+fn model_sync_should_execute_expected_migrations_against_collection() {
+    let db = setup();
+    let coll = db.collection(User::COLLECTION_NAME);
+    let mut new_user = User{id: None, email: String::from("test@test.com")};
+    new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
+
+    let _ = User::sync(db.clone()).expect("Expected a successful sync operation.");
+    let migrated_doc = coll.find_one(Some(doc!{"_id": new_user.id.clone().unwrap()}), None)
+        .expect("Expect a successful find operation.")
+        .expect("Expect a populated document.");
+
+    assert_eq!(migrated_doc, doc!{
+        "_id": new_user.id.clone().unwrap(),
+        "email": new_user.email,
+        "testfield": "test",
+    });
+}
+
+#[test]
+fn model_sync_should_error_if_migration_with_no_set_and_no_unset_given() {
+    let db = setup();
+    let mut new_user = UserModelBadMigrations{id: None, email: String::from("test@test.com")};
+    new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
+
+    let err = UserModelBadMigrations::sync(db.clone()).expect_err("Expected a failure from sync operation.");
+
+    assert_eq!(err.description(), "One of '$set' or '$unset' must be specified.");
 }

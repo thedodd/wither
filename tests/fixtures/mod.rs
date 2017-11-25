@@ -63,8 +63,53 @@ impl<'a> Model<'a> for User {
                 name: String::from("test-migration"),
                 threshold: chrono::Utc.ymd(2100, 1, 1).and_hms(1, 0, 0),
                 filter: doc!{"email": doc!{"$exists": true}},
-                set: doc!{"testfield": "test"},
-                unset: doc!{},
+                set: Some(doc!{"testfield": "test"}),
+                unset: None,
+            }),
+        ]
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct UserModelBadMigrations {
+    /// The user's unique ID.
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
+    pub id: Option<bson::oid::ObjectId>,
+
+    /// The user's unique email.
+    pub email: String,
+}
+
+impl<'a> Model<'a> for UserModelBadMigrations {
+
+    const COLLECTION_NAME: &'static str = "users_bad_migrations";
+
+    fn id(&self) -> Option<bson::oid::ObjectId> {
+        return self.id.clone();
+    }
+
+    fn set_id(&mut self, oid: bson::oid::ObjectId) {
+        self.id = Some(oid);
+    }
+
+    fn indexes() -> Vec<IndexModel> {
+        return vec![
+            IndexModel{
+                keys: doc!{"email" => 1},
+                options: wither::basic_index_options("unique-email", true, Some(true), None, None),
+            },
+        ];
+    }
+
+    fn migrations() -> Vec<Box<wither::Migration>> {
+        vec![
+            // This migration doesn't really do much. Just exercises the system.
+            Box::new(wither::IntervalMigration{
+                name: String::from("test-migration"),
+                threshold: chrono::Utc.ymd(2100, 1, 1).and_hms(1, 0, 0),
+                filter: doc!{"email": doc!{"$exists": true}},
+                set: None,
+                unset: None,
             }),
         ]
     }
@@ -73,11 +118,16 @@ impl<'a> Model<'a> for User {
 pub fn setup() -> Database {
     // Delete any records in the collection for respective models.
     User::delete_many(DB.clone(), doc!{}).expect("Expected to successfully delete all records for test fixture.");
+    UserModelBadMigrations::delete_many(DB.clone(), doc!{}).expect("Expected to successfully delete all records for test fixture.");
 
     // Clean up any indices.
-    let coll = DB.clone().collection(User::COLLECTION_NAME);
+    let users_coll = DB.clone().collection(User::COLLECTION_NAME);
     for idx in User::indexes().into_iter() {
-        let _ = (&coll).drop_index_model(idx);
+        let _ = (&users_coll).drop_index_model(idx);
+    }
+    let other_users_coll = DB.clone().collection(UserModelBadMigrations::COLLECTION_NAME);
+    for idx in UserModelBadMigrations::indexes().into_iter() {
+        let _ = (&other_users_coll).drop_index_model(idx);
     }
 
     return DB.clone();

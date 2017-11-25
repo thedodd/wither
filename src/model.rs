@@ -349,15 +349,12 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// Synchronize this model with the backend.
     ///
+    /// This routine should be called once per model, early on at boot time. It will synchronize
+    /// any indexes defined on this model with the backend & will execute any active migrations
+    /// against the model's collection.
+    ///
     /// This routine will destroy any indexes found on this model's collection which are not
     /// defined in the response from `Self.indexes()`.
-    ///
-    /// This routine should be called once per model, early on at boot time.
-    ///
-    /// TODO:
-    ///
-    /// - build up a safe sync execution standpoint.
-    /// - return before doing anything if index sync can not be executed safely.
     fn sync(db: Database) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
         sync_model_indexes(&coll, Self::indexes())?;
@@ -414,6 +411,7 @@ fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> Res
 
     // Create needed indexes.
     for model in indexes_to_create {
+        // NOTE: this wraps the native MongoDB `ensureIndex` command. Will not fail if index already exists.
         coll.create_index_model(model.clone())
             .map_err(|err| DefaultError(format!("Failed to create index: {}", err.description())))?;
     }
