@@ -32,12 +32,14 @@
 //!   after the first service performs the migration. Schema convergence will only take place after
 //!   all service instances have been updated & have executed their migrations.
 
+use std::error::Error;
+
 use bson::{Bson, Document};
 use chrono;
 use mongodb::coll::Collection;
 use mongodb::coll::options::UpdateOptions;
 use mongodb::common::WriteConcern;
-use mongodb::error::Error::DefaultError;
+use mongodb::error::Error::{DefaultError, WriteError};
 use mongodb::error::Result;
 
 /// A trait definition of objects which can be used to manage schema migrations.
@@ -99,6 +101,12 @@ impl Migration for IntervalMigration {
         // Build up & execute the migration.
         let options = UpdateOptions{upsert: Some(false), write_concern: Some(WriteConcern{w: 1, w_timeout: 0, j: true, fsync: false})};
         let res = coll.update_many(self.filter.clone(), update, Some(options))?;
+
+        // Handle nested error condition.
+        if let Some(err) = res.write_exception {
+            error!("Error executing migration: {:?}", err.description());
+            return Err(WriteError(err));
+        }
         info!("Successfully executed migration '{}' against '{}'. {} matched. {} modified.", &self.name, coll.namespace, res.matched_count, res.modified_count);
         Ok(())
     }

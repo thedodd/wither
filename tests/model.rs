@@ -153,7 +153,7 @@ fn model_sync_should_create_expected_indices_on_collection() {
     assert!(output_indices_len.clone() > initial_indices_len.clone());
     assert_eq!(output_indices_len.clone(), 2);
     assert_eq!(&new_idx, &doc!{
-        "v": 2i32,
+        "v": new_idx.get_i32("v").unwrap(),
         "unique": true,
         "key": doc!{"email": 1},
         "name": "unique-email",
