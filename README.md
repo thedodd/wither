@@ -10,6 +10,8 @@ An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb
 
 A primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver.
 
+Migrations have landed! Check out the docs for more info on getting started with migrations.
+
 This project makes use of `associated constants` as of `0.2.0`, so you will need to be running rust `>= 1.20`.
 
 **NOTE:** progress is being, but there is a lot more to be done! For the time being, there may be backwards incompatible releases made from minor version to minor version until the best patterns for this library are found. It would be best to pin to an exact version in your `Cargo.toml`. Any such backwards incompatible changes will be declared in the [changelog](https://github.com/thedodd/wither/master/CHANGELOG.md).
@@ -57,8 +59,8 @@ impl<'a> wither::Model<'a> for User {
 #### next steps
 Now you are ready to tackle some of the other important parts of the model lifecycle. Some additional items to look into:
 
-- [Model::sync](https://docs.rs/wither/0.4.0/wither/model/index.html#sync) - sync your models with the backend.
-- [Model::indexes](https://docs.rs/wither/0.4.0/wither/model/index.html#indexes) - define indexes for your models.
-- [Model::migrations](https://docs.rs/wither/0.4.0/wither/model/index.html#migrations) - define migrations to be run against your models collections.
+- [Model::sync](https://docs.rs/wither/0.5.0/wither/model/index.html#sync) - sync your models with the backend.
+- [Model::indexes](https://docs.rs/wither/0.5.0/wither/model/index.html#indexes) - define indexes for your models.
+- [Model::migrations](https://docs.rs/wither/0.5.0/wither/model/index.html#migrations) - define migrations to be run against your models collections.
 
 Good luck on the path.
