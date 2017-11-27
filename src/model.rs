@@ -9,10 +9,57 @@
 //!
 //! - define an associated constant `COLLECTION_NAME` in your impl which will be the name of the
 //!   collection where the corresponding model's data will be read from & written to.
-//! - provide an implementation for the `id`, `set_id` & `indexes` methods.
+//! - provide an implementation for the `id` & `set_id` methods.
 //!
 //! That's it! Now you can easliy perform standard CRUD operations on MongoDB
 //! using your models.
+//!
+//! ### sync
+//!
+//! [`Model::sync`](./trait.Model.html#method.sync) is an integral component of this system &
+//! allows you to delegate a majority of your database administration tasks to your services which
+//! are actually using the database. Both of the [indexes](trait.Model.html#method.indexes) &
+//! [migrations](trait.Model.html#method.migrations) systems rely upon this system to function.
+//!
+//! This routine should be called once per model, early on at boottime. It will synchronize any
+//! indexes defined on this model with the backend & will execute any active migrations against
+//! the model's collection.
+//!
+//! This routine will destroy any indexes found on this model's collection which are not defined
+//! on this model (barring the default index on `_id`).
+//!
+//! ### indexes
+//!
+//! Any collection that you actually plan on reading data from will need some indexes. These are
+//! very simple to define in your `Model` implementation.
+//!
+//! ```rust
+//! use mongodb::coll::options::IndexModel;
+//!
+//! // snip ...
+//!
+//! // Define any indexes which need to be maintained for your model here.
+//! // Remember to `use mongodb::coll::options::IndexModel;`.
+//! fn indexes() -> Vec<IndexModel> {
+//!     return vec![
+//!         IndexModel{
+//!             keys: doc!{"email" => 1},
+//!             // Args are: name, background, unique, ttl, sparse.
+//!             options: wither::basic_index_options("unique-email", true, Some(true), None, None),
+//!         },
+//!     ];
+//! }
+//!
+//! // snip ...
+//! ```
+//!
+//! Whenever [`Model::sync`](./trait.Model.html#method.sync) is called, it will synchronize any
+//! indexes defined in this method with the database. Any indexes which do not exist in the model
+//! definition will be removed (barring the default index on `_id`).
+//!
+//! ### migrations
+//! See the documentation on the [migration](../migration/index.html) module.
+
 
 use std::collections::HashMap;
 use std::error::Error;
@@ -343,13 +390,14 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         vec![]
     }
 
+    /// Get the vector of migration objects for this model.
     fn migrations() -> Vec<Box<Migration>> {
         vec![]
     }
 
     /// Synchronize this model with the backend.
     ///
-    /// This routine should be called once per model, early on at boot time. It will synchronize
+    /// This routine should be called once per model, early on at boottime. It will synchronize
     /// any indexes defined on this model with the backend & will execute any active migrations
     /// against the model's collection.
     ///

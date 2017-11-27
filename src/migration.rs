@@ -1,18 +1,44 @@
 //! Interface for schema migrations.
 //!
-//! Please note that `Model`s defined in this system use [serde](https://serde.rs/), and as such,
-//! it is quite likely that no explicity schema migration is needed for changes to your model.
-//! Often times, [field defaults](https://serde.rs/field-attrs.html#serdedefault) can be used and
-//! no additional overhead would be required.
+//! As your system evolves over time, you may find yourself needing to evolve the data in your
+//! databases along with your models. An [`IntervalMigration`](./struct.IntervalMigration.html)
+//! is a great place to start & should be defined in your `Model` implementation.
 //!
-//! With that said, there are multiple ways to approach this problem. Some better than others.
-//! However, after having used MongoDB for quite a long time, this approach to handling migrations
-//! has emerged. Schema migrations in this system:
+//! ```rust
+//! // snip ...
+//!
+//! // Define any migrations which your model needs in this method.
+//! // You should never have to remove these from your source code.
+//! fn migrations() -> Vec<Box<wither::Migration>> {
+//!     return vec![
+//!         Box::new(wither::IntervalMigration{
+//!             name: String::from("remove-oldfield"),
+//!             // NOTE: use a logical time here. A day after your deployment date, or the like.
+//!             threshold: chrono::Utc.ymd(2100, 1, 1).and_hms(1, 0, 0),
+//!             filter: doc!{"oldfield": doc!{"$exists": true}},
+//!             set: None,
+//!             unset: Some(doc!{"oldfield": ""}),
+//!         }),
+//!     ];
+//! }
+//!
+//! // snip ...
+//! ```
+//!
+//! **Remember, MongoDB is not a SQL based system.** There is no true database level schema
+//! enforcement. `IntervalMigration`s bridge this gap quite nicely.
+//!
+//! `Model`s defined in this system use [serde](https://serde.rs/), and as such, it is quite
+//! likely that no explicit schema migration is needed for changes to your model. Often times,
+//! [field defaults](https://serde.rs/field-attrs.html#serdedefault) can be used and no additional
+//! overhead would be required.
+//!
+//! With that said, schema migrations in this system:
 //!
 //! - are defined in Rust code. Allowing them to live as child elements of your data models.
-//! - are executed per model, whenever `Model::sync` is called — which should be once per system
-//!   life cycle, early on at boottime. When dealing with an API service, this should occur before
-//!   the API begins handling traffic.
+//! - are executed per model, whenever [`Model::sync`](../model/trait.Model.html#method.sync)
+//!   is called — which should be once per system life cycle, early on at boottime. When dealing
+//!   with an API service, this should occur before the API begins handling traffic.
 //! - require no downtime to perform.
 //! - require minimal configuration. The logic you use directly in your model for connecting to
 //!   the backend is used for the migrations system as well.
@@ -24,13 +50,19 @@
 //! how you write your migrations. Here are a few pointers & a few notes to help you succeed.
 //!
 //! - be sure that the queries used by your migrations are covered. Just add some new indexes to
-//!   your `Model::indexes` implementation to be sure. Indexes will always be synced by
-//!   `Model::sync` before migrations are executed for this reason.
+//!   your [`Model::indexes`](../model/trait.Model.html#method.indexes) implementation to be sure.
+//!   Indexes will always be synced by [`Model::sync`](../model/trait.Model.html#method.sync)
+//!   before migrations are executed for this reason.
 //! - when you are dealing with massive amounts of data, and every document needs to be touched,
-//!   **indexing still matters!** Especially when using an `IntervalMigration`, as you may be under
-//!   heavy write load, and new documents will potentially be introduced having the old schema
-//!   after the first service performs the migration. Schema convergence will only take place after
-//!   all service instances have been updated & have executed their migrations.
+//!   **indexing still matters!** Especially when using an `IntervalMigration`, as you may be
+//!   under heavy write load, and new documents will potentially be introduced having the old
+//!   schema after the first service performs the migration. Schema convergence will only take
+//!   place after all service instances have been updated & have executed their migrations.
+//!
+//! Currently, the following migration types are available. If there is a new migration "type"
+//! which you find yourself in need of, [please open an issue](https://github.com/thedodd/wither)!
+//!
+//! - [IntervalMigration](./struct.IntervalMigration.html)
 
 use std::error::Error;
 
@@ -42,7 +74,7 @@ use mongodb::common::WriteConcern;
 use mongodb::error::Error::{DefaultError, WriteError};
 use mongodb::error::Result;
 
-/// A trait definition of objects which can be used to manage schema migrations.
+/// A trait definition for objects which can be used to manage schema migrations.
 pub trait Migration {
     /// The function which is to execute this migration.
     fn execute<'c>(&self, coll: &'c Collection) -> Result<()>;
@@ -52,12 +84,11 @@ pub trait Migration {
 ///
 /// This migration type works nicely in environments where multiple instances of the system — in
 /// which this migration is defined — are continuously running, even during deployment cycles.
-/// Highly available systems. With an `IntervalMigration`, each instance will execute the migration
-/// at boottime, until the `threshold` date is passed. This will compensate for write-heavy
-/// workloads, as the final instance to be updated will ensure that any documents, written by
-/// previously running older versions of the system, will be properly migrated until all instances
-/// have been updated. As long as you ensure your migrations are idempotent — **WHICH YOU ALWAYS
-/// SHOULD** — this will work quite nicely.
+/// Highly available systems. With an `IntervalMigration`, each instance will execute the
+/// migration at boottime, until the `threshold` date is passed. This will compensate for
+/// write-heavy workloads, as the final instance to be updated will ensure schema convergence.
+/// As long as you ensure your migrations are idempotent — **WHICH YOU ALWAYS SHOULD** — this
+/// will work quite nicely.
 pub struct IntervalMigration {
     /// The name for this migration. Must be unique per collection.
     pub name: String,
