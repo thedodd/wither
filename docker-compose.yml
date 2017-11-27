@@ -2,7 +2,7 @@ version: '2'
 services:
   _base:
     build: .
-    command: cargo test -- --test-threads=1
+    command: cargo test --tests --lib -- --test-threads=1
     working_dir: /wither
 
   test.3-2:
