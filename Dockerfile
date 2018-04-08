@@ -1,6 +1,6 @@
-FROM rust:1.20
+FROM rust:1.25
 
-MAINTAINER Anthony Josiah Dodd <Dodd.AnthonyJosiah@gmail.com>
+LABEL maintainer="Anthony Josiah Dodd <Dodd.AnthonyJosiah@gmail.com>"
 
 # Install watcher extension.
 RUN cargo install cargo-watch
