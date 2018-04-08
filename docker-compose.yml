@@ -56,7 +56,7 @@ services:
     ports:
       - 27017
 
-  mongodb.3-4:
+  mongodb.3-6:
     image: mongo:3.6.3
     ports:
       - 27017
