@@ -18,6 +18,9 @@ This project makes use of `associated constants` as of `0.2.0`, so you will need
 
 Check out the [changelog](https://github.com/thedodd/wither/master/CHANGELOG.md) for more details on what has happened from release to release.
 
+### current plans & direction
+Progress is being made towards a `0.6.0` release. This will be a backwards incompatible release ... but you should be able to remove a decent bit of code. The release will be focused on implementing a custom derive for defining your models, which is 95% of what it takes to get started with this crate. Seems like a big win, IMHO.
+
 ### getting started
 A minimal example of how you might define a model for a MongoDB collection.
 
