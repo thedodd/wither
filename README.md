@@ -56,11 +56,14 @@ impl<'a> wither::Model<'a> for User {
 }
 ```
 
+#### logging
+This create uses the [rust standard logging facade](https://docs.rs/log/), and integrating it with another logging framework is usually quite simple. If you are using slog, check out the [slog-rs/stdlog](https://docs.rs/slog-stdlog/) create for easy integration.
+
 #### next steps
 Now you are ready to tackle some of the other important parts of the model lifecycle. Some additional items to look into:
 
-- [Model::sync](https://docs.rs/wither/0.5.0/wither/model/index.html#sync) - sync your models with the backend.
-- [Model::indexes](https://docs.rs/wither/0.5.0/wither/model/index.html#indexes) - define indexes for your models.
-- [Model::migrations](https://docs.rs/wither/0.5.0/wither/model/index.html#migrations) - define migrations to be run against your models collections.
+- [Model::sync](https://docs.rs/wither/0.5.1/wither/model/index.html#sync) - sync your models with the backend.
+- [Model::indexes](https://docs.rs/wither/0.5.1/wither/model/index.html#indexes) - define indexes for your models.
+- [Model::migrations](https://docs.rs/wither/0.5.1/wither/model/index.html#migrations) - define migrations to be run against your models collections.
 
 Good luck on the path.

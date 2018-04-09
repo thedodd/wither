@@ -62,6 +62,9 @@
 //! }
 //! ```
 //!
+//! #### logging
+//! This create uses the [rust standard logging facade](https://docs.rs/log/), and integrating it with another logging framework is usually quite simple. If you are using slog, check out the [slog-rs/stdlog](https://docs.rs/slog-stdlog/) create for easy integration.
+//!
 //! #### next steps
 //! Now you are ready to tackle some of the other important parts of the model lifecycle. Some
 //! additional items to look into:
