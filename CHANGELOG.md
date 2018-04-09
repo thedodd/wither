@@ -7,6 +7,11 @@ changelog
 - reexports of `bson::Document` & `mongodb::coll::options::FindOptions` have been removed. They must be vestiges of my early development on this crate.
 - now testing all builds against MongoDB 3.2.x & 3.4.x. Will add 3.6.x when it is available on hub.docker.com.
 
+#### 0.5.1
+- updating create dependencies. No expected backwards incompatibilities from this.
+- added some notes to the documentation on how to integrate this crate's logging.
+- added MongoDB 3.6.x to the test matrix & update patch versions of existing versions in test matrix.
+
 ##### backwards incompatibilities
 - `Model::sync` no longer panics. It will now return a `Result`, offering users a greater level of control on behavior.
 

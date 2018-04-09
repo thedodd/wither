@@ -23,6 +23,15 @@ services:
       BACKEND_HOST: mongodb.3-4
       BACKEND_PORT: 27017
 
+  test.3-6:
+    extends:
+      service: _base
+    links:
+      - mongodb.3-6
+    environment:
+      BACKEND_HOST: mongodb.3-6
+      BACKEND_PORT: 27017
+
   test.with-mounts:
     extends:
       service: _base
@@ -38,11 +47,16 @@ services:
       - ./tests:/wither/tests
 
   mongodb.3-2:
-    image: mongo:3.2.17
+    image: mongo:3.2.19
     ports:
       - 27017
 
   mongodb.3-4:
-    image: mongo:3.4.10
+    image: mongo:3.4.14
+    ports:
+      - 27017
+
+  mongodb.3-6:
+    image: mongo:3.6.3
     ports:
       - 27017

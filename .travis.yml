@@ -20,7 +20,9 @@ before_install:
 #   - sudo mv docker-compose /usr/local/bin
   - docker-compose up -d mongodb.3-2
   - docker-compose up -d mongodb.3-4
+  - docker-compose up -d mongodb.3-6
 
 script:
   - docker-compose run test.3-2
   - docker-compose run test.3-4
+  - docker-compose run test.3-6
