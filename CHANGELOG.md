@@ -12,6 +12,11 @@ changelog
 - added some notes to the documentation on how to integrate this crate's logging.
 - added MongoDB 3.6.x to the test matrix & update patch versions of existing versions in test matrix.
 
+#### 0.5.2
+This is an important release which implements a workaround for [a bug reported against the mongodb lib](https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/251). The bug was causing model syncing to fail for new models.
+- a workaround was implemented for the above mentioned bug.
+- a few `doc!` usages were updated to use `:` as opposed to `=>` for key/val delimiter.
+
 ##### backwards incompatibilities
 - `Model::sync` no longer panics. It will now return a `Result`, offering users a greater level of control on behavior.
 

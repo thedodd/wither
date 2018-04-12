@@ -77,11 +77,11 @@
 //! Good luck on the path.
 
 #[macro_use(doc, bson)]
-extern crate bson;
+pub extern crate bson;
 extern crate chrono;
 #[macro_use]
 extern crate log;
-extern crate mongodb;
+pub extern crate mongodb;
 extern crate serde;
 
 pub mod migration;
