@@ -415,7 +415,7 @@ fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> Res
     info!("Synchronizing indexes for '{}'.", coll.namespace);
 
     // Fetch current indexes.
-    coll.db.create_collection(coll.name().as_str(), None)?; // NOTE: NB: this is account for the mongodb driver bug: #251.
+    let _ = coll.db.create_collection(coll.name().as_str(), None); // NOTE: NB: this is account for the mongodb driver bug: #251.
     let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
     let indices = coll.list_indexes()
         .map_err(|err| DefaultError(format!("Error while fetching current indexes for '{}': {:?}", coll.namespace, err.description())))?
