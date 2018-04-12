@@ -43,7 +43,7 @@
 //! fn indexes() -> Vec<IndexModel> {
 //!     return vec![
 //!         IndexModel{
-//!             keys: doc!{"email" => 1},
+//!             keys: doc!{"email": 1},
 //!             // Args are: name, background, unique, ttl, sparse.
 //!             options: wither::basic_index_options("unique-email", true, Some(true), None, None),
 //!         },
@@ -271,7 +271,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         // Handle case where instance already has an ID.
         let mut id_needs_update = false;
         let _filter = if let Some(id) = self.id() {
-            doc!{"_id" => id}
+            doc!{"_id": id}
 
         // Handle case where no filter and no ID exist.
         } else if filter == None {
@@ -280,7 +280,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
                 Err(err) => return Err(OIDError(err)),
             };
             self.set_id(new_id.clone());
-            doc!{"_id" => new_id}
+            doc!{"_id": new_id}
 
         // Handle case where no ID exists, and a filter has been provided.
         } else {
@@ -332,7 +332,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
                 return Err(ArgumentError("Model must have an ObjectId for this operation.".to_owned()));
             }
         };
-        let filter = doc!{"_id" => id};
+        let filter = doc!{"_id": id};
 
         // Ensure that journaling is set to true for this call for full output document.
         // TODO: should probably encapsulate this as a unit-testable function.
@@ -415,6 +415,7 @@ fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> Res
     info!("Synchronizing indexes for '{}'.", coll.namespace);
 
     // Fetch current indexes.
+    coll.db.create_collection(coll.name().as_str(), None)?; // NOTE: NB: this is account for the mongodb driver bug: #251.
     let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
     let indices = coll.list_indexes()
         .map_err(|err| DefaultError(format!("Error while fetching current indexes for '{}': {:?}", coll.namespace, err.description())))?
