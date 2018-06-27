@@ -8,15 +8,15 @@ wither
 
 An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype). Please ⭐ on [github](https://github.com/thedodd/wither)!
 
-A primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver.
+A primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.2`, `3.4`, `3.6` & `4.0`.
 
 Migrations have landed! Check out the docs for more info on getting started with migrations.
 
 This project makes use of `associated constants` as of `0.2.0`, so you will need to be running rust `>= 1.20`.
 
-**NOTE:** progress is being, but there is a lot more to be done! For the time being, there may be backwards incompatible releases made from minor version to minor version until the best patterns for this library are found. It would be best to pin to an exact version in your `Cargo.toml`. Any such backwards incompatible changes will be declared in the [changelog](https://github.com/thedodd/wither/master/CHANGELOG.md).
+**NOTE:** progress is being, but there is a lot more to be done! For the time being, there may be backwards incompatible releases made from minor version to minor version until the best patterns for this library are found. It would be best to pin to an exact version in your `Cargo.toml`. Any such backwards incompatible changes will be declared in the [changelog](https://github.com/thedodd/wither/master/wither/CHANGELOG.md).
 
-Check out the [changelog](https://github.com/thedodd/wither/master/CHANGELOG.md) for more details on what has happened from release to release.
+Check out the [changelog](https://github.com/thedodd/wither/master/wither/CHANGELOG.md) for more details on what has happened from release to release.
 
 ### current plans & direction
 Progress is being made towards a `0.6.0` release. This will be a backwards incompatible release ... but you should be able to remove a decent bit of code. The release will be focused on implementing a custom derive for defining your models, which is 95% of what it takes to get started with this crate. Seems like a big win, IMHO.
@@ -65,8 +65,8 @@ This create uses the [rust standard logging facade](https://docs.rs/log/), and i
 #### next steps
 Now you are ready to tackle some of the other important parts of the model lifecycle. Some additional items to look into:
 
-- [Model::sync](https://docs.rs/wither/0.5.1/wither/model/index.html#sync) - sync your models with the backend.
-- [Model::indexes](https://docs.rs/wither/0.5.1/wither/model/index.html#indexes) - define indexes for your models.
-- [Model::migrations](https://docs.rs/wither/0.5.1/wither/model/index.html#migrations) - define migrations to be run against your models collections.
+- [Model::sync](https://docs.rs/wither/0.5.2/wither/model/index.html#sync) - sync your models with the backend.
+- [Model::indexes](https://docs.rs/wither/0.5.2/wither/model/index.html#indexes) - define indexes for your models.
+- [Model::migrations](https://docs.rs/wither/0.5.2/wither/model/index.html#migrations) - define migrations to be run against your models collections.
 
 Good luck on the path.
