@@ -2,7 +2,7 @@ version: '2'
 services:
   _base:
     build: .
-    command: cargo test --tests --lib -- --test-threads=1
+    command: cargo test -p wither --tests --lib -- --test-threads=1
     working_dir: /wither
 
   test.3-2:
@@ -44,6 +44,7 @@ services:
   test.with-mounts:
     extends:
       service: _base
+    command: bash -c 'cargo install cargo-watch && cargo watch -s "cargo test --lib --tests"'
     depends_on:
       - mongodb.3-6
     environment:
@@ -53,7 +54,7 @@ services:
       - ./Cargo.lock:/wither/Cargo.lock
       - ./Cargo.toml:/wither/Cargo.toml
       - ./wither:/wither/wither
-      - ./wither-derive:/wither/wither-derive
+      - ./wither_derive:/wither/wither_derive
 
   mongodb.3-2:
     image: mongo:3.2

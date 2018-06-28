@@ -1,0 +1,21 @@
+[package]
+authors = ["Anthony Dodd <dodd.anthonyjosiah@gmail.com>"]
+name = "wither_derive"
+version = "0.1.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+bson = "0.10"
+mongodb = "0.3"
+proc-macro2 = "0.4"
+quote = "0.6"
+syn = { version = "0.14", features = ["extra-traits"] }
+
+[dev-dependencies]
+compiletest_rs = "0.3"
+mongodb = "0.3"
+serde = "1.0"
+serde_derive = "1.0"
+wither = { path = "../wither" }
