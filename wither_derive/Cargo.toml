@@ -7,7 +7,7 @@ version = "0.1.0"
 proc-macro = true
 
 [dependencies]
-bson = "0.10"
+bson = "0.*"
 mongodb = "0.3"
 proc-macro2 = "0.4"
 quote = "0.6"

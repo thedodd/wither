@@ -142,32 +142,32 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// ensures that an ObjectId will be returned for the inserted document. For most cases,
     /// overriding this implementation should be unnecessary.
     fn model_write_concern() -> WriteConcern {
-        return WriteConcern{
+        WriteConcern{
             w: Self::write_concern_w(),
             w_timeout: Self::write_concern_w_timeout(),
             j: Self::write_concern_j(),
             fsync: Self::write_concern_fsync(),
-        };
+        }
     }
 
     /// The write replication settings for this model. Defaults to `1`.
     fn write_concern_w() -> i32 {
-        return 1;
+        1
     }
 
     /// The write concern timeout settings for this model. Defaults to `0`.
     fn write_concern_w_timeout() -> i32 {
-        return 0;
+        0
     }
 
     /// The write concern journal settings for this model. Defaults to `true`.
     fn write_concern_j() -> bool {
-        return true;
+        true
     }
 
     /// The write concern fsync settings for this model. Defaults to `false`.
     fn write_concern_fsync() -> bool {
-        return false;
+        false
     }
 
     //////////////////

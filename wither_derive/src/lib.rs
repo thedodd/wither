@@ -1,3 +1,5 @@
+#![recursion_limit="200"]
+
 #[macro_use]
 extern crate bson;
 extern crate mongodb;
@@ -11,11 +13,13 @@ mod model;
 mod model_field;
 mod model_struct;
 mod msg;
+mod tokens;
 
 use proc_macro::TokenStream;
 use syn::DeriveInput;
 
 use model::MetaModel;
+use tokens::Indexes;
 
 /// Derive the `Model` trait on your data model structs.
 ///
@@ -92,6 +96,7 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
     // Build output code for deriving `Model`.
     let name = model.struct_name();
     let collection_name = model.collection_name();
+    let indexes = Indexes(model.indexes());
     let expanded = quote! {
         impl<'a> wither::Model<'a> for #name {
             const COLLECTION_NAME: &'static str = #collection_name;
@@ -104,6 +109,11 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
             /// Set this instance's ID.
             fn set_id(&mut self, oid: ::bson::oid::ObjectId) {
                 self.id = Some(oid);
+            }
+
+            /// All indexes currently on this model.
+            fn indexes() -> Vec<IndexModel> {
+                #indexes
             }
         }
     };

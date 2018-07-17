@@ -1,3 +1,4 @@
+use mongodb::coll::options::IndexModel;
 use syn::{self, DeriveInput};
 
 use model_field::MetaModelFieldData;
@@ -32,11 +33,6 @@ impl MetaModel {
         let field_data = MetaModelFieldData::build(&struct_fields).finish();
 
         MetaModel{ident, struct_fields, struct_data, field_data}
-    }
-
-    /// The target struct's ident.
-    pub fn struct_name(&self) -> &syn::Ident {
-        &self.ident
     }
 
     /// The collection name to be used for this model.
@@ -104,6 +100,16 @@ impl MetaModel {
             panic!(msg::ID_FIELD_SERDE_REQ);
         }
         panic!(msg::ID_FIELD_SERDE_REQ);
+    }
+
+    /// The derived indexes on this model.
+    pub fn indexes(&self) -> Vec<IndexModel> {
+        self.field_data.indexes.clone()
+    }
+
+    /// The target struct's ident.
+    pub fn struct_name(&self) -> &syn::Ident {
+        &self.ident
     }
 }
 

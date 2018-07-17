@@ -9,7 +9,9 @@ use msg;
 
 /// The `Model` field attributes which have been accumulated from the target model.
 #[derive(Default)]
-pub(crate) struct MetaModelFieldData;
+pub(crate) struct MetaModelFieldData {
+    pub indexes: Vec<IndexModel>,
+}
 
 impl MetaModelFieldData {
     /// Extract needed data from the target model's field attributes. Call `.finish()` to finalize.
@@ -60,6 +62,7 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
                             // Handle index attrs.
                             "index" => {
                                 let model = self.build_index_model(field, inner);
+                                acc.indexes.push(model);
                             },
                             _ => panic!("Unrecognized `model` field attribute '{}'.", attr_name),
                         }
@@ -70,7 +73,7 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
     }
 
     /// Build an `IndexModel` from the metadata in the given attr meta object.
-    fn build_index_model(&self, field: &syn::Field, index_container: &syn::Meta) {
+    fn build_index_model(&self, field: &syn::Field, index_container: &syn::Meta) -> IndexModel {
         // Collect the internals of the `index` attr as a vector of additional meta elements.
         let index_attrs = match index_container {
             syn::Meta::List(meta_list) => meta_list.nested.iter().map(|nested| {
@@ -92,28 +95,29 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
             let meta_elem_name = meta_elem.name().to_string();
             match meta_elem_name.as_ref() {
                 "direction" => self.index_direction(meta_elem, &mut keys, &meta_elem_name, &name),
-                // "with" => MetaModelFieldData::index_with(meta_elem, &mut keys),
-                // "background" => MetaModelFieldData::index_background(meta_elem),
-                // "expire_after_seconds" => MetaModelFieldData::index_expire_after_seconds(meta_elem),
-                // "name" => MetaModelFieldData::index_name(meta_elem),
-                // "sparse" => MetaModelFieldData::index_sparse(meta_elem),
-                // "storage_engine" => MetaModelFieldData::index_storage_engine(meta_elem),
-                // "unique" => MetaModelFieldData::index_unique(meta_elem),
-                // "version" => MetaModelFieldData::index_version(meta_elem),
-                // "default_language" => MetaModelFieldData::index_default_language(meta_elem),
-                // "language_override" => MetaModelFieldData::index_language_override(meta_elem),
-                // "text_version" => MetaModelFieldData::index_text_version(meta_elem),
-                // "weights" => MetaModelFieldData::index_weights(meta_elem),
-                // "sphere_version" => MetaModelFieldData::index_sphere_version(meta_elem),
-                // "bits" => MetaModelFieldData::index_bits(meta_elem),
-                // "max" => MetaModelFieldData::index_max(meta_elem),
-                // "min" => MetaModelFieldData::index_min(meta_elem),
-                // "bucket_size" => MetaModelFieldData::index_bucket_size(meta_elem),
+                // TODO: come back and implement this.
+                // "with" => self.index_with(meta_elem, &mut keys),
+                "background" => self.index_background(meta_elem, &mut opts, &meta_elem_name),
+                "expire_after_seconds" => self.index_expire_after_seconds(meta_elem, &mut opts, &meta_elem_name),
+                "name" => self.index_name(meta_elem, &mut opts, &meta_elem_name),
+                "sparse" => self.index_sparse(meta_elem, &mut opts, &meta_elem_name),
+                "storage_engine" => self.index_storage_engine(meta_elem, &mut opts, &meta_elem_name),
+                "unique" => self.index_unique(meta_elem, &mut opts, &meta_elem_name),
+                "version" => self.index_version(meta_elem, &mut opts, &meta_elem_name),
+                "default_language" => self.index_default_language(meta_elem, &mut opts, &meta_elem_name),
+                "language_override" => self.index_language_override(meta_elem, &mut opts, &meta_elem_name),
+                "text_version" => self.index_text_version(meta_elem, &mut opts, &meta_elem_name),
+                // TODO: come back and implement this.
+                // "weights" => self.index_weights(meta_elem, &mut opts, &meta_elem_name),
+                "sphere_version" => self.index_sphere_version(meta_elem, &mut opts, &meta_elem_name),
+                "bits" => self.index_bits(meta_elem, &mut opts, &meta_elem_name),
+                "max" => self.index_max(meta_elem, &mut opts, &meta_elem_name),
+                "min" => self.index_min(meta_elem, &mut opts, &meta_elem_name),
+                "bucket_size" => self.index_bucket_size(meta_elem, &mut opts, &meta_elem_name),
                 _ => panic!("Unrecognized `#[model(index(...))]` attribute '{}'.", meta_elem_name),
             };
         }
-        // TODO:>>>
-        // IndexModel::new(keys, Some(opts))
+        IndexModel::new(keys, Some(opts))
     }
 
     /// A generic value extraction method for extracting the value of a `syn::Meta::NameValue` field.
@@ -143,72 +147,107 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
         keys.insert(field_name, lit_val);
     }
 
-    fn index_with(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<()>
+    // TODO: come back and implement this.
+    // /// Handle the `with` index key.
+    // fn index_with(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
+    //     // Option<()>
+    // }
+
+    /// Handle the `background` index option.
+    fn index_background(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: bool = self.extract_meta_kv(attr, attr_name);
+        opts.background = Some(lit_val);
     }
 
-    fn index_background(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<bool>
+    /// Handle the `expire_after_seconds` index option.
+    fn index_expire_after_seconds(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: i32 = self.extract_meta_kv(attr, attr_name);
+        opts.expire_after_seconds = Some(lit_val);
     }
 
-    fn index_expire_after_seconds(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<i32>
+    /// Handle the `name` index option.
+    fn index_name(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: String = self.extract_meta_kv(attr, attr_name);
+        opts.name = Some(lit_val);
     }
 
-    fn index_name(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<String>
+    /// Handle the `sparse` index option.
+    fn index_sparse(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: bool = self.extract_meta_kv(attr, attr_name);
+        opts.sparse = Some(lit_val);
     }
 
-    fn index_sparse(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<bool>
+    /// Handle the `storage_engine` index option.
+    fn index_storage_engine(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: String = self.extract_meta_kv(attr, attr_name);
+        opts.storage_engine = Some(lit_val);
     }
 
-    fn index_storage_engine(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<String>
+    /// Handle the `unique` index option.
+    fn index_unique(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: bool = self.extract_meta_kv(attr, attr_name);
+        opts.unique = Some(lit_val);
     }
 
-    fn index_unique(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<bool>
+    /// Handle the `version` index option.
+    fn index_version(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: i32 = self.extract_meta_kv(attr, attr_name);
+        opts.version = Some(lit_val);
     }
 
-    fn index_version(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<i32>
+    /// Handle the `default_language` index option.
+    fn index_default_language(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: String = self.extract_meta_kv(attr, attr_name);
+        opts.default_language = Some(lit_val);
     }
 
-    fn index_default_language(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<String>
+    /// Handle the `language_override` index option.
+    fn index_language_override(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: String = self.extract_meta_kv(attr, attr_name);
+        opts.language_override = Some(lit_val);
     }
 
-    fn index_language_override(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<String>
+    /// Handle the `text_version` index option.
+    fn index_text_version(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: i32 = self.extract_meta_kv(attr, attr_name);
+        opts.text_version = Some(lit_val);
     }
 
-    fn index_text_version(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<i32>
+    // TODO: come back and implement this.
+    // /// Handle the `weights` index option.
+    // fn index_weights(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+    //     let lit_val: Document = self.extract_meta_kv(attr, attr_name);
+    //     opts.weights = Some(lit_val);
+    // }
+
+    /// Handle the `sphere_version` index option.
+    fn index_sphere_version(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: i32 = self.extract_meta_kv(attr, attr_name);
+        opts.sphere_version = Some(lit_val);
     }
 
-    fn index_weights(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<Document>
+    /// Handle the `bits` index option.
+    fn index_bits(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: i32 = self.extract_meta_kv(attr, attr_name);
+        opts.bits = Some(lit_val);
     }
 
-    fn index_sphere_version(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<i32>
+    /// Handle the `max` index option.
+    fn index_max(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: f64 = self.extract_meta_kv(attr, attr_name);
+        opts.max = Some(lit_val);
     }
 
-    fn index_bits(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<i32>
+    /// Handle the `min` index option.
+    fn index_min(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: f64 = self.extract_meta_kv(attr, attr_name);
+        opts.min = Some(lit_val);
     }
 
-    fn index_max(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<f64>
-    }
-
-    fn index_min(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<f64>
-    }
-
-    fn index_bucket_size(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-        // Option<i32>
+    /// Handle the `bucket_size` index option.
+    fn index_bucket_size(&self, attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
+        let lit_val: i32 = self.extract_meta_kv(attr, attr_name);
+        opts.bucket_size = Some(lit_val);
     }
 
     /// Get the name that is to be used for the target field inside of the MongoDB database.
@@ -250,8 +289,9 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
             return serde_name;
         }
 
-        // Serde rename not found, so use field ident. NOTE: we should never panic here, as
-        // we are validating ahead of time that the target model's fields are named.
+        // Serde rename not found, so use field ident.
+        // **NOTE:** we should never panic here, as we are validating
+        // ahead of time that the target model's fields are named.
         field.ident.as_ref().expect("Model fields must be named.").to_string()
     }
 }
