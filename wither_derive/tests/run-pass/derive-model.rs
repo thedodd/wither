@@ -5,6 +5,7 @@ extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
 extern crate serde_derive;
+extern crate serde_json;
 extern crate wither;
 #[macro_use(Model)]
 extern crate wither_derive;

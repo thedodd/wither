@@ -1,11 +1,8 @@
-use std::str::FromStr;
+use quote::ToTokens;
+use proc_macro2::TokenStream;
 
-use syn;
-use quote::{TokenStreamExt, ToTokens};
-use proc_macro2::{TokenTree, Spacing, Span, Punct, TokenStream};
-
-use bson::Document;
 use mongodb::coll::options::{IndexModel, IndexOptions};
+use serde_json;
 
 pub struct Indexes(pub Vec<IndexModel>);
 
@@ -25,6 +22,7 @@ impl ToTokens for Indexes {
         let index_tokens = self.0.iter().map(|index| {
             // Desctructure variables needed for interpolation. Use struct destructuring syntax
             // to ensure we are not missing any fields.
+            let doc_json = serde_json::to_string(&index.keys).expect("Expected valid BSON to also be valid JSON. If you are seeing this unexpectedly, then you should open an issue here: https://github.com/thedodd/wither/issues/new");
             let IndexOptions{
                 background, expire_after_seconds, name, sparse, storage_engine, unique, version, default_language,
                 language_override, text_version, weights, sphere_version, bits, max, min, bucket_size,
@@ -47,7 +45,7 @@ impl ToTokens for Indexes {
             let bucket_size = option_to_tokens(bucket_size);
 
             quote!(IndexModel{
-                keys: Document::new(),
+                keys: serde_json::from_str(#doc_json).expect("Expected valid JSON to also be valid BSON. If you are seeing this unexpectedly, then you should open an issue here: https://github.com/thedodd/wither/issues/new"),
                 options: IndexOptions{
                     background: #background, expire_after_seconds: #expire_after_seconds, name: #name, sparse: #sparse,
                     storage_engine: #storage_engine, unique: #unique, version: #version, default_language: #default_language,
@@ -58,8 +56,8 @@ impl ToTokens for Indexes {
         }).collect::<Vec<TokenStream>>();
 
         tokens.extend(quote!{
-            use bson::Document;
             use mongodb::coll::options::{IndexModel, IndexOptions};
+            use serde_json;
             vec![
                 #(#index_tokens),*
             ]
