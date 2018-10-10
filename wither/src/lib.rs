@@ -96,3 +96,8 @@ pub use model::{
     basic_index_options,
     Model,
 };
+
+pub mod prelude {
+    pub use ::migration::Migration;
+    pub use ::model::Model;
+}

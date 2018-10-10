@@ -1,3 +1,4 @@
+#[macro_use]
 extern crate bson;
 extern crate compiletest_rs as compiletest;
 extern crate mongodb;

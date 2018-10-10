@@ -70,3 +70,23 @@ Now you are ready to tackle some of the other important parts of the model lifec
 - [Model::migrations](https://docs.rs/wither/0.5.2/wither/model/index.html#migrations) - define migrations to be run against your models collections.
 
 Good luck on the path.
+
+### development
+#### tests
+For easy backend integration, this project is using docker compose to manage MongoDB instances. Before kicking off tests locally, simply execute `docker-compose up -d` to bring up all of the different MongoDB instances.
+
+Now you just need to invoke the tests with the appropriate environment variables exposed:
+
+```bash
+# Test against MongoDB 3.2.
+HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
+
+# Test against MongoDB 3.4.
+HOST=localhost PORT=27117 cargo test -p wither --tests --lib -- --test-threads=1
+
+# Test against MongoDB 3.6.
+HOST=localhost PORT=27217 cargo test -p wither --tests --lib -- --test-threads=1
+
+# Test against MongoDB 4.0.
+HOST=localhost PORT=27317 cargo test -p wither --tests --lib -- --test-threads=1
+```

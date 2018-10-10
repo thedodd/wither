@@ -65,7 +65,9 @@ impl MetaModelStructData {
 
         // If collection name is default "", then use the struct's ident.
         // TODO: PLURALIZE & FORMAT AS TABLE NAME.
-        data.collection_name = target_ident.to_string();
+        if data.collection_name.len() == 0 {
+            data.collection_name = target_ident.to_string();
+        }
         data
     }
 }

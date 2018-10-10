@@ -406,7 +406,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     fn sync(db: Database) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
         sync_model_indexes(&coll, Self::indexes())?;
-        sync_model_migrations(&coll, Self::migrations())?;
+        sync_model_migrations(&coll, Self::migrations())?; // TODO: remove this, update docs & implement `migrate`.
         Ok(())
     }
 }

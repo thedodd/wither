@@ -8,6 +8,8 @@ extern crate serde;
 #[macro_use(Serialize, Deserialize)]
 extern crate serde_derive;
 extern crate wither;
+#[macro_use]
+extern crate wither_derive;
 
 mod fixtures;
 
@@ -17,14 +19,15 @@ use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
 use mongodb::db::ThreadedDatabase;
 use wither::Model;
 
-use fixtures::{setup, User, UserModelBadMigrations};
+use fixtures::{Fixture, User, UserModelBadMigrations, DerivedModel};
 
-//////////////////
-// Model::count //
+//////////////////////////////////////////////////////////////////////////////
+// Model::count //////////////////////////////////////////////////////////////
 
 #[test]
 fn model_count_should_return_expected_count_matching_filter() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut user = User{id: None, email: "test@test.com".to_string()};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
     let doc = doc!{"_id" => (user.id.clone().unwrap())};
@@ -35,12 +38,13 @@ fn model_count_should_return_expected_count_matching_filter() {
     assert_eq!(count, 1);
 }
 
-////////////////
-// Model.save //
+//////////////////////////////////////////////////////////////////////////////
+// Model.save ////////////////////////////////////////////////////////////////
 
 #[test]
 fn model_save_should_save_model_instance_and_add_id() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut user = User{id: None, email: "test@test.com".to_string()};
 
     user.save(db.clone(), None).expect("Expected a successful save operation.");
@@ -48,12 +52,24 @@ fn model_save_should_save_model_instance_and_add_id() {
     assert!(user.id != None)
 }
 
-/////////////////
-// Model::find //
+#[test]
+fn derived_model_save_should_save_model_instance_and_add_id() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut model = DerivedModel{id: None, field0: "0".to_string(), field1: "1".to_string(), field2: "2".to_string()};
+
+    model.save(db.clone(), None).expect("Expected a successful save operation.");
+
+    assert!(model.id != None)
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// Model::find ///////////////////////////////////////////////////////////////
 
 #[test]
 fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut user = User{id: None, email: "test@test.com".to_string()};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
 
@@ -66,7 +82,8 @@ fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
 
 #[test]
 fn model_find_should_find_instances_of_model_matching_filter() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut user = User{id: None, email: "test@test.com".to_string()};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
     let doc = doc!{"_id" => (user.id.clone().unwrap())};
@@ -79,12 +96,13 @@ fn model_find_should_find_instances_of_model_matching_filter() {
     assert_eq!(&users_from_db[0].email, &user.email);
 }
 
-/////////////////////
-// Model::find_one //
+//////////////////////////////////////////////////////////////////////////////
+// Model::find_one ///////////////////////////////////////////////////////////
 
 #[test]
 fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut user = User{id: None, email: "test@test.com".to_string()};
 
     user.save(db.clone(), None).expect("Expected a successful save operation.");
@@ -98,12 +116,13 @@ fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
     assert_eq!(&user_from_db.email, &user.email);
 }
 
-//////////////////
-// Model.update //
+//////////////////////////////////////////////////////////////////////////////
+// Model.update //////////////////////////////////////////////////////////////
 
 #[test]
 fn model_update_should_perform_expected_updates_against_self() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut user = User{id: None, email: String::from("test@test.com")};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
     let update_doc = doc!{"$set" => doc!{"email" => "new@test.com"}};
@@ -118,7 +137,8 @@ fn model_update_should_perform_expected_updates_against_self() {
 
 #[test]
 fn model_update_should_return_error_with_invalid_update_document() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut user = User{id: None, email: String::from("test@test.com")};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
     let update_doc = doc!{"invalid_update_key" => "should_fail"};
@@ -129,12 +149,14 @@ fn model_update_should_return_error_with_invalid_update_document() {
     assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
 }
 
-/////////////////
-// Model::sync //
+//////////////////////////////////////////////////////////////////////////////
+// Model::sync ///////////////////////////////////////////////////////////////
 
 #[test]
 fn model_sync_should_create_expected_indices_on_collection() {
-    let db = setup();
+    // TODO: update this fixture once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/251 is fixed.
+    let fixture = Fixture::new().with_synced_models().with_empty_collections();
+    let db = fixture.get_db();
     let coll = db.collection(User::COLLECTION_NAME);
     let initial_indices: Vec<bson::Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
@@ -143,28 +165,86 @@ fn model_sync_should_create_expected_indices_on_collection() {
     let initial_indices_len = initial_indices.len();
 
     let _ = User::sync(db.clone()).expect("Expected a successful sync operation.");
-    let output_indices: Vec<bson::Document> = coll.list_indexes()
+    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
+    output_indices.sort_by_key(|doc| doc.get_str("name").unwrap().to_string()); // The name key will always exist and always be a string.
     let output_indices_len = output_indices.len();
-    let new_idx = output_indices[1].clone();
+    let idx1 = output_indices[0].clone();
+    let idx2 = output_indices[1].clone();
 
-    assert!(output_indices_len.clone() > initial_indices_len.clone());
-    assert_eq!(output_indices_len.clone(), 2);
-    assert_eq!(&new_idx, &doc!{
-        "v": new_idx.get_i32("v").unwrap(),
+    assert!(output_indices_len > initial_indices_len);
+    assert_eq!(output_indices_len, 2);
+    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.users"});
+    assert_eq!(&idx2, &doc!{"v": idx2.get_i32("v").unwrap(), "unique": true, "key": doc!{"email": 1}, "name": "unique-email", "ns": "witherTestDB.users", "background": true});
+}
+
+#[test]
+fn model_sync_should_create_expected_indices_on_collection_for_derived_model() {
+    // TODO: update this fixture once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/251 is fixed.
+    let fixture = Fixture::new().with_synced_models().with_empty_collections();
+    let db = fixture.get_db();
+    let coll = db.collection(DerivedModel::COLLECTION_NAME);
+    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor pre-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    let initial_indices_len = initial_indices.len();
+
+    let _ = DerivedModel::sync(db.clone()).expect("Expected a successful sync operation.");
+    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor post-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    output_indices.sort_by_key(|doc| doc.get_str("name").unwrap().to_string()); // The name key will always exist and always be a string.
+    let output_indices_len = output_indices.len();
+    let idx1 = output_indices[0].clone();
+    let idx2 = output_indices[1].clone();
+    let idx3 = output_indices[2].clone();
+    let idx4 = output_indices[3].clone();
+
+    assert!(output_indices_len > initial_indices_len);
+    assert_eq!(output_indices_len, 4);
+    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derivations"});
+    assert_eq!(&idx2, &doc!{
+        "v": idx2.get_i32("v").unwrap(),
         "unique": true,
-        "key": doc!{"email": 1},
-        "name": "unique-email",
-        "ns": "witherTestDB.users",
+        "key": doc!{"field0": 1},
+        "name": "field0",
+        "ns": "witherTestDB.derivations",
         "background": true,
+        "expireAfterSeconds": 15i32,
+        "sparse": true,
+        "default_language": "en_us",
+        "language_override": "en_us",
+        "textIndexVersion": 1i32,
+        "2dsphereIndexVersion": 1i32,
+        "bits": 1i32,
+        "max": 10.0,
+        "min": 1.0,
+        "bucketSize": 1i32,
+    });
+    assert_eq!(&idx3, &doc!{
+        "v": idx3.get_i32("v").unwrap(),
+        "key": doc!{"field1": -1i32},
+        "name": "field1_-1",
+        "ns": "witherTestDB.derivations",
+        "background": false,
+        "sparse": false,
+    });
+    assert_eq!(&idx4, &doc!{
+        "v": idx4.get_i32("v").unwrap(),
+        "key": doc!{"field2": -1i32},
+        "name": "field2_-1",
+        "ns": "witherTestDB.derivations",
     });
 }
 
 #[test]
 fn model_sync_should_execute_expected_migrations_against_collection() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database();
+    let db = fixture.get_db();
     let coll = db.collection(User::COLLECTION_NAME);
     let mut new_user = User{id: None, email: String::from("test@test.com")};
     new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
@@ -183,7 +263,8 @@ fn model_sync_should_execute_expected_migrations_against_collection() {
 
 #[test]
 fn model_sync_should_error_if_migration_with_no_set_and_no_unset_given() {
-    let db = setup();
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
     let mut new_user = UserModelBadMigrations{id: None, email: String::from("test@test.com")};
     new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
 

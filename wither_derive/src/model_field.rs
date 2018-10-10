@@ -141,10 +141,12 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
     /// Handle the `direction` index key.
     fn index_direction(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str, field_name: &str) {
         let lit_val: String = self.extract_meta_kv(attr, attr_name);
-        if lit_val != "asc" && lit_val != "dsc" {
-            panic!(msg::MODEL_ATTR_INDEX_DIRECTION_ALLOWED_VALUES);
-        }
-        keys.insert(field_name, lit_val);
+        let direction = match lit_val.as_str() {
+            "asc" => 1i32,
+            "dsc" => -1i32,
+            _ => panic!(msg::MODEL_ATTR_INDEX_DIRECTION_ALLOWED_VALUES),
+        };
+        keys.insert(field_name, direction);
     }
 
     // TODO: come back and implement this.

@@ -1,29 +1,14 @@
-extern crate chrono;
-// #[macro_use(lazy_static)]
-// extern crate lazy_static;
-extern crate mongodb;
-extern crate wither;
-
-use std::env;
-
 use bson;
 use chrono::TimeZone;
 use mongodb::coll::options::IndexModel;
-use mongodb::db::{Database, ThreadedDatabase};
-use mongodb::ThreadedClient;
-use wither::Model;
+use wither::prelude::*;
 
-lazy_static!{
-    static ref DB: Database = {
-        let host = env::var("BACKEND_HOST").expect("Environment variable BACKEND_HOST must be defined.");
-        let port = env::var("BACKEND_PORT").expect("Environment variable BACKEND_PORT must be defined.")
-            .parse::<u32>().expect("Environment variable BACKEND_PORT must be an instance of `u32`.");
-        let connection_string = format!("mongodb://{}:{:?}/", host, port);
-        mongodb::Client::with_uri(&connection_string)
-            .expect("Expected MongoDB instance to be available for testing.")
-            .db("witherTestDB")
-    };
-}
+pub mod fixture;
+
+pub use self::fixture::Fixture;
+
+//////////////////////////////////////////////////////////////////////////////
+// User //////////////////////////////////////////////////////////////////////
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct User {
@@ -70,6 +55,9 @@ impl<'a> Model<'a> for User {
     }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// UserModelBadMigrations ////////////////////////////////////////////////////
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserModelBadMigrations {
     /// The user's unique ID.
@@ -115,20 +103,36 @@ impl<'a> Model<'a> for UserModelBadMigrations {
     }
 }
 
-pub fn setup() -> Database {
-    // Delete any records in the collection for respective models.
-    User::delete_many(DB.clone(), doc!{}).expect("Expected to successfully delete all records for test fixture.");
-    UserModelBadMigrations::delete_many(DB.clone(), doc!{}).expect("Expected to successfully delete all records for test fixture.");
+//////////////////////////////////////////////////////////////////////////////
+// Derived Model /////////////////////////////////////////////////////////////
 
-    // Clean up any indices.
-    let users_coll = DB.clone().collection(User::COLLECTION_NAME);
-    for idx in User::indexes().into_iter() {
-        let _ = (&users_coll).drop_index_model(idx);
-    }
-    let other_users_coll = DB.clone().collection(UserModelBadMigrations::COLLECTION_NAME);
-    for idx in UserModelBadMigrations::indexes().into_iter() {
-        let _ = (&other_users_coll).drop_index_model(idx);
-    }
+#[derive(Serialize, Deserialize, Model)]
+#[model(collection_name="derivations")]
+pub struct DerivedModel {
+    /// The ID of the model.
+    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
+    pub id: Option<bson::oid::ObjectId>,
 
-    return DB.clone();
+    /// A field to test base line index options & bool fields with `true`.
+    #[model(index(
+        direction="asc",
+        background="true", sparse="true", unique="true",
+        expire_after_seconds="15", name="field0", version="1", default_language="en_us",
+        language_override="en_us", text_version="1", sphere_version="1", bits="1", max="10.0", min="1.0", bucket_size="1",
+    ))]
+    pub field0: String,
+
+    /// A field to test bool fields with `false`.
+    #[model(index(
+        direction="dsc",
+        background="false", sparse="false", unique="false",
+    ))]
+    pub field1: String,
+
+    /// A field to test `weights` option.
+    /// TODO:
+    /// - ensure weights are compiling correctly.
+    /// - fix issues with storage_engine. Apparently needs to be a doc.
+    #[model(index(direction="dsc", /* weights="", storage_engine="wt" */))]
+    pub field2: String,
 }

@@ -1,8 +1,8 @@
 use quote::ToTokens;
 use proc_macro2::TokenStream;
 
+use bson::Document;
 use mongodb::coll::options::{IndexModel, IndexOptions};
-use serde_json;
 
 pub struct Indexes(pub Vec<IndexModel>);
 
@@ -22,7 +22,6 @@ impl ToTokens for Indexes {
         let index_tokens = self.0.iter().map(|index| {
             // Desctructure variables needed for interpolation. Use struct destructuring syntax
             // to ensure we are not missing any fields.
-            let doc_json = serde_json::to_string(&index.keys).expect("Expected valid BSON to also be valid JSON. If you are seeing this unexpectedly, then you should open an issue here: https://github.com/thedodd/wither/issues/new");
             let IndexOptions{
                 background, expire_after_seconds, name, sparse, storage_engine, unique, version, default_language,
                 language_override, text_version, weights, sphere_version, bits, max, min, bucket_size,
@@ -44,8 +43,11 @@ impl ToTokens for Indexes {
             let min = option_to_tokens(min);
             let bucket_size = option_to_tokens(bucket_size);
 
+            // Need to take special care with the index keys.
+            let keys = build_index_keys(&index.keys);
+
             quote!(IndexModel{
-                keys: serde_json::from_str(#doc_json).expect("Expected valid JSON to also be valid BSON. If you are seeing this unexpectedly, then you should open an issue here: https://github.com/thedodd/wither/issues/new"),
+                keys: #keys,
                 options: IndexOptions{
                     background: #background, expire_after_seconds: #expire_after_seconds, name: #name, sparse: #sparse,
                     storage_engine: #storage_engine, unique: #unique, version: #version, default_language: #default_language,
@@ -57,12 +59,24 @@ impl ToTokens for Indexes {
 
         tokens.extend(quote!{
             use mongodb::coll::options::{IndexModel, IndexOptions};
-            use serde_json;
             vec![
                 #(#index_tokens),*
             ]
         });
     }
+}
+
+/// NOTE WELL: the token stream returned from this method evaluates to a single-line
+/// `doc!` macro invocation.
+fn build_index_keys(doc: &Document) -> TokenStream {
+    let key_vals = doc.iter().map(|(key, val)| {
+        // TODO: need to update this by using an intermediate representation of index models
+        // instead of using actual index models. For now, just unwrap.
+        let val = val.as_i32().unwrap();
+        quote!(#key: #val)
+    }).collect::<Vec<TokenStream>>();
+
+    quote!(doc!{ #(#key_vals),* })
 }
 
 fn option_to_tokens<T: ToTokens>(target: Option<T>) -> TokenStream {
