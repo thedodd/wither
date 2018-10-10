@@ -90,3 +90,10 @@ HOST=localhost PORT=27217 cargo test -p wither --tests --lib -- --test-threads=1
 # Test against MongoDB 4.0.
 HOST=localhost PORT=27317 cargo test -p wither --tests --lib -- --test-threads=1
 ```
+
+For the compile tests, you will need to use nightly.
+
+```bash
+# Run the compile tests.
+cargo +nightly test -p wither_derive
+```

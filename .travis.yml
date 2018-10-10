@@ -2,7 +2,6 @@ sudo: required
 language: rust
 rust:
   - stable
-  - nightly
 services:
   - docker
 # env:
@@ -19,6 +18,7 @@ before_cache:
 
 before_install:
   - docker-compose up -d
+  - rustup install nightly-2018-10-09
 
 script:
   # Test code generation & compilation.

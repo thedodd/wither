@@ -1,7 +1,7 @@
 use bson;
-use chrono::TimeZone;
+use chrono::{self, TimeZone};
 use mongodb::coll::options::IndexModel;
-use wither::prelude::*;
+use wither::{self, prelude::*};
 
 pub mod fixture;
 

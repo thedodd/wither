@@ -1,7 +1,10 @@
 use std::env;
 
-use mongodb::db::{Database, ThreadedDatabase};
-use mongodb::ThreadedClient;
+use mongodb::{
+    Client,
+    db::{Database, ThreadedDatabase},
+    ThreadedClient,
+};
 use wither::prelude::*;
 
 use super::{
@@ -16,7 +19,7 @@ lazy_static!{
         let port = env::var("PORT").expect("Environment variable PORT must be defined.")
             .parse::<u32>().expect("Environment variable PORT must be an instance of `u32`.");
         let connection_string = format!("mongodb://{}:{:?}/", host, port);
-        mongodb::Client::with_uri(&connection_string)
+        Client::with_uri(&connection_string)
             .expect("Expected MongoDB instance to be available for testing.")
             .db("witherTestDB")
     };

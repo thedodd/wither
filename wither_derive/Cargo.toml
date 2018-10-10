@@ -12,7 +12,7 @@ mongodb = "0.3"
 proc-macro2 = "0.4"
 quote = "0.6"
 serde = "1"
-syn = { version = "0.14", features = ["extra-traits"] }
+syn = { version = "0.15", features = ["extra-traits"] }
 
 [dev-dependencies]
 compiletest_rs = "0.3"
