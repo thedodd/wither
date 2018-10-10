@@ -22,7 +22,7 @@ before_install:
 
 script:
   # Test code generation & compilation.
-  - cargo +nightly test -p wither_derive --tests --lib
+  - cargo +nightly-2018-10-09 test -p wither_derive
   # Test against MongoDB 3.2.
   - HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
   # Test against MongoDB 3.4.
