@@ -8,6 +8,7 @@ proc-macro = true
 
 [dependencies]
 bson = "0.12"
+Inflector = "0.11"
 mongodb = "0.3"
 proc-macro2 = "0.4"
 quote = "0.6"

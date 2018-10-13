@@ -2,6 +2,7 @@
 
 #[macro_use]
 extern crate bson;
+extern crate inflector;
 extern crate mongodb;
 extern crate proc_macro;
 extern crate proc_macro2;

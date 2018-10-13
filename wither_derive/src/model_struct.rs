@@ -1,6 +1,7 @@
+use inflector::Inflector;
 use syn;
 
-use msg;
+use ::msg;
 
 /// All `Model` struct attributes which have been accumulated from the target struct.
 #[derive(Default)]
@@ -64,9 +65,8 @@ impl MetaModelStructData {
         });
 
         // If collection name is default "", then use the struct's ident.
-        // TODO: PLURALIZE & FORMAT AS TABLE NAME.
         if data.collection_name.len() == 0 {
-            data.collection_name = target_ident.to_string();
+            data.collection_name = target_ident.to_string().to_table_case().to_plural();
         }
         data
     }

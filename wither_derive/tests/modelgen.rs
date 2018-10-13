@@ -10,11 +10,12 @@ extern crate wither;
 extern crate wither_derive;
 
 use wither::prelude::*;
-use mongodb::coll::options::{IndexModel, IndexOptions};
+use mongodb::coll::options::IndexModel;
 
+/// This model tests a majority of the major code generation bits.
 #[derive(Serialize, Deserialize, Model)]
-#[model(collection_name="valid_data_models", skip_serde_checks="false")]
-struct ValidDataModel0 {
+#[model(collection_name="first_models", skip_serde_checks="false")]
+struct FirstModel {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
     id: Option<bson::oid::ObjectId>,
@@ -43,15 +44,26 @@ struct ValidDataModel0 {
     field2: String,
 }
 
-
-#[test]
-fn test_model_collection_name() {
-    assert_eq!("valid_data_models", ValidDataModel0::COLLECTION_NAME);
+/// This model tests the generation of an accurate collection name based on the model's ident.
+#[derive(Serialize, Deserialize, Model)]
+struct SecondModel {
+    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
+    id: Option<bson::oid::ObjectId>,
 }
 
 #[test]
-fn test_model_indexes() {
-    let indexes = ValidDataModel0::indexes();
+fn test_first_model_collection_name() {
+    assert_eq!("first_models", FirstModel::COLLECTION_NAME);
+}
+
+#[test]
+fn test_second_model_collection_name() {
+    assert_eq!("second_models", SecondModel::COLLECTION_NAME);
+}
+
+#[test]
+fn test_first_model_indexes() {
+    let indexes = FirstModel::indexes();
     assert_eq!(3, indexes.len());
 
     let (idx1, idx2, idx3) = (indexes[0].clone(), indexes[1].clone(), indexes[2].clone());
