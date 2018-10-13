@@ -95,8 +95,7 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
             let meta_elem_name = meta_elem.name().to_string();
             match meta_elem_name.as_ref() {
                 "direction" => self.index_direction(meta_elem, &mut keys, &meta_elem_name, &name),
-                // TODO: come back and implement this.
-                // "with" => self.index_with(meta_elem, &mut keys),
+                "with" => self.index_with(meta_elem, &mut keys),
                 "background" => opts.background = Some(self.extract_meta_kv(meta_elem, &meta_elem_name)),
                 "expire_after_seconds" => opts.expire_after_seconds = Some(self.extract_meta_kv(meta_elem, &meta_elem_name)),
                 "name" => opts.name = Some(self.extract_meta_kv(meta_elem, &meta_elem_name)),
@@ -149,11 +148,41 @@ impl<'a> MetaModelFieldDataBuilder<'a> {
         keys.insert(field_name, direction);
     }
 
-    // TODO: come back and implement this.
-    // /// Handle the `with` index key.
-    // fn index_with(&self, attr: &syn::Meta, keys: &mut Document, attr_name: &str) {
-    //     // Option<()>
-    // }
+    /// Handle the `with` index key.
+    fn index_with(&self, index_with_container: &syn::Meta, keys: &mut Document) {
+        // Collect the internals of the `index(with(...))` attr as a vector of name-value pairs.
+        let index_with_attrs = match index_with_container {
+            syn::Meta::List(meta_list) => meta_list.nested.iter().map(|nested| {
+                match nested {
+                    syn::NestedMeta::Meta(meta) => {
+                        match meta {
+                            syn::Meta::NameValue(name_val) => name_val,
+                            _ => panic!(msg::MODEL_ATTR_INDEX_WITH_FORM),
+                        }
+                    },
+                    _ => panic!(msg::MODEL_ATTR_INDEX_WITH_FORM),
+                }
+            }).collect::<Vec<&syn::MetaNameValue>>(),
+            _ => panic!(msg::MODEL_ATTR_INDEX_WITH_FORM),
+        };
+
+        // Iterate over name-value pairs and update the index document for each.
+        index_with_attrs.into_iter().for_each(|name_val| {
+            // Extract key & value.
+            let key = name_val.ident.to_string();
+            let val = match &name_val.lit {
+                syn::Lit::Str(lit_str) => {
+                    match lit_str.value().as_str() {
+                        "asc" => 1i32,
+                        "dsc" => -1i32,
+                        _ => panic!(msg::MODEL_ATTR_INDEX_WITH_FORM),
+                    }
+                },
+                _ => panic!(msg::MODEL_ATTR_INDEX_WITH_FORM),
+            };
+            keys.insert(key, val);
+        });
+    }
 
     // TODO: come back and implement this.
     // /// Handle the `weights` index option.

@@ -13,5 +13,8 @@ pub(crate) const MODEL_ATTR_INDEX_ELEMENT_FORM: &str = "Index declarations on yo
 /// An error message indicating the allowed values for `#[model(index(direction))]`.
 pub(crate) const MODEL_ATTR_INDEX_DIRECTION_ALLOWED_VALUES: &str = r#"The index `direction` value must be one of `"asc"` or `"dsc"`."#;
 
+/// An error message indicating the allowed form for `#[model(index(with(...)))]`.
+pub(crate) const MODEL_ATTR_INDEX_WITH_FORM: &str = r#"The `model(index(with(...))) attr may contain only mappings of field names to directions (`"asc"` or `"dsc"`)."#;
+
 /// An error message indicating the required form of a `Model`'s struct level attributes.
 pub(crate) const MODEL_STRUCT_ATTR_FORM: &str = r#"A `Model`'s struct level attributes may only contain name-value pairs: `#[model(name="value")]`."#;

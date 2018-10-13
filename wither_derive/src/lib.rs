@@ -31,7 +31,8 @@ use tokens::Indexes;
 /// ### Derive
 /// Deriving `Model` for your struct is straightforward.
 ///
-/// - Ensure that your struct has at least the following derivations: `#[derive(Model, Serialize, Deserialize)]`.
+/// - Ensure that your struct has at least the following derivations:
+///   `#[derive(Model, Serialize, Deserialize)]`.
 /// - Ensure that you have a field named `id`, of type `Option<bson::oid::ObjectId>`, with the
 ///   following serde attributes: `#[serde(rename="_id", skip_serializing_if="Option::is_none")]`.
 ///
@@ -40,42 +41,78 @@ use tokens::Indexes;
 /// reasoning for this argument which I am aware of. If you need to treat a different field as
 /// PK, then just add the needed index to the field, and you are good to go. More on indexing soon.
 ///
-/// If you need to implement `Serialize` and/or `Deserialize` manually, add the `#[model(skip_serde_checks=true)]`,
-/// then you may remove the respective derivations mentioned above. If you are handling the `id`
-/// field manually as well, then you may remove the `rename` & `skip_serializing_if` attributes as
-/// well. However, take care to ensure that you are replicating the serde behavior of these two
-/// attributes, else you may run into strange behavior ... and it won't be my fault `;p`.
+/// If you need to implement `Serialize` and/or `Deserialize` manually, add the
+/// `#[model(skip_serde_checks=true)]` struct attribute, then you may remove the respective
+/// derivations mentioned above. If you are handling the `id` field manually as well, then you may
+/// remove the `rename` & `skip_serializing_if` attributes as well. However, take care to ensure
+/// that you are replicating the serde behavior of these two attributes, else you may run into
+/// strange behavior ... and it won't be my fault `;p`.
 ///
 /// ### Struct Attributes
 /// There are a few struct-level `Model` attributes available currently.
 ///
-/// - `collection_name` takes a literal string. This allows to specify your model name explicitly.
-///   By default, your model's name will be pluralized, and then formatted as a standard table name.
+/// - `collection_name` takes a literal string. This allows you to specify your model name
+///   explicitly. By default, your model's name will be pluralized, and then formatted as a
+///   standard table name.
 /// - `skip_serde_checks` takes a literal boolean. Setting this to `true` will disable any checks
 ///   which are normally performed to ensure that serde is setup properly on your model. If you
 ///   disable serde checks, you're on your own `:)`.
 ///
 /// ### Indexing
 /// Adding indexes to your model's collection is done entirely through the attribute system. Let's
-/// take a look.
+/// start with an example.
 ///
-/// Start off by adding one or more index declaration attributes to the field which is to be the
-/// first field of the index: `#[model(<index declaration>)]`. The `<index declaration>`, must look
-/// like this: `index(direction="...", with(...), (idx_attr="value",)*)`. Let's break this down.
+/// ```rust
+/// #[derive(Model, Serialize, Deserialize)]
+/// struct MyModel {
+///     // snip ...
 ///
-/// - `index(...)` everything related to an index declaration must be declared within these parens.
-/// - `direction="..."` declares the direction of the field which this attribute appears on, which
-///   will also be the first field of the generated index. The value must be one of `"asc"` or
-///   `"dsc"`. For a simple single-field index, this is all you need.
-/// - `with(...)` is optional. For compound indexes, this is where you declare the other fields
-///   which the generated index is to be created with. Inside of these parens, you map field names
-///   to directions. The field name must be the name of the target field as it will be in the
-///   MongoDB collection. The value must be either `"asc"` or `"dsc"`, as usual.
-/// - `(index_attribute="value",)*` is also optional. This is where you specify the attributes of
-///   the index itself. Simply use the name of the attribute, followed by `=`, followed by the
-///   desired value (which must be quoted). Be sure to comma-separate each attribute-value pair.
-///   All attributes supported by the underlying MongoDB driver are supported by this framework. A
-///   list of all attributes can be found in the docs for [IndexOptions](https://docs.rs/mongodb/0.3.7/mongodb/coll/options/struct.IndexOptions.html).
+///     /// This field has a unique index on it.
+///     #[model(index(direction="dsc", unique="true"))]
+///     pub email: String,
+///
+///     /// First field of a compound index.
+///     #[model(index(direction="dsc", with(last_name="dsc")))]
+///     pub first_name: String,
+///
+///     /// Is indexed along with `first_name`, but nothing special is declared here.
+///     pub last_name: String,
+///
+///     // snip ...
+/// }
+/// ```
+///
+/// As you can see, everything is declared within the `#[model(index(...))]` attributes. Let's
+/// break this down.
+///
+/// ##### index
+/// Everything related to an index declaration must be declared within these parens.
+///
+/// ##### direction
+/// This declares the direction of the field which this attribute appears on, which will also be
+/// the first field of the generated index. The value must be one of `"asc"` or `"dsc"`. For a
+/// simple single-field index, this is all you need.
+///
+/// ##### with
+/// This is optional. For compound indexes, this is where you declare the other fields which the
+/// generated index is to be created with. Inside of these parens, you map field names to
+/// directions. The field name must be the name of the target field as it will be in the MongoDB
+/// collection. The value must be either `"asc"` or `"dsc"`, as usual.
+///
+/// **NOTE WELL:** as of the `0.6.0` implementation, specifying the additional fields of a
+/// compound index using this system my be theoretically limiting. Technically, the field names
+/// are declared as Rust `syn::Ident`s, which carries the restriction of being a valid variable
+/// name, which is more limiting than that of MongoDB's field naming restrictions. **Please open
+/// an issue** if you find this to be limiting. There are workarounds, but if this is a big issue,
+/// I definitely want to know. There are other ways this could be implemented (though not as
+/// beautifully `;)`).
+///
+/// ##### other attributes
+/// Other attributes, like `unique` or `sparse`, are optional. Simply use the name of the
+/// attribute, followed by `=`, followed by the desired value (which must be quoted). Be sure to
+/// comma-separate each attribute-value pair. All attributes supported by the underlying MongoDB
+/// driver are supported by this framework. A list of all attributes can be found in the docs for
+/// [IndexOptions](https://docs.rs/mongodb/0.3.7/mongodb/coll/options/struct.IndexOptions.html).
 ///
 /// ### Migrations
 /// Migrations are not currently part of the `Model` derivation system. A separate pattern is used

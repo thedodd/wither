@@ -95,5 +95,5 @@ For the compile tests, you will need to use nightly.
 
 ```bash
 # Run the compile tests.
-cargo +nightly test -p wither_derive
+cargo +nightly test -p wither_derive --tests --lib
 ```

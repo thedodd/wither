@@ -33,6 +33,7 @@ struct FirstModel {
     #[model(index(
         direction="dsc",
         background="false", sparse="false", unique="false",
+        with(field2="dsc", field0="asc"),
     ))]
     field1: String,
 
@@ -45,7 +46,7 @@ struct FirstModel {
 }
 
 /// This model tests the generation of an accurate collection name based on the model's ident.
-#[derive(Serialize, Deserialize, Model)]
+#[derive(Model, Serialize, Deserialize)]
 struct SecondModel {
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
     id: Option<bson::oid::ObjectId>,
@@ -85,7 +86,7 @@ fn test_first_model_indexes() {
     assert_eq!(idx1.options.version, Some(1i32));
     assert_eq!(idx1.options.weights, None);
 
-    assert_eq!(idx2.keys, doc!{"field1": -1i32});
+    assert_eq!(idx2.keys, doc!{"field1": -1i32, "field2": -1i32, "field0": 1i32});
     assert_eq!(idx2.options.background, Some(false));
     assert_eq!(idx2.options.bits, None);
     assert_eq!(idx2.options.bucket_size, None);
