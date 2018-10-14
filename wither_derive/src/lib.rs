@@ -125,10 +125,6 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
     // Build a meta model of the struct which `Model` is being derived on.
     let model = MetaModel::new(input);
 
-    // // TODO: >>>
-    // // Ensure that target struct has needed serde derivations.
-    // // meta.ensure_serde_derivations();
-
     // Ensure the target struct has `id` field with the needed attrs.
     model.ensure_id_field();
 

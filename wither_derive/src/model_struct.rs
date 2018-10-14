@@ -23,45 +23,16 @@ impl MetaModelStructData {
                 Some(meta) => meta,
                 None => return acc,
             };
+            let meta_name = meta.name().to_string();
 
             // If we are not looking at a `model` attr, then skip.
-            if meta.name() != "model" {
-                return acc;
+            match meta_name.as_str() {
+                "model" => {
+                    unpack_model_attr(&meta, &mut acc);
+                    acc
+                },
+                _ => acc,
             }
-
-            // Unpack the inner attr's components.
-            match meta {
-                syn::Meta::List(list) => list.nested.iter().by_ref()
-                    .filter_map(|nested_meta| match nested_meta {
-                        syn::NestedMeta::Meta(meta) => Some(meta),
-                        _ => panic!(msg::MODEL_ATTR_FORM),
-                    }).filter_map(|meta| match meta {
-                        syn::Meta::NameValue(kv) => Some(kv),
-                        _ => panic!(msg::MODEL_STRUCT_ATTR_FORM),
-                    }).for_each(|kv| {
-                        let ident = kv.ident.to_string();
-                        match &kv.lit {
-                            syn::Lit::Str(ref val) => {
-                                let value = val.value();
-                                match ident.as_str() {
-                                    "collection_name" => {
-                                        acc.collection_name = value;
-                                        if acc.collection_name.len() < 1 {
-                                            panic!("The `Model` struct attribute 'collection_name' may not have a zero-length value.");
-                                        }
-                                    },
-                                    "skip_serde_checks" => {
-                                        acc.skip_serde_checks = value.parse().expect("Value for `skip_serde_checks` must be parseable as a `bool`.");
-                                    },
-                                    _ => panic!(format!("Unrecognized struct-level `Model` attribute '{}'.", ident)),
-                                }
-                            },
-                            _ => panic!("Only string literals are supported as named values in `Model` attributes."),
-                        }
-                    }),
-                _ => panic!(msg::MODEL_ATTR_FORM),
-            };
-            acc
         });
 
         // If collection name is default "", then use the struct's ident.
@@ -70,4 +41,41 @@ impl MetaModelStructData {
         }
         data
     }
+
+}
+
+/// Unpack the data from any struct level `model` attrs.
+fn unpack_model_attr(meta: &syn::Meta, struct_data: &mut MetaModelStructData) {
+    // Unpack the inner attr's components.
+    match meta {
+        syn::Meta::List(list) => list.nested.iter().by_ref()
+            .filter_map(|nested_meta| match nested_meta {
+                syn::NestedMeta::Meta(meta) => Some(meta),
+                _ => panic!(msg::MODEL_ATTR_FORM),
+            }).filter_map(|meta| match meta {
+                syn::Meta::NameValue(kv) => Some(kv),
+                _ => panic!(msg::MODEL_STRUCT_ATTR_FORM),
+            }).for_each(|kv| {
+                let ident = kv.ident.to_string();
+                match &kv.lit {
+                    syn::Lit::Str(ref val) => {
+                        let value = val.value();
+                        match ident.as_str() {
+                            "collection_name" => {
+                                struct_data.collection_name = value;
+                                if struct_data.collection_name.len() < 1 {
+                                    panic!("The `Model` struct attribute 'collection_name' may not have a zero-length value.");
+                                }
+                            },
+                            "skip_serde_checks" => {
+                                struct_data.skip_serde_checks = value.parse().expect("Value for `skip_serde_checks` must be parseable as a `bool`.");
+                            },
+                            _ => panic!(format!("Unrecognized struct-level `Model` attribute '{}'.", ident)),
+                        }
+                    },
+                    _ => panic!("Only string literals are supported as named values in `Model` attributes."),
+                }
+            }),
+        _ => panic!(msg::MODEL_ATTR_FORM),
+    };
 }
