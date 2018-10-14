@@ -36,7 +36,7 @@ impl ToTokens for Indexes {
             let default_language = option_to_tokens_for_string(default_language);
             let language_override = option_to_tokens_for_string(language_override);
             let text_version = option_to_tokens(text_version);
-            // let weights = None; // option_to_tokens(weights);
+            let _weights = weights; // option_to_tokens(weights); // TODO: implement this.
             let sphere_version = option_to_tokens(sphere_version);
             let bits = option_to_tokens(bits);
             let max = option_to_tokens(max);
