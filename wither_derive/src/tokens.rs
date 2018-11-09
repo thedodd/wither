@@ -36,7 +36,7 @@ impl ToTokens for Indexes {
             let default_language = option_to_tokens_for_string(default_language);
             let language_override = option_to_tokens_for_string(language_override);
             let text_version = option_to_tokens(text_version);
-            let _weights = weights; // option_to_tokens(weights); // TODO: implement this.
+            let weights = option_to_tokens_for_weights(weights);
             let sphere_version = option_to_tokens(sphere_version);
             let bits = option_to_tokens(bits);
             let max = option_to_tokens(max);
@@ -51,7 +51,7 @@ impl ToTokens for Indexes {
                 options: IndexOptions{
                     background: #background, expire_after_seconds: #expire_after_seconds, name: #name, sparse: #sparse,
                     storage_engine: #storage_engine, unique: #unique, version: #version, default_language: #default_language,
-                    language_override: #language_override, text_version: #text_version, weights: None, sphere_version: #sphere_version,
+                    language_override: #language_override, text_version: #text_version, weights: #weights, sphere_version: #sphere_version,
                     bits: #bits, max: #max, min: #min, bucket_size: #bucket_size,
                 },
             })
@@ -70,10 +70,11 @@ impl ToTokens for Indexes {
 /// `doc!` macro invocation.
 fn build_index_keys(doc: &Document) -> TokenStream {
     let key_vals = doc.iter().map(|(key, val)| {
-        // TODO: need to update this by using an intermediate representation of index models
-        // instead of using actual index models. For now, just unwrap.
-        let val = val.as_i32().unwrap();
-        quote!(#key: #val)
+        match val { // Currently, we will only be returning fields which are i32, i64, or string.
+            bson::Bson::String(s) => quote!(#key: #s),
+            bson::Bson::I32(int32) => quote!(#key: #int32),
+            _ => panic!("Developer error. Found an unexpected index document val of type {:?}. This is a bug within the wither framework. Please open an issue here: https://github.com/thedodd/wither/issues/new", val),
+        }
     }).collect::<Vec<TokenStream>>();
 
     quote!(doc!{ #(#key_vals),* })
@@ -90,5 +91,24 @@ fn option_to_tokens_for_string(target: Option<String>) -> TokenStream {
     match target {
         Some(t) => quote!(Some(String::from(#t))),
         None => quote!(None),
+    }
+}
+
+/// Code generation for creating an index weights document.
+///
+/// TODO: this has a possibility of growing out of sync with the IndexModel generation code. There
+/// is an issue open to refactor this pattern for indexes to use an IR for easier code generation.
+fn option_to_tokens_for_weights(doc_opt: Option<Document>) -> TokenStream {
+    match doc_opt {
+        None => quote!(None),
+        Some(doc) => {
+            let key_vals = doc.iter().map(|(key, val)| {
+                match val { // Weights can only be mapped to an i32 in this system.
+                    bson::Bson::I32(int32) => quote!(#key: #int32),
+                    _ => panic!("Developer error. Found unexpected type for index weights value {:?}. This is a bug within the wither framework. Please open an issue here: https://github.com/thedodd/wither/issues/new", val),
+                }
+            }).collect::<Vec<TokenStream>>();
+            quote!(Some(doc!{ #(#key_vals),* }))
+        }
     }
 }

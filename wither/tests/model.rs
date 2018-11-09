@@ -19,7 +19,7 @@ use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
 use mongodb::db::ThreadedDatabase;
 use wither::Model;
 
-use fixtures::{Fixture, User, UserModelBadMigrations, DerivedModel};
+use fixtures::{Fixture, User, UserModelBadMigrations, DerivedModel, Derived2dModel};
 
 //////////////////////////////////////////////////////////////////////////////
 // Model::count //////////////////////////////////////////////////////////////
@@ -56,7 +56,7 @@ fn model_save_should_save_model_instance_and_add_id() {
 fn derived_model_save_should_save_model_instance_and_add_id() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut model = DerivedModel{id: None, field0: "0".to_string(), field1: "1".to_string(), field2: "2".to_string()};
+    let mut model = DerivedModel::default();
 
     model.save(db.clone(), None).expect("Expected a successful save operation.");
 
@@ -203,42 +203,79 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_model() {
     let idx2 = output_indices[1].clone();
     let idx3 = output_indices[2].clone();
     let idx4 = output_indices[3].clone();
+    let idx5 = output_indices[4].clone();
 
     assert!(output_indices_len > initial_indices_len);
-    assert_eq!(output_indices_len, 4);
+    assert_eq!(output_indices_len, 5);
     assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derivations"});
     assert_eq!(&idx2, &doc!{
         "v": idx2.get_i32("v").unwrap(),
         "unique": true,
         "key": doc!{"field0": 1},
-        "name": "field0",
+        "name": "idx2",
         "ns": "witherTestDB.derivations",
         "background": true,
         "expireAfterSeconds": 15i32,
         "sparse": true,
-        "default_language": "en_us",
-        "language_override": "en_us",
-        "textIndexVersion": 1i32,
-        "2dsphereIndexVersion": 1i32,
-        "bits": 1i32,
-        "max": 10.0,
-        "min": 1.0,
-        "bucketSize": 1i32,
     });
     assert_eq!(&idx3, &doc!{
         "v": idx3.get_i32("v").unwrap(),
-        "key": doc!{"field1": -1i32},
-        "name": "field1_-1",
+        "key": doc!{"field1": -1i32, "text_field_a": -1i32, "field0": 1i32},
+        "name": "idx3",
         "ns": "witherTestDB.derivations",
         "background": false,
         "sparse": false,
     });
     assert_eq!(&idx4, &doc!{
         "v": idx4.get_i32("v").unwrap(),
-        "key": doc!{"field2": -1i32},
-        "name": "field2_-1",
+        "key": doc!{"_fts": "text", "_ftsx": 1i32},
+        "name": "idx4",
+        "ns": "witherTestDB.derivations",
+        "default_language": "en",
+        "language_override": "override_field",
+        "weights": doc!{"text_field_a": 10i32, "text_field_b": 5i32},
+        "textIndexVersion": 3i32,
+    });
+    assert_eq!(&idx5, &doc!{
+        "v": idx5.get_i32("v").unwrap(),
+        "key": doc!{"hashed_field": "hashed"},
+        "name": "idx5",
         "ns": "witherTestDB.derivations",
     });
+}
+
+#[test]
+fn model_sync_should_create_expected_indices_on_collection_for_derived_2d_model() {
+    // TODO: update this fixture once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/251 is fixed.
+    let fixture = Fixture::new().with_synced_models().with_empty_collections();
+    let db = fixture.get_db();
+    let coll = db.collection(Derived2dModel::COLLECTION_NAME);
+    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor pre-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    let initial_indices_len = initial_indices.len();
+
+    let _ = Derived2dModel::sync(db.clone()).expect("Expected a successful sync operation.");
+    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor post-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    output_indices.sort_by_key(|doc| doc.get_str("name").unwrap().to_string()); // The name key will always exist and always be a string.
+    let output_indices_len = output_indices.len();
+    let idx1 = output_indices[0].clone();
+    let idx2 = output_indices[1].clone();
+
+    assert!(output_indices_len > initial_indices_len);
+    assert_eq!(output_indices_len, 2);
+    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2d_models"});
+    assert_eq!(idx2.get_i32("v").unwrap(), 2i32);
+    assert_eq!(idx2.get("key").unwrap().as_document().unwrap(), &doc!{"field_2d_a": "2d", "field_2d_filter": 1i32});
+    assert_eq!(idx2.get("name").unwrap().as_str().unwrap(), "field_2d_a_2d_field_2d_filter_1");
+    assert_eq!(idx2.get("ns").unwrap().as_str().unwrap(), "witherTestDB.derived_2d_models");
+    assert_eq!(idx2.get("min").unwrap().as_f64().unwrap(), -180.0f64);
+    assert_eq!(idx2.get("max").unwrap().as_f64().unwrap(), 180.0f64);
+    assert_eq!(idx2.get("bits").unwrap().as_i32().unwrap(), 1i32);
 }
 
 #[test]

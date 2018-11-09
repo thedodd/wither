@@ -66,7 +66,7 @@ impl MetaModelFieldData {
 /// Build an `IndexModel` from the metadata in the given attr meta object.
 fn build_index_model(field: &syn::Field, index_container: &syn::Meta) -> IndexModel {
     // Collect the internals of the `index` attr as a vector of additional meta elements.
-    let index_named_vals = match index_container {
+    let index_attrs = match index_container {
         syn::Meta::List(meta_list) => meta_list.nested.iter().map(|nested| {
             match nested {
                 syn::NestedMeta::Meta(meta) => meta,
@@ -81,8 +81,8 @@ fn build_index_model(field: &syn::Field, index_container: &syn::Meta) -> IndexMo
     let mut opts = IndexOptions::new();
     let name = get_db_field_name(field);
 
-    // Iterator over index metadata.
-    for index_meta in index_named_vals {
+    // Iterate over index meta attrs and handle them as needed.
+    for index_meta in index_attrs {
         let meta_elem_name = index_meta.name().to_string();
         match meta_elem_name.as_ref() {
             "index_type" => index_type(index_meta, &mut keys, &meta_elem_name, &name),
@@ -97,8 +97,7 @@ fn build_index_model(field: &syn::Field, index_container: &syn::Meta) -> IndexMo
             "default_language" => opts.default_language = Some(extract_meta_kv(index_meta, &meta_elem_name)),
             "language_override" => opts.language_override = Some(extract_meta_kv(index_meta, &meta_elem_name)),
             "text_version" => opts.text_version = Some(extract_meta_kv(index_meta, &meta_elem_name)),
-            // TODO: come back and implement this.
-            // "weights" => index_weights(index_meta, &mut opts, &meta_elem_name),
+            "weights" => index_weights(index_meta, &mut opts),
             "sphere_version" => opts.sphere_version = Some(extract_meta_kv(index_meta, &meta_elem_name)),
             "bits" => opts.bits = Some(extract_meta_kv(index_meta, &meta_elem_name)),
             "max" => opts.max = Some(extract_meta_kv(index_meta, &meta_elem_name)),
@@ -110,12 +109,41 @@ fn build_index_model(field: &syn::Field, index_container: &syn::Meta) -> IndexMo
     IndexModel::new(keys, Some(opts))
 }
 
-// TODO: come back and implement this.
-// /// Handle the `weights` index option.
-// fn index_weights(attr: &syn::Meta, opts: &mut IndexOptions, attr_name: &str) {
-//     let lit_val: Document = extract_meta_kv(attr, attr_name);
-//     opts.weights = Some(lit_val);
-// }
+/// Handle the `weights` index option.
+fn index_weights(weights: &syn::Meta, opts: &mut IndexOptions) {
+    // Collect the internals of the `index(weights(...))` attr as a vector of name-value pairs.
+    let weight_fields = match weights {
+        syn::Meta::List(meta_list) => meta_list.nested.iter().map(|nested| {
+            match nested {
+                syn::NestedMeta::Meta(meta) => {
+                    match meta {
+                        syn::Meta::NameValue(name_val) => name_val,
+                        _ => panic!(msg::MODEL_ATTR_INDEX_WEIGHTS_FORM),
+                    }
+                },
+                _ => panic!(msg::MODEL_ATTR_INDEX_WEIGHTS_FORM),
+            }
+        }).collect::<Vec<&syn::MetaNameValue>>(),
+        _ => panic!(msg::MODEL_ATTR_INDEX_WEIGHTS_FORM),
+    };
+
+    // Iterate over name-value pairs and update the index document for each.
+    let weights_doc = weight_fields.into_iter().fold(Document::new(), |mut acc, name_val| {
+        // Extract key & value.
+        let key = name_val.ident.to_string();
+        let val = match &name_val.lit {
+            syn::Lit::Str(lit_str) => match lit_str.value().parse::<i32>() {
+                Ok(val) => val,
+                Err(_) => panic!(msg::MODEL_ATTR_INDEX_WITH_FORM),
+            },
+            _ => panic!(msg::MODEL_ATTR_INDEX_WITH_FORM),
+        };
+        acc.insert(key, val);
+        acc
+    });
+
+    opts.weights = Some(weights_doc);
+}
 
 /// A generic value extraction method for extracting the value of a `syn::Meta::NameValue` field.
 fn extract_meta_kv<T>(attr: &syn::Meta, attr_name: &str) -> T
@@ -152,6 +180,7 @@ fn set_index_type_from_str(field_name: &str, index_type: &str, keys: &mut Docume
         "2d" => keys.insert(field_name, "2d"),
         "2dsphere" => keys.insert(field_name, "2dsphere"),
         "text" => keys.insert(field_name, "text"),
+        "geoHaystack" => keys.insert(field_name, "geoHaystack"),
         "hashed" => keys.insert(field_name, "hashed"),
         _ => panic!(msg::MODEL_ATTR_INDEX_TYPE_ALLOWED_VALUES),
     };
@@ -176,7 +205,6 @@ fn index_with(index_with_container: &syn::Meta, keys: &mut Document) {
     };
 
     // Iterate over name-value pairs and update the index document for each.
-    // TODO: this must be updated to conform to the logic of `index_type` above.
     index_with_attrs.into_iter().for_each(|name_val| {
         // Extract key & value.
         let key = name_val.ident.to_string();

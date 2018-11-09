@@ -11,6 +11,7 @@ use super::{
     User,
     UserModelBadMigrations,
     DerivedModel,
+    Derived2dModel,
 };
 
 lazy_static!{
@@ -62,6 +63,10 @@ impl Fixture {
         for idx in DerivedModel::indexes().into_iter() {
             let _ = (&derivations_coll).drop_index_model(idx);
         }
+        let derivations2d_coll = DB.clone().collection(Derived2dModel::COLLECTION_NAME);
+        for idx in Derived2dModel::indexes().into_iter() {
+            let _ = (&derivations2d_coll).drop_index_model(idx);
+        }
         self
     }
 
@@ -76,6 +81,7 @@ impl Fixture {
         User::sync(DB.clone()).expect("Expected to successfully sync `User` model.");
         // UserModelBadMigrations::sync(DB.clone()).expect("Expected to successfully sync `UserModelBadMigrations` model.");
         DerivedModel::sync(DB.clone()).expect("Expected to successfully sync `DerivedModel` model.");
+        Derived2dModel::sync(DB.clone()).expect("Expected to successfully sync `Derived2dModel` model.");
         self
     }
 }

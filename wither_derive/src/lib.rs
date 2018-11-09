@@ -108,20 +108,14 @@ use tokens::Indexes;
 ///
 /// ##### weights
 /// This is optional, but needs a special callout here. The underlying type for this field is a
-/// BSON Document, but this is tricky in a proc_macro context. The approach we are taking is to
-/// specify the value for this field as a string with an embedded JSON document inside of it. At
-/// compile time, the code will be deserialized with serde_json into a BSON Document to ensure the
-/// value is specified correctly. **However, note well** that the validity of the document will
-/// only be checked by your MongoDB deployment when the index is synced. So, as always, it is a
-/// good idea to write some tests for your models to ensure that your indexes are specified
-/// correctly, and that the MongoDB server will accept them. Here is an example which extends our
-/// above `MyModel` example:
+/// BSON Document which maps field names to integers, where the integer is the weight for the
+/// field.
 ///
 /// ```rust
 ///     // snip ...
 ///
 ///     /// A text search field, so we add a `weights` field on our index for optimization.
-///     #[model(index(index_type="text", with(text1="text"), weights=r#"{"text0": 10, "text1": 5}"#))]
+///     #[model(index(index_type="text", with(text1="text"), weights(text0=10, text1=5)))]
 ///     pub text0: String,
 ///
 ///     /// The other field of our text index. No `model` attributes need to be added here.
@@ -132,7 +126,7 @@ use tokens::Indexes;
 /// ```
 ///
 /// Check out the MongoDB docs on [Control Search Results with Weights](https://docs.mongodb.com/manual/tutorial/control-results-of-text-search/)
-/// for some excellent guidance on how to effectively use these types of indices.
+/// for some excellent guidance on how to effectively use text indexes.
 ///
 /// ##### other attributes
 /// Other attributes, like `unique` or `sparse`, are optional. Simply use the name of the
