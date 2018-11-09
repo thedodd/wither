@@ -21,7 +21,7 @@ struct ValidDataModel0 {
 
     /// A field to test base line index options & bool fields with `true`.
     #[model(index(
-        direction="asc",
+        index_type="asc",
         background="true", sparse="true", unique="true",
         expire_after_seconds="15", name="field0", storage_engine="wt", version="1", default_language="en_us",
         language_override="en_us", text_version="1", sphere_version="1", bits="1", max="10.0", min="1.0", bucket_size="1",
@@ -30,13 +30,13 @@ struct ValidDataModel0 {
 
     /// A field to test bool fields with `false`.
     #[model(index(
-        direction="dsc",
+        index_type="dsc",
         background="false", sparse="false", unique="false",
     ))]
     field1: String,
 
     /// A field to test `weights` option.
-    #[model(index(direction="dsc", /*weights=""*/))] // TODO: ensure weights are compiling correctly.
+    #[model(index(index_type="dsc", /*weights=""*/))] // TODO: ensure weights are compiling correctly.
     field2: String,
 }
 

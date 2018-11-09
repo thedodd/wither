@@ -11,10 +11,10 @@ pub(crate) const MODEL_ATTR_INDEX_FORM: &str = "The `model(index)` attribute mus
 pub(crate) const MODEL_ATTR_INDEX_ELEMENT_FORM: &str = "Index declarations on your model fields may only contain name-value pairs or the nested `with(...)` element.";
 
 /// An error message indicating the allowed values for `#[model(index(direction))]`.
-pub(crate) const MODEL_ATTR_INDEX_DIRECTION_ALLOWED_VALUES: &str = r#"The index `direction` value must be one of `"asc"` or `"dsc"`."#;
+pub(crate) const MODEL_ATTR_INDEX_TYPE_ALLOWED_VALUES: &str = r#"The index `direction` value must be one of `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"text"`, or `"hashed"`."#;
 
 /// An error message indicating the allowed form for `#[model(index(with(...)))]`.
-pub(crate) const MODEL_ATTR_INDEX_WITH_FORM: &str = r#"The `model(index(with(...))) attr may contain only mappings of field names to directions (`"asc"` or `"dsc"`)."#;
+pub(crate) const MODEL_ATTR_INDEX_WITH_FORM: &str = r#"The `model(index(with(...))) attr may contain only mappings of field names to index type (`"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"text"`, `"hashed"`)."#;
 
 /// An error message indicating the required form of a `Model`'s struct level attributes.
 pub(crate) const MODEL_STRUCT_ATTR_FORM: &str = r#"A `Model`'s struct level attributes may only contain name-value pairs: `#[model(name="value")]`."#;

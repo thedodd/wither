@@ -22,7 +22,7 @@ struct FirstModel {
 
     /// A field to test base line index options & bool fields with `true`.
     #[model(index(
-        direction="asc",
+        index_type="asc",
         background="true", sparse="true", unique="true",
         expire_after_seconds="15", name="field0", version="1", default_language="en_us",
         language_override="en_us", text_version="1", sphere_version="1", bits="1", max="10.0", min="1.0", bucket_size="1",
@@ -31,7 +31,7 @@ struct FirstModel {
 
     /// A field to test bool fields with `false`.
     #[model(index(
-        direction="dsc",
+        index_type="dsc",
         background="false", sparse="false", unique="false",
         with(field2="dsc", field0="asc"),
     ))]
@@ -41,7 +41,7 @@ struct FirstModel {
     /// TODO:
     /// - ensure weights are compiling correctly.
     /// - fix issues with storage_engine. Apparently needs to be a doc.
-    #[model(index(direction="dsc", /* weights="", storage_engine="wt" */))]
+    #[model(index(index_type="dsc", /* weights="", storage_engine="wt" */))]
     field2: String,
 }
 

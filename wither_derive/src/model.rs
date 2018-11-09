@@ -30,7 +30,7 @@ impl MetaModel {
 
         // Extract struct & field attrs.
         let struct_data = MetaModelStructData::new(input.attrs.as_slice(), &ident);
-        let field_data = MetaModelFieldData::build(&struct_fields).finish();
+        let field_data = MetaModelFieldData::new(&struct_fields);
 
         MetaModel{ident, struct_fields, struct_data, field_data}
     }

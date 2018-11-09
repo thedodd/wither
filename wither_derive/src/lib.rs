@@ -68,11 +68,11 @@ use tokens::Indexes;
 ///     // snip ...
 ///
 ///     /// This field has a unique index on it.
-///     #[model(index(direction="dsc", unique="true"))]
+///     #[model(index(index_type="dsc", unique="true"))]
 ///     pub email: String,
 ///
 ///     /// First field of a compound index.
-///     #[model(index(direction="dsc", with(last_name="dsc")))]
+///     #[model(index(index_type="dsc", with(last_name="dsc")))]
 ///     pub first_name: String,
 ///
 ///     /// Is indexed along with `first_name`, but nothing special is declared here.
@@ -88,24 +88,51 @@ use tokens::Indexes;
 /// ##### index
 /// Everything related to an index declaration must be declared within these parens.
 ///
-/// ##### direction
-/// This declares the direction of the field which this attribute appears on, which will also be
-/// the first field of the generated index. The value must be one of `"asc"` or `"dsc"`. For a
-/// simple single-field index, this is all you need.
+/// ##### type
+/// This declares the type of index for the field which this attribute appears on, which will also
+/// be the first field of the generated index. The value must be one of the valid MongoDB index
+/// types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"text"` & `"hashed"`.
 ///
 /// ##### with
 /// This is optional. For compound indexes, this is where you declare the other fields which the
 /// generated index is to be created with. Inside of these parens, you map field names to
 /// directions. The field name must be the name of the target field as it will be in the MongoDB
-/// collection. The value must be either `"asc"` or `"dsc"`, as usual.
+/// collection. The value must be one of the valid MongoDB index types, as described above.
 ///
 /// **NOTE WELL:** as of the `0.6.0` implementation, specifying the additional fields of a
 /// compound index using this system my be theoretically limiting. Technically, the field names
 /// are declared as Rust `syn::Ident`s, which carries the restriction of being a valid variable
 /// name, which is more limiting than that of MongoDB's field naming restrictions. **Please open
 /// an issue** if you find this to be limiting. There are workarounds, but if this is a big issue,
-/// I definitely want to know. There are other ways this could be implemented (though not as
-/// beautifully `;)`).
+/// I definitely want to know. There are other ways this could be implemented.
+///
+/// ##### weights
+/// This is optional, but needs a special callout here. The underlying type for this field is a
+/// BSON Document, but this is tricky in a proc_macro context. The approach we are taking is to
+/// specify the value for this field as a string with an embedded JSON document inside of it. At
+/// compile time, the code will be deserialized with serde_json into a BSON Document to ensure the
+/// value is specified correctly. **However, note well** that the validity of the document will
+/// only be checked by your MongoDB deployment when the index is synced. So, as always, it is a
+/// good idea to write some tests for your models to ensure that your indexes are specified
+/// correctly, and that the MongoDB server will accept them. Here is an example which extends our
+/// above `MyModel` example:
+///
+/// ```rust
+///     // snip ...
+///
+///     /// A text search field, so we add a `weights` field on our index for optimization.
+///     #[model(index(index_type="text", with(text1="text"), weights=r#"{"text0": 10, "text1": 5}"#))]
+///     pub text0: String,
+///
+///     /// The other field of our text index. No `model` attributes need to be added here.
+///     pub text1: String,
+///
+///     // snip ...
+/// }
+/// ```
+///
+/// Check out the MongoDB docs on [Control Search Results with Weights](https://docs.mongodb.com/manual/tutorial/control-results-of-text-search/)
+/// for some excellent guidance on how to effectively use these types of indices.
 ///
 /// ##### other attributes
 /// Other attributes, like `unique` or `sparse`, are optional. Simply use the name of the
