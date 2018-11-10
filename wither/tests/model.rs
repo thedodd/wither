@@ -19,7 +19,15 @@ use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
 use mongodb::db::ThreadedDatabase;
 use wither::Model;
 
-use fixtures::{Fixture, User, UserModelBadMigrations, DerivedModel, Derived2dModel};
+use fixtures::{
+    Fixture,
+    User,
+    UserModelBadMigrations,
+    DerivedModel,
+    Derived2dModel,
+    Derived2dsphereModel,
+    // DerivedGeoHaystackModel,
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // Model::count //////////////////////////////////////////////////////////////
@@ -269,6 +277,7 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2d_model(
     assert!(output_indices_len > initial_indices_len);
     assert_eq!(output_indices_len, 2);
     assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2d_models"});
+    // NOTE WELL: doc comparison was failing for some reason. Not sure why. Doing manual asserts now.
     assert_eq!(idx2.get_i32("v").unwrap(), 2i32);
     assert_eq!(idx2.get("key").unwrap().as_document().unwrap(), &doc!{"field_2d_a": "2d", "field_2d_filter": 1i32});
     assert_eq!(idx2.get("name").unwrap().as_str().unwrap(), "field_2d_a_2d_field_2d_filter_1");
@@ -277,6 +286,75 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2d_model(
     assert_eq!(idx2.get("max").unwrap().as_f64().unwrap(), 180.0f64);
     assert_eq!(idx2.get("bits").unwrap().as_i32().unwrap(), 1i32);
 }
+
+#[test]
+fn model_sync_should_create_expected_indices_on_collection_for_derived_2dsphere_model() {
+    // TODO: update this fixture once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/251 is fixed.
+    let fixture = Fixture::new().with_synced_models().with_empty_collections();
+    let db = fixture.get_db();
+    let coll = db.collection(Derived2dsphereModel::COLLECTION_NAME);
+    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor pre-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    let initial_indices_len = initial_indices.len();
+
+    let _ = Derived2dsphereModel::sync(db.clone()).expect("Expected a successful sync operation.");
+    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+        .expect("Expected to successfully open indices cursor post-test.")
+        .filter_map(|doc_res| doc_res.ok())
+        .collect();
+    output_indices.sort_by_key(|doc| doc.get_str("name").unwrap().to_string()); // The name key will always exist and always be a string.
+    let output_indices_len = output_indices.len();
+    let idx1 = output_indices[0].clone();
+    let idx2 = output_indices[1].clone();
+
+    assert!(output_indices_len > initial_indices_len);
+    assert_eq!(output_indices_len, 2);
+    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2dsphere_models"});
+    assert_eq!(idx2, doc!{
+        "v": 2i32,
+        "key": doc!{"field_2dsphere": "2dsphere", "field_2dsphere_filter": 1i32},
+        "name": "field_2dsphere_2dsphere_field_2dsphere_filter_1",
+        "ns": "witherTestDB.derived_2dsphere_models",
+        "2dsphereIndexVersion": 3i32,
+    });
+}
+
+// TODO: enable this test once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/289 lands.
+// #[test]
+// fn model_sync_should_create_expected_indices_on_collection_for_derived_haystack_model() {
+//     // TODO: update this fixture once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/251 is fixed.
+//     let fixture = Fixture::new().with_synced_models().with_empty_collections();
+//     let db = fixture.get_db();
+//     let coll = db.collection(DerivedGeoHaystackModel::COLLECTION_NAME);
+//     let initial_indices: Vec<bson::Document> = coll.list_indexes()
+//         .expect("Expected to successfully open indices cursor pre-test.")
+//         .filter_map(|doc_res| doc_res.ok())
+//         .collect();
+//     let initial_indices_len = initial_indices.len();
+
+//     let _ = DerivedGeoHaystackModel::sync(db.clone()).expect("Expected a successful sync operation.");
+//     let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+//         .expect("Expected to successfully open indices cursor post-test.")
+//         .filter_map(|doc_res| doc_res.ok())
+//         .collect();
+//     output_indices.sort_by_key(|doc| doc.get_str("name").unwrap().to_string()); // The name key will always exist and always be a string.
+//     let output_indices_len = output_indices.len();
+//     let idx1 = output_indices[0].clone();
+//     let idx2 = output_indices[1].clone();
+
+//     assert!(output_indices_len > initial_indices_len);
+//     assert_eq!(output_indices_len, 2);
+//     assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_geo_haystack_models"});
+//     assert_eq!(idx2, doc!{
+//         "v": 2i32,
+//         "key": doc!{"field_geo_haystack": "geoHaystack", "field_geo_haystack_filter": 1i32},
+//         "name": "field_geo_haystack_geohaystack_field_geo_haystack_filter_1",
+//         "ns": "witherTestDB.derived_geo_haystack_models",
+//         "bucketSize": 5i32,
+//     });
+// }
 
 #[test]
 fn model_sync_should_execute_expected_migrations_against_collection() {

@@ -91,7 +91,7 @@ use tokens::Indexes;
 /// ##### type
 /// This declares the type of index for the field which this attribute appears on, which will also
 /// be the first field of the generated index. The value must be one of the valid MongoDB index
-/// types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"text"` & `"hashed"`.
+/// types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"` & `"hashed"`.
 ///
 /// ##### with
 /// This is optional. For compound indexes, this is where you declare the other fields which the
@@ -99,23 +99,14 @@ use tokens::Indexes;
 /// directions. The field name must be the name of the target field as it will be in the MongoDB
 /// collection. The value must be one of the valid MongoDB index types, as described above.
 ///
-/// **NOTE WELL:** as of the `0.6.0` implementation, specifying the additional fields of a
-/// compound index using this system my be theoretically limiting. Technically, the field names
-/// are declared as Rust `syn::Ident`s, which carries the restriction of being a valid variable
-/// name, which is more limiting than that of MongoDB's field naming restrictions. **Please open
-/// an issue** if you find this to be limiting. There are workarounds, but if this is a big issue,
-/// I definitely want to know. There are other ways this could be implemented.
-///
 /// ##### weights
-/// This is optional, but needs a special callout here. The underlying type for this field is a
-/// BSON Document which maps field names to integers, where the integer is the weight for the
-/// field.
+/// This is optional. Values here simply map field names to `i32` values wrapped in strings.
 ///
 /// ```rust
 ///     // snip ...
 ///
 ///     /// A text search field, so we add a `weights` field on our index for optimization.
-///     #[model(index(index_type="text", with(text1="text"), weights(text0=10, text1=5)))]
+///     #[model(index(index_type="text", with(text1="text"), weights(text0="10", text1="5")))]
 ///     pub text0: String,
 ///
 ///     /// The other field of our text index. No `model` attributes need to be added here.
@@ -134,6 +125,19 @@ use tokens::Indexes;
 /// comma-separate each attribute-value pair. All attributes supported by the underlying MongoDB
 /// driver are supported by this framework. A list of all attributes can be found in the docs for
 /// [IndexOptions](https://docs.rs/mongodb/0.3.7/mongodb/coll/options/struct.IndexOptions.html).
+///
+/// ##### known issues
+/// - As of the `0.6.0` implementation, specifying the additional fields of a
+///   compound index using this system my be theoretically limiting. Technically, the field names
+///   are declared as Rust `syn::Ident`s, which carries the restriction of being a valid variable
+///   name, which is more limiting than that of MongoDB's field naming restrictions. **Please open
+///   an issue** if you find this to be limiting. There are workarounds, but if this is a big
+///   issue, I definitely want to know. There are other ways this could be implemented.
+/// - Indexing subdocuments is in progress, but not done yet. Will probably come as `0.7` or
+///   something.
+/// - To index a field on a subdocument which is not modelled (EG, using `Document` as a value for
+///   a field), you will have to manually implement `Model` for your struct & then manually
+///   specify the indexes. See the section on [manually implementing model trait](#manually-implementing-model-trait).
 ///
 /// ### Migrations
 /// Migrations are not currently part of the `Model` derivation system. A separate pattern is used

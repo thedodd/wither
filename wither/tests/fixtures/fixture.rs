@@ -12,6 +12,8 @@ use super::{
     UserModelBadMigrations,
     DerivedModel,
     Derived2dModel,
+    Derived2dsphereModel,
+    // DerivedGeoHaystackModel,
 };
 
 lazy_static!{
@@ -67,6 +69,15 @@ impl Fixture {
         for idx in Derived2dModel::indexes().into_iter() {
             let _ = (&derivations2d_coll).drop_index_model(idx);
         }
+        let derivations2dsphere_coll = DB.clone().collection(Derived2dsphereModel::COLLECTION_NAME);
+        for idx in Derived2dsphereModel::indexes().into_iter() {
+            let _ = (&derivations2dsphere_coll).drop_index_model(idx);
+        }
+        // TODO: enable this once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/289 lands.
+        // let derivationsHaystack_coll = DB.clone().collection(DerivedGeoHaystackModel::COLLECTION_NAME);
+        // for idx in DerivedGeoHaystackModel::indexes().into_iter() {
+        //     let _ = (&derivationsHaystack_coll).drop_index_model(idx);
+        // }
         self
     }
 
@@ -82,6 +93,9 @@ impl Fixture {
         // UserModelBadMigrations::sync(DB.clone()).expect("Expected to successfully sync `UserModelBadMigrations` model.");
         DerivedModel::sync(DB.clone()).expect("Expected to successfully sync `DerivedModel` model.");
         Derived2dModel::sync(DB.clone()).expect("Expected to successfully sync `Derived2dModel` model.");
+        Derived2dsphereModel::sync(DB.clone()).expect("Expected to successfully sync `Derived2dsphereModel` model.");
+        // TODO: enable this once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/289 lands.
+        // DerivedGeoHaystackModel::sync(DB.clone()).expect("Expected to successfully sync `DerivedGeoHaystackModel` model.");
         self
     }
 }
