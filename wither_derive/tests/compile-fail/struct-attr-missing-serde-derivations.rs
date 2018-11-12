@@ -13,7 +13,7 @@ use wither::Model;
 use mongodb::coll::options::IndexModel;
 
 #[derive(Model)]
-#[model(skip_serde_checks="true")]
+#[model(skip_serde_checks)]
 struct BadModel {
     id: Option<bson::oid::ObjectId>,
 }

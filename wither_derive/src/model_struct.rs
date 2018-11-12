@@ -48,34 +48,47 @@ impl MetaModelStructData {
 fn unpack_model_attr(meta: &syn::Meta, struct_data: &mut MetaModelStructData) {
     // Unpack the inner attr's components.
     match meta {
+        // Model attr must be a list.
         syn::Meta::List(list) => list.nested.iter().by_ref()
             .filter_map(|nested_meta| match nested_meta {
                 syn::NestedMeta::Meta(meta) => Some(meta),
                 _ => panic!(msg::MODEL_ATTR_FORM),
-            }).filter_map(|meta| match meta {
-                syn::Meta::NameValue(kv) => Some(kv),
-                _ => panic!(msg::MODEL_STRUCT_ATTR_FORM),
-            }).for_each(|kv| {
-                let ident = kv.ident.to_string();
-                match &kv.lit {
-                    syn::Lit::Str(ref val) => {
-                        let value = val.value();
-                        match ident.as_str() {
-                            "collection_name" => {
-                                struct_data.collection_name = value;
-                                if struct_data.collection_name.len() < 1 {
-                                    panic!("The `Model` struct attribute 'collection_name' may not have a zero-length value.");
-                                }
-                            },
-                            "skip_serde_checks" => {
-                                struct_data.skip_serde_checks = value.parse().expect("Value for `skip_serde_checks` must be parseable as a `bool`.");
-                            },
-                            _ => panic!(format!("Unrecognized struct-level `Model` attribute '{}'.", ident)),
-                        }
-                    },
-                    _ => panic!("Only string literals are supported as named values in `Model` attributes."),
+            }).for_each(|innermeta| {
+                match innermeta {
+                    syn::Meta::Word(ident) => handle_ident_attr(ident, struct_data),
+                    syn::Meta::NameValue(kv) => handle_kv_attr(kv, struct_data),
+                    _ => panic!(msg::MODEL_STRUCT_ATTRS),
                 }
             }),
         _ => panic!(msg::MODEL_ATTR_FORM),
     };
+}
+
+fn handle_kv_attr(kv: &syn::MetaNameValue, struct_data: &mut MetaModelStructData) {
+    let ident = kv.ident.to_string();
+    match &kv.lit {
+        syn::Lit::Str(ref val) => {
+            let value = val.value();
+            match ident.as_str() {
+                "collection_name" => {
+                    struct_data.collection_name = value;
+                    if struct_data.collection_name.len() < 1 {
+                        panic!("The `Model` struct attribute 'collection_name' may not have a zero-length value.");
+                    }
+                },
+                _ => panic!(format!("Unrecognized struct-level `Model` attribute '{}'.", ident)),
+            }
+        },
+        _ => panic!("Only string literals are supported as named values in `Model` attributes."),
+    }
+}
+
+fn handle_ident_attr(ident: &syn::Ident, struct_data: &mut MetaModelStructData) {
+    let ident = ident.to_string();
+    match ident.as_str() {
+        "skip_serde_checks" => {
+            struct_data.skip_serde_checks = true;
+        },
+        _ => panic!(format!("Unrecognized struct-level `Model` attribute '{}'.", ident)),
+    }
 }

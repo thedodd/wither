@@ -8,7 +8,7 @@ extern crate serde;
 #[macro_use(Serialize, Deserialize)]
 extern crate serde_derive;
 extern crate wither;
-#[macro_use]
+#[macro_use(Model)]
 extern crate wither_derive;
 
 mod fixtures;

@@ -4,7 +4,7 @@
 //! databases along with your models. An [`IntervalMigration`](./struct.IntervalMigration.html)
 //! is a great place to start & should be defined in your `Model` implementation.
 //!
-//! ```rust
+//! ```rust,ignore
 //! // snip ...
 //!
 //! // Define any migrations which your model needs in this method.
@@ -46,8 +46,8 @@
 //!   the rest will be taken care of.
 //!
 //! An important question which you should be asking at this point is _"Well, how is this going to
-//! work at scale?"._ This is an excellent question, of course. The answer is that it depends on
-//! how you write your migrations. Here are a few pointers & a few notes to help you succeed.
+//! work at scale?"._ The answer is that it depends on how you write your migrations. Here are a
+//! few pointers & a few notes to help you succeed.
 //!
 //! - be sure that the queries used by your migrations are covered. Just add some new indexes to
 //!   your [`Model::indexes`](../model/trait.Model.html#method.indexes) implementation to be sure.
@@ -84,7 +84,7 @@ pub trait Migration {
 ///
 /// This migration type works nicely in environments where multiple instances of the system — in
 /// which this migration is defined — are continuously running, even during deployment cycles.
-/// Highly available systems. With an `IntervalMigration`, each instance will execute the
+/// AKA, highly available systems. With an `IntervalMigration`, each instance will execute the
 /// migration at boottime, until the `threshold` date is passed. This will compensate for
 /// write-heavy workloads, as the final instance to be updated will ensure schema convergence.
 /// As long as you ensure your migrations are idempotent — **WHICH YOU ALWAYS SHOULD** — this

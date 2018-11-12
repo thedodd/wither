@@ -13,7 +13,7 @@ use wither::Model;
 use mongodb::coll::options::IndexModel;
 
 #[derive(Serialize, Deserialize, Model)]
-#[model(collection_name="valid_data_models_0", skip_serde_checks="false")]
+#[model(collection_name="valid_data_models_0")]
 struct ValidDataModel0 {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
