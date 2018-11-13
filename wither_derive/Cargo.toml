@@ -1,7 +1,16 @@
 [package]
 authors = ["Anthony Dodd <dodd.anthonyjosiah@gmail.com>"]
+categories = ["database", "data-structures"]
+description = "An ODM for MongoDB built upon the mongo rust driver."
+documentation = "https://github.com/thedodd/wither"
+exclude = []
+homepage = "https://github.com/thedodd/wither"
+keywords = ["mongodb", "odm", "orm"]
+license = "Apache-2.0"
 name = "wither_derive"
-version = "0.1.0"
+readme = "../README.md"
+repository = "https://github.com/thedodd/wither"
+version = "0.6.0"
 
 [lib]
 proc-macro = true
@@ -17,7 +26,7 @@ syn = { version = "0.15", features = ["extra-traits"] }
 
 [dev-dependencies]
 compiletest_rs = "0.3"
-wither = { path = "../wither" }
+wither = { version = "0.6", path = "../wither" }
 serde_derive = "1"
 
 [features]
