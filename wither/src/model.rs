@@ -60,10 +60,10 @@ pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, e
 
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
 ///
-#[cfg_attr(feature="docinclude", doc(include="../../docs/model-derive.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../../docs/model-sync.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../../docs/logging.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../../docs/manually-implementing-model.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../docs/model-derive.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../docs/model-sync.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../docs/logging.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../docs/manually-implementing-model.md"))]
 pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// The name of the collection where this model's data is stored.

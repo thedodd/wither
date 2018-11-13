@@ -1,4 +1,4 @@
-#![cfg_attr(feature="docinclude", doc(include="../../docs/migrations-overview.md"))]
+#![cfg_attr(feature="docinclude", doc(include="../docs/migrations-overview.md"))]
 
 use std::error::Error;
 

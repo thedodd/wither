@@ -1,7 +1,6 @@
 //! Withers custom derive module.
 
 #![recursion_limit="200"]
-#![cfg_attr(feature="docinclude", feature(external_doc))]
 
 #[macro_use]
 extern crate bson;
@@ -27,7 +26,7 @@ use model::MetaModel;
 use tokens::Indexes;
 
 
-#[cfg_attr(feature="docinclude", doc(include="../../docs/model-derive.md"))]
+/// Please see the wither crate's documentation for details on the Model derive system.
 #[proc_macro_derive(Model, attributes(model))]
 pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
     // Parse the input token stream into a syntax tree.
