@@ -24,6 +24,9 @@ pub use model::{
 
 pub mod prelude {
     //! All traits needed for basic usage of the wither system.
-    pub use ::migration::Migration;
+    pub use ::migration::{
+        Migrating,
+        Migration,
+    };
     pub use ::model::Model;
 }

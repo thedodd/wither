@@ -17,7 +17,7 @@ use std::error::Error;
 
 use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
 use mongodb::db::ThreadedDatabase;
-use wither::Model;
+use wither::prelude::*;
 
 use fixtures::{
     Fixture,
@@ -364,7 +364,7 @@ fn model_sync_should_execute_expected_migrations_against_collection() {
     let mut new_user = User{id: None, email: String::from("test@test.com")};
     new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
 
-    let _ = User::sync(db.clone()).expect("Expected a successful sync operation.");
+    let _ = User::migrate(db.clone()).expect("Expected a successful migration operation.");
     let migrated_doc = coll.find_one(Some(doc!{"_id": new_user.id.clone().unwrap()}), None)
         .expect("Expect a successful find operation.")
         .expect("Expect a populated document.");
@@ -383,7 +383,7 @@ fn model_sync_should_error_if_migration_with_no_set_and_no_unset_given() {
     let mut new_user = UserModelBadMigrations{id: None, email: String::from("test@test.com")};
     new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
 
-    let err = UserModelBadMigrations::sync(db.clone()).expect_err("Expected a failure from sync operation.");
+    let err = UserModelBadMigrations::migrate(db.clone()).expect_err("Expected a failure from migration operation.");
 
     assert_eq!(err.description(), "One of '$set' or '$unset' must be specified.");
 }

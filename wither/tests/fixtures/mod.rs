@@ -40,7 +40,9 @@ impl<'a> Model<'a> for User {
             },
         ];
     }
+}
 
+impl<'m> Migrating<'m> for User {
     fn migrations() -> Vec<Box<wither::Migration>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.
@@ -88,7 +90,9 @@ impl<'a> Model<'a> for UserModelBadMigrations {
             },
         ];
     }
+}
 
+impl<'m> Migrating<'m> for UserModelBadMigrations {
     fn migrations() -> Vec<Box<wither::Migration>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.

@@ -33,8 +33,6 @@ use serde::{
     Deserialize,
 };
 
-use migration::Migration;
-
 /// The name of the default index created by MongoDB.
 pub const DEFAULT_INDEX: &str = "_id";
 
@@ -334,23 +332,16 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         vec![]
     }
 
-    /// Get the vector of migration objects for this model.
-    fn migrations() -> Vec<Box<Migration>> {
-        vec![]
-    }
-
     /// Synchronize this model with the backend.
     ///
     /// This routine should be called once per model, early on at boottime. It will synchronize
-    /// any indexes defined on this model with the backend & will execute any active migrations
-    /// against the model's collection.
+    /// any indexes defined on this model with the backend.
     ///
     /// This routine will destroy any indexes found on this model's collection which are not
     /// defined in the response from `Self.indexes()`.
     fn sync(db: Database) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
         sync_model_indexes(&coll, Self::indexes())?;
-        sync_model_migrations(&coll, Self::migrations())?; // TODO: remove this, update docs & implement `migrate`.
         Ok(())
     }
 }
@@ -419,18 +410,6 @@ fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> Res
     }
 
     info!("Finished synchronizing indexes for '{}'.", coll.namespace);
-    Ok(())
-}
-
-fn sync_model_migrations<'a>(coll: &'a Collection, migrations: Vec<Box<Migration>>) -> Result<()> {
-    info!("Starting migrations for '{}'.", coll.namespace);
-
-    // Execute each migration.
-    for migration in migrations {
-        migration.execute(coll)?;
-    }
-
-    info!("Finished migrations for '{}'.", coll.namespace);
     Ok(())
 }
 
