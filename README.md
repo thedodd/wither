@@ -16,7 +16,7 @@ The primary goal of this project is to provide a simple, sane & predictable inte
 
 ### items of interest
 - [docs](https://docs.rs/wither): all the good stuff is here.
-- [changelog](https://github.com/thedodd/wither/master/wither/CHANGELOG.md): details on what has happened from release to release.
+- [changelog](https://github.com/thedodd/wither/blob/master/CHANGELOG.md): details on what has happened from release to release.
 - [contributing & development guidelines](https://github.com/thedodd/wither/blob/master/CONTRIBUTING.md): details on how to get started with doing development on this project.
 
 ### getting started
