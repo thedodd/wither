@@ -62,7 +62,7 @@ struct MyModel {
 As you can see, everything is declared within `#[model(index(...))]` attributes. Let's break this down.
 
 ##### index
-Everything related to an index declaration must be declared within these parens.
+Everything related to an index declaration must be declared within these parens. If the field is using a serde `rename` attribute, this system will account for that and use the value of `rename` as the initial field name for the new index.
 
 ##### type
 This declares the type of index for the field which this attribute appears on, which will also be the first field of the generated index. The value must be one of the valid MongoDB index types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"` & `"hashed"`.

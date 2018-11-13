@@ -12,10 +12,10 @@ pub(crate) struct MetaModelStructData {
     pub skip_serde_checks: bool,
 
     /// An attribute to control write concern replication.
-    pub wc_replication: u32,
+    pub wc_replication: i32,
 
     /// An attribute to control write concern replication timeout.
-    pub wc_timeout: u32,
+    pub wc_timeout: i32,
 
     /// An attribute to control write concern journaling.
     pub wc_journaling: bool,
@@ -29,7 +29,7 @@ impl Default for MetaModelStructData {
         MetaModelStructData {
             collection_name: Default::default(),
             skip_serde_checks: Default::default(),
-            wc_replication: 1u32,
+            wc_replication: 1i32,
             wc_timeout: Default::default(),
             wc_journaling: true,
             wc_fsync: Default::default(),
@@ -101,11 +101,11 @@ fn handle_kv_attr(kv: &syn::MetaNameValue, struct_data: &mut MetaModelStructData
                     }
                 },
                 "wc_replication" => {
-                    let parsed = value.parse::<u32>().expect("Value for `model(wc_replication)` must be a `u32` wrapped in a string.");
+                    let parsed = value.parse::<i32>().expect("Value for `model(wc_replication)` must be an `i32` wrapped in a string.");
                     struct_data.wc_replication = parsed;
                 },
                 "wc_timeout" => {
-                    let parsed = value.parse::<u32>().expect("Value for `model(wc_timeout)` must be a `u32` wrapped in a string.");
+                    let parsed = value.parse::<i32>().expect("Value for `model(wc_timeout)` must be an `i32` wrapped in a string.");
                     struct_data.wc_timeout = parsed;
                 },
                 "wc_journaling" => {

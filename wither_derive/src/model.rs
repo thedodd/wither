@@ -114,12 +114,12 @@ impl MetaModel {
 
     /// The write replication settings for this model. Defaults to `1`.
     pub fn write_concern_w(&self) -> i32 {
-        self.struct_data.wc_replication as i32
+        self.struct_data.wc_replication
     }
 
     /// The write concern timeout settings for this model. Defaults to `0`.
     pub fn write_concern_w_timeout(&self) -> i32 {
-        self.struct_data.wc_timeout as i32
+        self.struct_data.wc_timeout
     }
 
     /// The write concern journal settings for this model. Defaults to `true`.

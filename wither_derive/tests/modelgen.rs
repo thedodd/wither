@@ -68,18 +68,19 @@ struct DerivedModel {
 
 /// This model tests the generation of an accurate collection name based on the model's ident.
 #[derive(Model, Serialize, Deserialize)]
+#[model(wc_replication="2", wc_timeout="300", wc_journaling="false", wc_fsync="true")]
 struct SecondModel {
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
     id: Option<bson::oid::ObjectId>,
 }
 
 #[test]
-fn test_first_model_collection_name() {
+fn test_model_collection_name_with_override() {
     assert_eq!("derivations", DerivedModel::COLLECTION_NAME);
 }
 
 #[test]
-fn test_second_model_collection_name() {
+fn test_model_collection_name_defaults() {
     assert_eq!("second_models", SecondModel::COLLECTION_NAME);
 }
 
@@ -118,6 +119,30 @@ fn test_first_model_indexes() {
 
     IndexShapeAssert::new(idx7, doc!{"field_geo_haystack": "geoHaystack", "field_geo_haystack_filter": 1i32})
         .bucket_size(Some(5i32)).assert();
+}
+
+#[test]
+fn test_model_write_concern_replication() {
+    assert_eq!(DerivedModel::write_concern_w(), 1);
+    assert_eq!(SecondModel::write_concern_w(), 2);
+}
+
+#[test]
+fn test_model_write_concern_timeout() {
+    assert_eq!(DerivedModel::write_concern_w_timeout(), 0);
+    assert_eq!(SecondModel::write_concern_w_timeout(), 300);
+}
+
+#[test]
+fn test_model_write_concern_journaling() {
+    assert_eq!(DerivedModel::write_concern_j(), true);
+    assert_eq!(SecondModel::write_concern_j(), false);
+}
+
+#[test]
+fn test_model_write_concern_fsync() {
+    assert_eq!(DerivedModel::write_concern_fsync(), false);
+    assert_eq!(SecondModel::write_concern_fsync(), true);
 }
 
 /// A utility type used for comparing index models.
