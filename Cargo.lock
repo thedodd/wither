@@ -546,7 +546,7 @@ dependencies = [
 
 [[package]]
 name = "wither"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "bson 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -580,7 +580,7 @@ dependencies = [
  "mongodb 0.3.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "wither 0.6.1",
+ "wither 0.6.2",
  "wither_derive 0.6.1",
 ]
 
