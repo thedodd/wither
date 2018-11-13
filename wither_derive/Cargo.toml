@@ -4,13 +4,14 @@ categories = ["database", "data-structures"]
 description = "An ODM for MongoDB built upon the mongo rust driver."
 documentation = "https://github.com/thedodd/wither"
 exclude = []
+include = ["*", "../docs/*"]
 homepage = "https://github.com/thedodd/wither"
 keywords = ["mongodb", "odm", "orm"]
 license = "Apache-2.0"
 name = "wither_derive"
-readme = "../README.md"
+readme = "README.md"
 repository = "https://github.com/thedodd/wither"
-version = "0.6.0"
+version = "0.6.1"
 
 [lib]
 proc-macro = true
