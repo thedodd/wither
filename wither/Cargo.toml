@@ -23,3 +23,9 @@ wither_derive = { path = "../wither_derive" }
 
 [dev-dependencies]
 lazy_static = "1"
+
+[features]
+docinclude = [] # Used only for activating `doc(include="...")` on stable.
+
+[package.metadata.docs.rs]
+features = ["docinclude"] # Activate `docinclude` during docs.rs build.

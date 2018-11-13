@@ -19,3 +19,9 @@ syn = { version = "0.15", features = ["extra-traits"] }
 compiletest_rs = "0.3"
 wither = { path = "../wither" }
 serde_derive = "1"
+
+[features]
+docinclude = [] # Used only for activating `doc(include="...")` on stable.
+
+[package.metadata.docs.rs]
+features = ["docinclude"] # Activate `docinclude` during docs.rs build.
