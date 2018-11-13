@@ -1,6 +1,6 @@
 Interface for schema migrations.
 
-As your system evolves over time, you may find yourself needing to evolve the data in your databases along with your models. This will keep your database clean, and will allow you to evolve your data at a more rapid and controlled pace.
+As your system evolves over time, you may find yourself needing to alter the data in your databases in a way which does not fit in with the standard `Model` lifecycle. Using the migration system will keep your database clean, and will allow you to evolve your data at a more rapid and controlled pace.
 
 Migrations are controlled by implementing the [Migrating](./trait.Migrating.html) trait on your `Model`s. This couldn't be more simple, so let's look at an example of an [`IntervalMigration`](./struct.IntervalMigration.html).
 

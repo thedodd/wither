@@ -17,6 +17,10 @@ There are a few struct-level `Model` attributes available currently.
 
 - `collection_name="..."`: this allows you to specify your model name explicitly. By default, your model's name will be pluralized, and then formatted as a standard table name (with underscores, EG `OrgPermission` becomes `org_permissions`).
 - `skip_serde_checks`: including this attribute will disable any checks which are normally performed to ensure that serde is setup properly on your model. If you disable serde checks, you're on your own `:)`.
+- `wc_replication="..."`: this controls the model's write concern replication setting. Must be an `i32` wrapped in a string. Defaults to `1`. It is acknowledged that it is possible to specify `"majority"` in MongoDB itself, but the underlying MongoDB driver does not currently support that option. If this is an issue for you, please open an issue in this repo.
+- `wc_timeout="..."`: this controls the model's write concern replication timeout setting. Must be an `i32` wrapped in a string. Defaults to `0`.
+- `wc_journaling="..."`: this controls the model's write concern replication journaling setting. Must be a `bool` wrapped in a string. Defaults to `true`.
+- `wc_fsync="..."`: this controls the model's write concern replication fsync setting. Must be a `bool` wrapped in a string. Defaults to `false`.
 
 ### indexing
 Adding indexes to your model's collection is done entirely through the attribute system. Let's start with an example.
