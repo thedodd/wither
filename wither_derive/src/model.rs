@@ -111,6 +111,26 @@ impl MetaModel {
     pub fn struct_name(&self) -> &syn::Ident {
         &self.ident
     }
+
+    /// The write replication settings for this model. Defaults to `1`.
+    pub fn write_concern_w(&self) -> i32 {
+        self.struct_data.wc_replication as i32
+    }
+
+    /// The write concern timeout settings for this model. Defaults to `0`.
+    pub fn write_concern_w_timeout(&self) -> i32 {
+        self.struct_data.wc_timeout as i32
+    }
+
+    /// The write concern journal settings for this model. Defaults to `true`.
+    pub fn write_concern_j(&self) -> bool {
+        self.struct_data.wc_journaling
+    }
+
+    /// The write concern fsync settings for this model. Defaults to `false`.
+    pub fn write_concern_fsync(&self) -> bool {
+        self.struct_data.wc_fsync
+    }
 }
 
 /// The serde attributes which are needed on the ID field for the system to work correctly.

@@ -40,8 +40,10 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
     model.ensure_id_field();
 
     // Build output code for deriving `Model`.
-    let name = model.struct_name();
-    let collection_name = model.collection_name();
+    let (name, collection_name, wc_w, wc_t, wc_j, wc_f) = (
+        model.struct_name(), model.collection_name(),
+        model.write_concern_w(), model.write_concern_w_timeout(), model.write_concern_j(), model.write_concern_fsync(),
+    );
     let indexes = Indexes(model.indexes());
     let expanded = quote! {
         impl<'a> wither::Model<'a> for #name {
@@ -60,6 +62,26 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
             /// All indexes currently on this model.
             fn indexes() -> Vec<IndexModel> {
                 #indexes
+            }
+
+            /// The write replication settings for this model. Defaults to `1`.
+            fn write_concern_w() -> i32 {
+                #wc_w
+            }
+
+            /// The write concern timeout settings for this model. Defaults to `0`.
+            fn write_concern_w_timeout() -> i32 {
+                #wc_t
+            }
+
+            /// The write concern journal settings for this model. Defaults to `true`.
+            fn write_concern_j() -> bool {
+                #wc_j
+            }
+
+            /// The write concern fsync settings for this model. Defaults to `false`.
+            fn write_concern_fsync() -> bool {
+                #wc_f
             }
         }
     };

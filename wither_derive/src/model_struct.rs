@@ -4,13 +4,37 @@ use syn;
 use ::msg;
 
 /// All `Model` struct attributes which have been accumulated from the target struct.
-#[derive(Default)]
 pub(crate) struct MetaModelStructData {
     /// The name to be used for the model's collection.
     pub collection_name: String,
 
     /// An attribute to control whether or not this derive macro will check for serde attributes.
     pub skip_serde_checks: bool,
+
+    /// An attribute to control write concern replication.
+    pub wc_replication: u32,
+
+    /// An attribute to control write concern replication timeout.
+    pub wc_timeout: u32,
+
+    /// An attribute to control write concern journaling.
+    pub wc_journaling: bool,
+
+    /// An attribute to control write concern fsync.
+    pub wc_fsync: bool,
+}
+
+impl Default for MetaModelStructData {
+    fn default() -> Self {
+        MetaModelStructData {
+            collection_name: Default::default(),
+            skip_serde_checks: Default::default(),
+            wc_replication: 1u32,
+            wc_timeout: Default::default(),
+            wc_journaling: true,
+            wc_fsync: Default::default(),
+        }
+    }
 }
 
 impl MetaModelStructData {
@@ -75,6 +99,22 @@ fn handle_kv_attr(kv: &syn::MetaNameValue, struct_data: &mut MetaModelStructData
                     if struct_data.collection_name.len() < 1 {
                         panic!("The `Model` struct attribute 'collection_name' may not have a zero-length value.");
                     }
+                },
+                "wc_replication" => {
+                    let parsed = value.parse::<u32>().expect("Value for `model(wc_replication)` must be a `u32` wrapped in a string.");
+                    struct_data.wc_replication = parsed;
+                },
+                "wc_timeout" => {
+                    let parsed = value.parse::<u32>().expect("Value for `model(wc_timeout)` must be a `u32` wrapped in a string.");
+                    struct_data.wc_timeout = parsed;
+                },
+                "wc_journaling" => {
+                    let parsed = value.parse::<bool>().expect("Value for `model(wc_journaling)` must be a `bool` wrapped in a string.");
+                    struct_data.wc_journaling = parsed;
+                },
+                "wc_fsync" => {
+                    let parsed = value.parse::<bool>().expect("Value for `model(wc_fsync)` must be a `bool` wrapped in a string.");
+                    struct_data.wc_fsync = parsed;
                 },
                 _ => panic!(format!("Unrecognized struct-level `Model` attribute '{}'.", ident)),
             }
