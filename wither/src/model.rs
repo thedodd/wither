@@ -1,65 +1,4 @@
-//! Interface for defining & using data models.
-//!
-//! `Model` is the central type in this crate. The entire purpose of this create is to simplify
-//! the process of interfacing with MongoDB in Rust for patterns which should be simple. This
-//! system allows you to define a data model using a normal struct, and then interact with your
-//! MongoDB database collections using that struct.
-//!
-//! Implementing `Model` for your custom structs is quite simple.
-//!
-//! - define an associated constant `COLLECTION_NAME` in your impl which will be the name of the
-//!   collection where the corresponding model's data will be read from & written to.
-//! - provide an implementation for the `id` & `set_id` methods.
-//!
-//! That's it! Now you can easliy perform standard CRUD operations on MongoDB
-//! using your models.
-//!
-//! ### sync
-//!
-//! [`Model::sync`](./trait.Model.html#method.sync) is an integral component of this system &
-//! allows you to delegate a majority of your database administration tasks to your services which
-//! are actually using the database. Both of the [indexes](trait.Model.html#method.indexes) &
-//! [migrations](trait.Model.html#method.migrations) systems rely upon this system to function.
-//!
-//! This routine should be called once per model, early on at boottime. It will synchronize any
-//! indexes defined on this model with the backend & will execute any active migrations against
-//! the model's collection.
-//!
-//! This routine will destroy any indexes found on this model's collection which are not defined
-//! on this model (barring the default index on `_id`).
-//!
-//! ### indexes
-//!
-//! Any collection that you actually plan on reading data from will need some indexes. These are
-//! very simple to define in your `Model` implementation.
-//!
-//! ```rust
-//! use mongodb::coll::options::IndexModel;
-//!
-//! // snip ...
-//!
-//! // Define any indexes which need to be maintained for your model here.
-//! // Remember to `use mongodb::coll::options::IndexModel;`.
-//! fn indexes() -> Vec<IndexModel> {
-//!     return vec![
-//!         IndexModel{
-//!             keys: doc!{"email": 1},
-//!             // Args are: name, background, unique, ttl, sparse.
-//!             options: wither::basic_index_options("unique-email", true, Some(true), None, None),
-//!         },
-//!     ];
-//! }
-//!
-//! // snip ...
-//! ```
-//!
-//! Whenever [`Model::sync`](./trait.Model.html#method.sync) is called, it will synchronize any
-//! indexes defined in this method with the database. Any indexes which do not exist in the model
-//! definition will be removed (barring the default index on `_id`).
-//!
-//! ### migrations
-//! See the documentation on the [migration](../migration/index.html) module.
-
+//! Model related code.
 
 use std::collections::HashMap;
 use std::error::Error;
@@ -94,8 +33,6 @@ use serde::{
     Deserialize,
 };
 
-use migration::Migration;
-
 /// The name of the default index created by MongoDB.
 pub const DEFAULT_INDEX: &str = "_id";
 
@@ -121,7 +58,12 @@ pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, e
     };
 }
 
-/// Model provides data modeling behaviors for interacting with MongoDB database collections.
+/// This trait provides data modeling behaviors for interacting with MongoDB database collections.
+///
+#[cfg_attr(feature="docinclude", doc(include="../../docs/model-derive.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../../docs/model-sync.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../../docs/logging.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../../docs/manually-implementing-model.md"))]
 pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// The name of the collection where this model's data is stored.
@@ -142,32 +84,32 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// ensures that an ObjectId will be returned for the inserted document. For most cases,
     /// overriding this implementation should be unnecessary.
     fn model_write_concern() -> WriteConcern {
-        return WriteConcern{
+        WriteConcern{
             w: Self::write_concern_w(),
             w_timeout: Self::write_concern_w_timeout(),
             j: Self::write_concern_j(),
             fsync: Self::write_concern_fsync(),
-        };
+        }
     }
 
     /// The write replication settings for this model. Defaults to `1`.
     fn write_concern_w() -> i32 {
-        return 1;
+        1
     }
 
     /// The write concern timeout settings for this model. Defaults to `0`.
     fn write_concern_w_timeout() -> i32 {
-        return 0;
+        0
     }
 
     /// The write concern journal settings for this model. Defaults to `true`.
     fn write_concern_j() -> bool {
-        return true;
+        true
     }
 
     /// The write concern fsync settings for this model. Defaults to `false`.
     fn write_concern_fsync() -> bool {
-        return false;
+        false
     }
 
     //////////////////
@@ -390,23 +332,16 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         vec![]
     }
 
-    /// Get the vector of migration objects for this model.
-    fn migrations() -> Vec<Box<Migration>> {
-        vec![]
-    }
-
     /// Synchronize this model with the backend.
     ///
     /// This routine should be called once per model, early on at boottime. It will synchronize
-    /// any indexes defined on this model with the backend & will execute any active migrations
-    /// against the model's collection.
+    /// any indexes defined on this model with the backend.
     ///
     /// This routine will destroy any indexes found on this model's collection which are not
     /// defined in the response from `Self.indexes()`.
     fn sync(db: Database) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
         sync_model_indexes(&coll, Self::indexes())?;
-        sync_model_migrations(&coll, Self::migrations())?;
         Ok(())
     }
 }
@@ -475,18 +410,6 @@ fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> Res
     }
 
     info!("Finished synchronizing indexes for '{}'.", coll.namespace);
-    Ok(())
-}
-
-fn sync_model_migrations<'a>(coll: &'a Collection, migrations: Vec<Box<Migration>>) -> Result<()> {
-    info!("Starting migrations for '{}'.", coll.namespace);
-
-    // Execute each migration.
-    for migration in migrations {
-        migration.execute(coll)?;
-    }
-
-    info!("Finished migrations for '{}'.", coll.namespace);
     Ok(())
 }
 

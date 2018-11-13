@@ -1,62 +1,21 @@
-version: '2'
+version: '3'
 services:
-  _base:
-    build: .
-    command: cargo test --tests --lib -- --test-threads=1
-    working_dir: /wither
-
-  test.3-2:
-    extends:
-      service: _base
-    links:
-      - mongodb.3-2
-    environment:
-      BACKEND_HOST: mongodb.3-2
-      BACKEND_PORT: 27017
-
-  test.3-4:
-    extends:
-      service: _base
-    links:
-      - mongodb.3-4
-    environment:
-      BACKEND_HOST: mongodb.3-4
-      BACKEND_PORT: 27017
-
-  test.3-6:
-    extends:
-      service: _base
-    links:
-      - mongodb.3-6
-    environment:
-      BACKEND_HOST: mongodb.3-6
-      BACKEND_PORT: 27017
-
-  test.with-mounts:
-    extends:
-      service: _base
-    depends_on:
-      - mongodb.3-4
-    environment:
-      BACKEND_HOST: mongodb.3-4
-      BACKEND_PORT: 27017
-    volumes:
-      - ./Cargo.lock:/wither/Cargo.lock
-      - ./Cargo.toml:/wither/Cargo.toml
-      - ./src:/wither/src
-      - ./tests:/wither/tests
-
   mongodb.3-2:
-    image: mongo:3.2.19
+    image: mongo:3.2
     ports:
-      - 27017
+      - 27017:27017
 
   mongodb.3-4:
-    image: mongo:3.4.14
+    image: mongo:3.4
     ports:
-      - 27017
+      - 27117:27017
 
   mongodb.3-6:
-    image: mongo:3.6.3
+    image: mongo:3.6
     ports:
-      - 27017
+      - 27217:27017
+
+  mongodb.4-0:
+    image: mongo:4.0
+    ports:
+      - 27317:27017

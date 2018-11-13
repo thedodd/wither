@@ -1,0 +1,31 @@
+[package]
+authors = ["Anthony Dodd <Dodd.AnthonyJosiah@gmail.com>"]
+categories = ["database", "data-structures"]
+description = "An ODM for MongoDB built upon the mongo rust driver."
+documentation = "https://github.com/thedodd/wither"
+exclude = [".git*", "target", "docker-compose.yml", "Dockerfile"]
+homepage = "https://github.com/thedodd/wither"
+keywords = ["mongodb", "odm", "orm"]
+license = "Apache-2.0"
+name = "wither"
+readme = "README.md"
+repository = "https://github.com/thedodd/wither"
+version = "0.5.2"
+
+[dependencies]
+bson = "0.12"
+chrono = "0.4"
+log = "0.4"
+mongodb = "0.3"
+serde = "1"
+serde_derive = "1"
+wither_derive = { path = "../wither_derive" }
+
+[dev-dependencies]
+lazy_static = "1"
+
+[features]
+docinclude = [] # Used only for activating `doc(include="...")` on stable.
+
+[package.metadata.docs.rs]
+features = ["docinclude"] # Activate `docinclude` during docs.rs build.

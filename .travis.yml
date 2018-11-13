@@ -1,28 +1,36 @@
 sudo: required
-
+language: rust
+rust:
+  - stable
+services:
+  - docker
 # env:
 #   - DOCKER_COMPOSE_VERSION=1.14.0
 
-services:
-  - docker
+# Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work.
+cache:
+  directories:
+    - /home/travis/.cargo
+
+# Don't cache the cargo registry.
+before_cache:
+  - rm -rf /home/travis/.cargo/registry
 
 before_install:
-#   # Update to specific version of docker.
-#   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-#   - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-#   - sudo apt-get update
-#   - sudo apt-get -y install docker-ce
-#
-#   # Get needed version of docker-compose in place. This is straight from the travis docs.
-#   - sudo rm /usr/local/bin/docker-compose
-#   - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
-#   - chmod +x docker-compose
-#   - sudo mv docker-compose /usr/local/bin
-  - docker-compose up -d mongodb.3-2
-  - docker-compose up -d mongodb.3-4
-  - docker-compose up -d mongodb.3-6
+  - docker-compose up -d
+  - rustup install nightly-2018-10-09
 
 script:
-  - docker-compose run test.3-2
-  - docker-compose run test.3-4
-  - docker-compose run test.3-6
+  # Test doc samples.
+  - cd wither && cargo +nightly-2018-10-09 test --features docinclude --doc; cd -
+  - cd wither_derive && cargo +nightly-2018-10-09 test --features docinclude --doc; cd -
+  # Test code generation & compilation.
+  - cargo +nightly-2018-10-09 test -p wither_derive --tests --lib
+  # Test against MongoDB 3.2.
+  - HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
+  # Test against MongoDB 3.4.
+  - HOST=localhost PORT=27117 cargo test -p wither --tests --lib -- --test-threads=1
+  # Test against MongoDB 3.6.
+  - HOST=localhost PORT=27217 cargo test -p wither --tests --lib -- --test-threads=1
+  # Test against MongoDB 4.0.
+  - HOST=localhost PORT=27317 cargo test -p wither --tests --lib -- --test-threads=1

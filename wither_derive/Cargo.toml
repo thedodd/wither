@@ -1,0 +1,27 @@
+[package]
+authors = ["Anthony Dodd <dodd.anthonyjosiah@gmail.com>"]
+name = "wither_derive"
+version = "0.1.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+bson = "0.12"
+Inflector = "0.11"
+mongodb = "0.3"
+proc-macro2 = "0.4"
+quote = "0.6"
+serde = "1"
+syn = { version = "0.15", features = ["extra-traits"] }
+
+[dev-dependencies]
+compiletest_rs = "0.3"
+wither = { path = "../wither" }
+serde_derive = "1"
+
+[features]
+docinclude = [] # Used only for activating `doc(include="...")` on stable.
+
+[package.metadata.docs.rs]
+features = ["docinclude"] # Activate `docinclude` during docs.rs build.

@@ -8,65 +8,71 @@ wither
 
 An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype). Please ⭐ on [github](https://github.com/thedodd/wither)!
 
-A primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver.
+The primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.2`, `3.4`, `3.6` & `4.0`.
 
-Migrations have landed! Check out the docs for more info on getting started with migrations.
-
-This project makes use of `associated constants` as of `0.2.0`, so you will need to be running rust `>= 1.20`.
-
-**NOTE:** progress is being, but there is a lot more to be done! For the time being, there may be backwards incompatible releases made from minor version to minor version until the best patterns for this library are found. It would be best to pin to an exact version in your `Cargo.toml`. Any such backwards incompatible changes will be declared in the [changelog](https://github.com/thedodd/wither/master/CHANGELOG.md).
-
-Check out the [changelog](https://github.com/thedodd/wither/master/CHANGELOG.md) for more details on what has happened from release to release.
-
-### current plans & direction
-Progress is being made towards a `0.6.0` release. This will be a backwards incompatible release ... but you should be able to remove a decent bit of code. The release will be focused on implementing a custom derive for defining your models, which is 95% of what it takes to get started with this crate. Seems like a big win, IMHO.
+### items of interest
+- [docs](https://docs.rs/wither): all the good stuff is here.
+- [changelog](https://github.com/thedodd/wither/master/wither/CHANGELOG.md): details on what has happened from release to release.
+- [contributing & development guidelines](https://github.com/thedodd/wither/blob/master/CONTRIBUTING.md): details on how to get started with doing development on this project.
 
 ### getting started
-A minimal example of how you might define a model for a MongoDB collection.
+To get started, simply derive `Model` on your struct along with a few other serde derivations. Let's step through a full example with imports and all.
 
-```rust
+```rust ,no_run
+// First, we add import statements for the crates that we need.
+// In Rust 2018, `extern crate` declarations will no longer be needed.
 #[macro_use]
 extern crate bson;
+extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
 extern crate serde_derive;
 extern crate wither;
+#[macro_use(Model)]
+extern crate wither_derive;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct User {
-    /// The user's unique ID.
-    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+// Next we bring a few types into scope for our example.
+use bson::oid::ObjectId;
+use mongodb::{
+    Client, ThreadedClient,
+    db::{Database, ThreadedDatabase},
+    coll::options::IndexModel,
+};
+use wither::prelude::*;
 
-    /// The user's unique email.
+// Now we define our model. Simple as deriving a few traits.
+#[derive(Model, Serialize, Deserialize)]
+struct User {
+    /// The ID of the model.
+    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
+    pub id: Option<ObjectId>,
+
+    /// This field has a unique index on it.
+    #[model(index(index_type="dsc", unique="true"))]
     pub email: String,
 }
 
-impl<'a> wither::Model<'a> for User {
+fn main() {
+    // Create a user.
+    let db = mongodb::Client::with_uri("mongodb://localhost:27017/").unwrap().db("mydb");
+    let mut me = User{id: None, email: "my.email@example.com".to_string()};
+    me.save(db.clone(), None);
 
-    /// The name of this model's collection.
-    const COLLECTION_NAME: &'static str = "users";
+    // Update user's email address.
+    me = me.update(db.clone(), doc!{"$set": doc!{"email": "new.email@example.com"}}, None).unwrap();
 
-    /// Implement the getter for the ID of a model instance.
-    fn id(&self) -> Option<bson::oid::ObjectId> {
-        return self.id.clone();
-    }
-
-    /// Implement the setter for the ID of a model instance.
-    fn set_id(&mut self, oid: bson::oid::ObjectId) {
-        self.id = Some(oid);
-    }
+    // Fetch all users.
+    let all_users = User::find(db.clone(), None, None).unwrap();
 }
 ```
 
-#### logging
-This create uses the [rust standard logging facade](https://docs.rs/log/), and integrating it with another logging framework is usually quite simple. If you are using slog, check out the [slog-rs/stdlog](https://docs.rs/slog-stdlog/) create for easy integration.
-
 #### next steps
-Now you are ready to tackle some of the other important parts of the model lifecycle. Some additional items to look into:
+And that's all there is to it. Now you are ready to tackle some of the other important parts of the model lifecycle. Some additional items to look into:
 
-- [Model::sync](https://docs.rs/wither/0.5.1/wither/model/index.html#sync) - sync your models with the backend.
-- [Model::indexes](https://docs.rs/wither/0.5.1/wither/model/index.html#indexes) - define indexes for your models.
-- [Model::migrations](https://docs.rs/wither/0.5.1/wither/model/index.html#migrations) - define migrations to be run against your models collections.
+- [deriving model](https://docs.rs/wither/latest/wither/model/trait.Model.html) - learn more about automatically deriving the `Model` trait on your structs.
+- [model usage](https://docs.rs/wither/latest/wither/model/trait.Model.html#provided-methods) - check out some of the other methods available to you from your models.
+- [syncing indexes](https://docs.rs/wither/latest/wither/model/trait.Model.html#sync) - learn how to synchronize a model's indexes with the database.
+- [logging](https://docs.rs/wither/latest/wither/model/trait.Model.html#logging) - learn how to hook into this crate's logging mechanisms (hint, we use Rust's standard logging facade).
+- [migrations](https://docs.rs/wither/latest/wither/migration/index.html) - learn about defining migrations to be run against your model's collection.
 
 Good luck on the path.

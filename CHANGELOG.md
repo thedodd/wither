@@ -1,6 +1,18 @@
 changelog
 =========
 
+## 0.6
+Wow! So much stuff here. `0.6` is a big step forward for the ergonomics & usability of the wither system. A custom derive has been introduced (`#[derive(Model)]`), and it is now the recommended way to use this system. This should greatly simplify the process of getting started. Overall this has been an awesome experience putting this together and delving into the custom derive system in Rust. Here are a few of the changes to highlight.
+- Use `#[derive(Model)]` to turn your struct into a wither `Model`.
+- A model's collection name can be controlled via the `#[model(collection_name="...")]` struct attribute, or left off to have a default name generated based on the struct's name.
+- Write concern settings are controlled via struct-level `#[model(wc_*)]` attributes.
+- Indexes are defined using the `#[model(index(...))]` attribute.
+- A `wither::prelude` module has been added for easily pulling in all traits which you may need to use wither effectively.
+- Everything has been thoroughly tested, including exhaustive use of `compiletest-rs` for the code generation of the custom derive.
+
+There is really only one breaking change with this release:
+- migrations no longer run as part of the `Model::sync` system. They are now encapsulated in their own trait which must be manually implemented on your models if they need migrations. See the docs for more details.
+
 ## 0.5
 - a migrations system has been added, closing [#3](https://github.com/thedodd/wither/issues/3) & [#4](https://github.com/thedodd/wither/issues/4). The important part of this feature set is the `IntervalMigration` type.
 - `Model::sync` has received some updates. It now synchronizes a model's indexes as well as its migrations.
