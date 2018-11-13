@@ -1,5 +1,10 @@
 contributing
 ============
+This project is currently setup as three different crates.
+
+- `wither`: the main business logic crate.
+- `wither_derive`: the custom derive logic.
+- `wither_tests`: a crate which depends on the above two crates for executing compiler tests and the like. In the future, once we hit a `1.0`, we will be able to collapse this crate back down into the `wither_derive` crate. It is only needed in order to ensure that we can cleanly release the `wither_derive` crate onto crates.io without any issues.
 
 ### development
 #### tests

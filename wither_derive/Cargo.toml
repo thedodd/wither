@@ -24,11 +24,6 @@ quote = "0.6"
 serde = "1"
 syn = { version = "0.15", features = ["extra-traits"] }
 
-[dev-dependencies]
-compiletest_rs = "0.3"
-wither = { version = "0.6", path = "../wither" }
-serde_derive = "1"
-
 [features]
 docinclude = [] # Used only for activating `doc(include="...")` on stable.
 

@@ -564,14 +564,24 @@ version = "0.6.0"
 dependencies = [
  "Inflector 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "bson 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "compiletest_rs 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "mongodb 0.3.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2 0.4.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "quote 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "syn 0.15.20 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "wither_tests"
+version = "0.0.0"
+dependencies = [
+ "bson 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "compiletest_rs 0.3.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mongodb 0.3.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "wither 0.6.0",
+ "wither_derive 0.6.0",
 ]
 
 [metadata]
