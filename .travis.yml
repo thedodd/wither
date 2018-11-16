@@ -22,10 +22,10 @@ before_install:
 
 script:
   # Test doc samples.
-  - cd wither && cargo +nightly-2018-10-09 test --features docinclude --doc; cd -
-  - cd wither_derive && cargo +nightly-2018-10-09 test --doc; cd -
+  - cd wither && cargo +nightly-2018-11-09 test --features docinclude --doc; cd -
+  - cd wither_derive && cargo +nightly-2018-11-09 test --doc; cd -
   # Test code generation & compilation.
-  - cargo +nightly-2018-10-09 test -p wither_tests -p wither_derive --tests --lib
+  - cargo +nightly-2018-11-09 test -p wither_tests -p wither_derive --tests --lib
   # Test against MongoDB 3.2.
   - HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
   # Test against MongoDB 3.4.
