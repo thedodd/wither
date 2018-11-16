@@ -5,25 +5,17 @@ rust:
 services:
   - docker
 
-# # Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work.
-# cache:
-#   directories:
-#     - /home/travis/.cargo
-
-# Don't cache the cargo registry.
-before_cache:
-  - rm -rf /home/travis/.cargo/registry
-
 before_install:
   - docker-compose up -d
-  - rustup install nightly-2018-11-09
+  - rustup install nightly-2018-11-10
+  - cargo clean
 
 script:
-  # Test doc samples.
-  - cd wither && cargo +nightly-2018-11-09 test --features docinclude --doc; cd -
-  - cd wither_derive && cargo +nightly-2018-11-09 test --doc; cd -
   # Test code generation & compilation.
-  - cargo +nightly-2018-11-09 test -p wither_tests -p wither_derive --tests --lib
+  - cargo +nightly-2018-11-10 test -p wither_tests -p wither_derive --tests --lib
+  # Test doc samples.
+  - cd wither && cargo +nightly-2018-11-10 test --features docinclude --doc; cd -
+  - cd wither_derive && cargo +nightly-2018-11-10 test --doc; cd -
   # Test against MongoDB 3.2.
   - HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
   # Test against MongoDB 3.4.
