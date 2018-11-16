@@ -4,13 +4,11 @@ rust:
   - stable
 services:
   - docker
-# env:
-#   - DOCKER_COMPOSE_VERSION=1.14.0
 
-# Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work.
-cache:
-  directories:
-    - /home/travis/.cargo
+# # Need to cache the whole `.cargo` directory to keep .crates.toml for cargo-update to work.
+# cache:
+#   directories:
+#     - /home/travis/.cargo
 
 # Don't cache the cargo registry.
 before_cache:
