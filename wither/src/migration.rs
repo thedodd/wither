@@ -2,9 +2,9 @@
 
 use std::error::Error;
 
-use bson::{Bson, Document};
 use chrono;
 use mongodb::{
+    Bson, Document,
     db::{
         Database,
         ThreadedDatabase,

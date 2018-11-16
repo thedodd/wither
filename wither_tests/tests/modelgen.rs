@@ -1,6 +1,5 @@
-#[macro_use]
-extern crate bson;
 extern crate compiletest_rs as compiletest;
+#[macro_use]
 extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
@@ -9,9 +8,8 @@ extern crate wither;
 #[macro_use(Model)]
 extern crate wither_derive;
 
-use bson::Document;
 use wither::prelude::*;
-use mongodb::coll::options::IndexModel;
+use mongodb::{Document, coll::options::IndexModel};
 
 /// This model tests all of the major code generation bits.
 ///
@@ -22,7 +20,7 @@ use mongodb::coll::options::IndexModel;
 struct DerivedModel {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<mongodb::oid::ObjectId>,
 
     // A field to test base line index options with index of type `asc`.
     #[model(index(
@@ -71,7 +69,7 @@ struct DerivedModel {
 #[model(wc_replication="2", wc_timeout="300", wc_journaling="false", wc_fsync="true")]
 struct SecondModel {
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    id: Option<bson::oid::ObjectId>,
+    id: Option<mongodb::oid::ObjectId>,
 }
 
 #[test]

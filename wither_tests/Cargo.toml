@@ -6,7 +6,6 @@ version = "0.0.0"
 [dependencies]
 
 [dev-dependencies]
-bson = "0.12"
 compiletest_rs = "0.3"
 mongodb = "0.3"
 serde = "1"

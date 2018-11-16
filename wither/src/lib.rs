@@ -1,11 +1,10 @@
 #![cfg_attr(feature="docinclude", feature(external_doc))]
 #![cfg_attr(feature="docinclude", doc(include="../README.md"))]
 
-#[macro_use(doc, bson)]
-pub extern crate bson;
 extern crate chrono;
 #[macro_use]
 extern crate log;
+#[macro_use(doc, bson)]
 pub extern crate mongodb;
 extern crate serde;
 

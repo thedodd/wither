@@ -1,8 +1,10 @@
 use std::fmt::Display;
 use std::str::FromStr;
 
-use bson::Document;
-use mongodb::coll::options::{IndexModel, IndexOptions};
+use mongodb::{
+    Document,
+    coll::options::{IndexModel, IndexOptions},
+};
 use syn;
 
 use msg;

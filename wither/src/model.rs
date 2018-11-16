@@ -3,35 +3,29 @@
 use std::collections::HashMap;
 use std::error::Error;
 
-use bson;
-use bson::Document;
-use bson::oid::ObjectId;
-use mongodb::error::Error::{
-    ArgumentError,
-    DecoderError,
-    DefaultError,
-    OIDError,
-    ResponseError,
+use mongodb::{
+    Bson, Document,
+    coll::{
+        Collection,
+        options::{
+            CountOptions,
+            FindOneAndUpdateOptions,
+            FindOptions,
+            IndexModel,
+            IndexOptions,
+            ReturnDocument,
+        },
+    },
+    common::WriteConcern,
+    db::{Database, ThreadedDatabase},
+    error::{
+        Error::{ArgumentError, DecoderError, DefaultError, OIDError, ResponseError},
+        Result,
+    },
+    oid::ObjectId,
+    to_bson, from_bson,
 };
-use mongodb::error::Result;
-use mongodb::coll::Collection;
-use mongodb::coll::options::{
-    CountOptions,
-    FindOneAndUpdateOptions,
-    FindOptions,
-    IndexModel,
-    IndexOptions,
-    ReturnDocument,
-};
-use mongodb::common::WriteConcern;
-use mongodb::db::{
-    Database,
-    ThreadedDatabase,
-};
-use serde::{
-    Serialize,
-    Deserialize,
-};
+use serde::{Serialize, Deserialize};
 
 /// The name of the default index created by MongoDB.
 pub const DEFAULT_INDEX: &str = "_id";
@@ -201,8 +195,8 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// operation.
     fn save(&mut self, db: Database, filter: Option<Document>) -> Result<()> {
         let coll = db.collection(Self::COLLECTION_NAME);
-        let instance_doc = match bson::to_bson(&self)? {
-            bson::Bson::Document(doc) => doc,
+        let instance_doc = match to_bson(&self)? {
+            Bson::Document(doc) => doc,
             _ => return Err(DefaultError("Failed to convert struct to a bson document.".to_string())),
         };
 
@@ -317,8 +311,8 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     // Convenience Methods //
 
     /// Attempt to serialize the given bson document into an instance of this model.
-    fn instance_from_document(document: bson::Document) -> Result<Self> {
-        match bson::from_bson::<Self>(bson::Bson::Document(document)) {
+    fn instance_from_document(document: Document) -> Result<Self> {
+        match from_bson::<Self>(Bson::Document(document)) {
             Ok(inst) => Ok(inst),
             Err(err) => Err(DecoderError(err)),
         }

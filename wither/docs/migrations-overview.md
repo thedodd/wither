@@ -5,9 +5,8 @@ As your system evolves over time, you may find yourself needing to alter the dat
 Migrations are controlled by implementing the [Migrating](./trait.Migrating.html) trait on your `Model`s. This couldn't be more simple, so let's look at an example of an [`IntervalMigration`](./struct.IntervalMigration.html).
 
 ```rust
-# #[macro_use]
-# extern crate bson;
 # extern crate chrono;
+# #[macro_use]
 # extern crate mongodb;
 # extern crate serde;
 # #[macro_use(Serialize, Deserialize)]
@@ -16,19 +15,19 @@ Migrations are controlled by implementing the [Migrating](./trait.Migrating.html
 # #[macro_use(Model)]
 # extern crate wither_derive;
 #
-# use bson::oid::ObjectId;
 # use chrono::offset::TimeZone;
 # use mongodb::{
 #     Client, ThreadedClient,
 #     db::{Database, ThreadedDatabase},
 #     coll::options::IndexModel,
+#     oid::ObjectId,
 # };
 # use wither::prelude::*;
 #
 # #[derive(Serialize, Deserialize, Model)]
 # pub struct User {
 #     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-#     pub id: Option<bson::oid::ObjectId>,
+#     pub id: Option<mongodb::oid::ObjectId>,
 # }
 #
 impl<'m> Migrating<'m> for User {

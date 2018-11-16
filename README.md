@@ -26,7 +26,6 @@ To get started, simply derive `Model` on your struct along with a few other serd
 // First, we add import statements for the crates that we need.
 // In Rust 2018, `extern crate` declarations will no longer be needed.
 #[macro_use]
-extern crate bson;
 extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
@@ -36,11 +35,11 @@ extern crate wither;
 extern crate wither_derive;
 
 // Next we bring a few types into scope for our example.
-use bson::oid::ObjectId;
 use mongodb::{
     Client, ThreadedClient,
     db::{Database, ThreadedDatabase},
     coll::options::IndexModel,
+    oid::ObjectId,
 };
 use wither::prelude::*;
 
