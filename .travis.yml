@@ -18,7 +18,7 @@ before_cache:
 
 before_install:
   - docker-compose up -d
-  - rustup install nightly-2018-10-09
+  - rustup install nightly-2018-11-09
 
 script:
   # Test doc samples.

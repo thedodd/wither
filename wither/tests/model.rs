@@ -280,7 +280,6 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2d_model(
     assert_eq!(output_indices_len, 2);
     assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2d_models"});
     // NOTE WELL: doc comparison was failing for some reason. Not sure why. Doing manual asserts now.
-    assert_eq!(idx2.get_i32("v").unwrap(), 2i32);
     assert_eq!(idx2.get("key").unwrap().as_document().unwrap(), &doc!{"field_2d_a": "2d", "field_2d_filter": 1i32});
     assert_eq!(idx2.get("name").unwrap().as_str().unwrap(), "field_2d_a_2d_field_2d_filter_1");
     assert_eq!(idx2.get("ns").unwrap().as_str().unwrap(), "witherTestDB.derived_2d_models");
@@ -314,13 +313,10 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2dsphere_
     assert!(output_indices_len > initial_indices_len);
     assert_eq!(output_indices_len, 2);
     assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2dsphere_models"});
-    assert_eq!(idx2, doc!{
-        "v": 2i32,
-        "key": doc!{"field_2dsphere": "2dsphere", "field_2dsphere_filter": 1i32},
-        "name": "field_2dsphere_2dsphere_field_2dsphere_filter_1",
-        "ns": "witherTestDB.derived_2dsphere_models",
-        "2dsphereIndexVersion": 3i32,
-    });
+    assert_eq!(idx2.get("key").unwrap().as_document().unwrap(), &doc!{"field_2dsphere": "2dsphere", "field_2dsphere_filter": 1i32});
+    assert_eq!(idx2.get("name").unwrap().as_str().unwrap(), "field_2dsphere_2dsphere_field_2dsphere_filter_1");
+    assert_eq!(idx2.get("ns").unwrap().as_str().unwrap(), "witherTestDB.derived_2dsphere_models");
+    assert_eq!(idx2.get("2dsphereIndexVersion").unwrap().as_i32().unwrap(), 3i32);
 }
 
 // TODO: enable this test once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/289 lands.
