@@ -13,6 +13,13 @@ Wow! So much stuff here. `0.6` is a big step forward for the ergonomics & usabil
 There is really only one breaking change with this release:
 - migrations no longer run as part of the `Model::sync` system. They are now encapsulated in their own trait which must be manually implemented on your models if they need migrations. See the docs for more details.
 
+#### 0.6.0 - 0.6.2
+Just dealing with some docs.rs build issues. Yanked `0.6.0` & `0.6.1`.
+
+#### 0.6.3
+Using mongodb 0.3.12, which now re-exports the bson crate. This means that we no longer have to deal with errors due to conflicting versions of bson.
+
+
 ## 0.5
 - a migrations system has been added, closing [#3](https://github.com/thedodd/wither/issues/3) & [#4](https://github.com/thedodd/wither/issues/4). The important part of this feature set is the `IntervalMigration` type.
 - `Model::sync` has received some updates. It now synchronizes a model's indexes as well as its migrations.
