@@ -1,8 +1,7 @@
-#[macro_use(doc, bson)]
-extern crate bson;
 extern crate chrono;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use(doc, bson)]
 extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
@@ -15,8 +14,11 @@ mod fixtures;
 
 use std::error::Error;
 
-use mongodb::coll::options::{FindOneAndUpdateOptions, ReturnDocument};
-use mongodb::db::ThreadedDatabase;
+use mongodb::{
+    Document,
+    coll::options::{FindOneAndUpdateOptions, ReturnDocument},
+    db::ThreadedDatabase,
+};
 use wither::prelude::*;
 
 use fixtures::{
@@ -166,14 +168,14 @@ fn model_sync_should_create_expected_indices_on_collection() {
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(User::COLLECTION_NAME);
-    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = User::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -194,14 +196,14 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_model() {
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(DerivedModel::COLLECTION_NAME);
-    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = DerivedModel::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -258,14 +260,14 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2d_model(
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(Derived2dModel::COLLECTION_NAME);
-    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = Derived2dModel::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -293,14 +295,14 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2dsphere_
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(Derived2dsphereModel::COLLECTION_NAME);
-    let initial_indices: Vec<bson::Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = Derived2dsphereModel::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll.list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -328,14 +330,14 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2dsphere_
 //     let fixture = Fixture::new().with_synced_models().with_empty_collections();
 //     let db = fixture.get_db();
 //     let coll = db.collection(DerivedGeoHaystackModel::COLLECTION_NAME);
-//     let initial_indices: Vec<bson::Document> = coll.list_indexes()
+//     let initial_indices: Vec<Document> = coll.list_indexes()
 //         .expect("Expected to successfully open indices cursor pre-test.")
 //         .filter_map(|doc_res| doc_res.ok())
 //         .collect();
 //     let initial_indices_len = initial_indices.len();
 
 //     let _ = DerivedGeoHaystackModel::sync(db.clone()).expect("Expected a successful sync operation.");
-//     let mut output_indices: Vec<bson::Document> = coll.list_indexes()
+//     let mut output_indices: Vec<Document> = coll.list_indexes()
 //         .expect("Expected to successfully open indices cursor post-test.")
 //         .filter_map(|doc_res| doc_res.ok())
 //         .collect();

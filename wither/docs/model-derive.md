@@ -27,7 +27,6 @@ Adding indexes to your model's collection is done entirely through the attribute
 
 ```rust
 # #[macro_use]
-# extern crate bson;
 # extern crate mongodb;
 # extern crate serde;
 # #[macro_use(Serialize, Deserialize)]
@@ -44,7 +43,7 @@ Adding indexes to your model's collection is done entirely through the attribute
 struct MyModel {
     // snip ...
     # #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    # pub id: Option<bson::oid::ObjectId>,
+    # pub id: Option<mongodb::oid::ObjectId>,
 
     /// This field has a unique index on it.
     #[model(index(index_type="dsc", unique="true"))]
@@ -79,7 +78,6 @@ This is optional. Values here simply map field names to `i32` values wrapped in 
 
 ```rust
 # #[macro_use]
-# extern crate bson;
 # extern crate mongodb;
 # extern crate serde;
 # #[macro_use(Serialize, Deserialize)]
@@ -94,7 +92,7 @@ This is optional. Values here simply map field names to `i32` values wrapped in 
 # #[derive(Model, Serialize, Deserialize)]
 # struct MyModel {
     # #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    # pub id: Option<bson::oid::ObjectId>,
+    # pub id: Option<mongodb::oid::ObjectId>,
 
     // ... other model fields
 

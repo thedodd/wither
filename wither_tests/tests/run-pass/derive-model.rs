@@ -1,6 +1,5 @@
-#[macro_use]
-extern crate bson;
 extern crate compiletest_rs as compiletest;
+#[macro_use]
 extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
@@ -17,7 +16,7 @@ use mongodb::coll::options::IndexModel;
 struct ValidDataModel0 {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    id: Option<bson::oid::ObjectId>,
+    id: Option<mongodb::oid::ObjectId>,
 
     /// A field to test base line index options & bool fields with `true`.
     #[model(index(

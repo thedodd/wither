@@ -1,6 +1,5 @@
-#[macro_use]
-extern crate bson;
 extern crate compiletest_rs as compiletest;
+#[macro_use]
 extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]

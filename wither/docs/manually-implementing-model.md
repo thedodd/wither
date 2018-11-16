@@ -5,7 +5,6 @@ section is for you. If not, feel free to skip over it.
 ### basic impl
 ```rust
 #[macro_use]
-extern crate bson;
 extern crate mongodb;
 extern crate serde;
 #[macro_use(Serialize, Deserialize)]
@@ -16,7 +15,7 @@ extern crate wither;
 pub struct User {
     /// The user's unique ID.
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<mongodb::oid::ObjectId>,
 
     /// The user's unique email.
     pub email: String,
@@ -28,12 +27,12 @@ impl<'a> wither::Model<'a> for User {
     const COLLECTION_NAME: &'static str = "users";
 
     /// Implement the getter for the ID of a model instance.
-    fn id(&self) -> Option<bson::oid::ObjectId> {
+    fn id(&self) -> Option<mongodb::oid::ObjectId> {
         return self.id.clone();
     }
 
     /// Implement the setter for the ID of a model instance.
-    fn set_id(&mut self, oid: bson::oid::ObjectId) {
+    fn set_id(&mut self, oid: mongodb::oid::ObjectId) {
         self.id = Some(oid);
     }
 }
@@ -45,7 +44,6 @@ To manually declare indexes, declare them in the `indexes` method.
 
 ```rust
 # #[macro_use]
-# extern crate bson;
 # extern crate mongodb;
 # extern crate serde;
 # #[macro_use(Serialize, Deserialize)]
@@ -58,7 +56,7 @@ use mongodb::coll::options::IndexModel;
 # pub struct User {
 #     /// The user's unique ID.
 #     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-#     pub id: Option<bson::oid::ObjectId>,
+#     pub id: Option<mongodb::oid::ObjectId>,
 # }
 #
 impl<'a> wither::Model<'a> for User {
@@ -68,12 +66,12 @@ impl<'a> wither::Model<'a> for User {
 #     const COLLECTION_NAME: &'static str = "users";
 #
 #     /// Implement the getter for the ID of a model instance.
-#     fn id(&self) -> Option<bson::oid::ObjectId> {
+#     fn id(&self) -> Option<mongodb::oid::ObjectId> {
 #         return self.id.clone();
 #     }
 #
 #     /// Implement the setter for the ID of a model instance.
-#     fn set_id(&mut self, oid: bson::oid::ObjectId) {
+#     fn set_id(&mut self, oid: mongodb::oid::ObjectId) {
 #         self.id = Some(oid);
 #     }
 

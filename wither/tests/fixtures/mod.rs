@@ -1,6 +1,9 @@
-use bson::{self, Document};
 use chrono::{self, TimeZone};
-use mongodb::coll::options::IndexModel;
+use mongodb::{
+    Document,
+    coll::options::IndexModel,
+    oid::ObjectId,
+};
 use wither::{self, prelude::*};
 
 pub mod fixture;
@@ -14,7 +17,7 @@ pub use self::fixture::Fixture;
 pub struct User {
     /// The user's unique ID.
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<ObjectId>,
 
     /// The user's unique email.
     pub email: String,
@@ -24,11 +27,11 @@ impl<'a> Model<'a> for User {
 
     const COLLECTION_NAME: &'static str = "users";
 
-    fn id(&self) -> Option<bson::oid::ObjectId> {
+    fn id(&self) -> Option<ObjectId> {
         return self.id.clone();
     }
 
-    fn set_id(&mut self, oid: bson::oid::ObjectId) {
+    fn set_id(&mut self, oid: ObjectId) {
         self.id = Some(oid);
     }
 
@@ -64,7 +67,7 @@ impl<'m> Migrating<'m> for User {
 pub struct UserModelBadMigrations {
     /// The user's unique ID.
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<ObjectId>,
 
     /// The user's unique email.
     pub email: String,
@@ -74,11 +77,11 @@ impl<'a> Model<'a> for UserModelBadMigrations {
 
     const COLLECTION_NAME: &'static str = "users_bad_migrations";
 
-    fn id(&self) -> Option<bson::oid::ObjectId> {
+    fn id(&self) -> Option<ObjectId> {
         return self.id.clone();
     }
 
-    fn set_id(&mut self, oid: bson::oid::ObjectId) {
+    fn set_id(&mut self, oid: ObjectId) {
         self.id = Some(oid);
     }
 
@@ -116,7 +119,7 @@ impl<'m> Migrating<'m> for UserModelBadMigrations {
 pub struct DerivedModel {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<ObjectId>,
 
     // A field to test base line index options with index of type `asc`.
     #[model(index(
@@ -149,7 +152,7 @@ pub struct DerivedModel {
 pub struct Derived2dModel {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<ObjectId>,
 
     // A field to test index of type `2d`.
     #[model(index(index_type="2d", with(field_2d_filter="asc"), min="-180.0", max="180.0", bits="1"))]
@@ -161,7 +164,7 @@ pub struct Derived2dModel {
 pub struct Derived2dsphereModel {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<ObjectId>,
 
     // A field to test index of type `2dsphere`.
     #[model(index(index_type="2dsphere", sphere_version="3", with(field_2dsphere_filter="asc")))]
@@ -173,7 +176,7 @@ pub struct Derived2dsphereModel {
 pub struct DerivedGeoHaystackModel {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<ObjectId>,
 
     // A field to test index of type `geoHaystack`.
     #[model(index(index_type="geoHaystack", bucket_size="5", with(field_geo_haystack_filter="asc")))]

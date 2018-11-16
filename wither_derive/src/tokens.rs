@@ -1,8 +1,10 @@
 use quote::ToTokens;
 use proc_macro2::TokenStream;
 
-use bson::Document;
-use mongodb::coll::options::{IndexModel, IndexOptions};
+use mongodb::{
+    Bson, Document,
+    coll::options::{IndexModel, IndexOptions},
+};
 
 pub struct Indexes(pub Vec<IndexModel>);
 
@@ -71,8 +73,8 @@ impl ToTokens for Indexes {
 fn build_index_keys(doc: &Document) -> TokenStream {
     let key_vals = doc.iter().map(|(key, val)| {
         match val { // Currently, we will only be returning fields which are i32, i64, or string.
-            bson::Bson::String(s) => quote!(#key: #s),
-            bson::Bson::I32(int32) => quote!(#key: #int32),
+            Bson::String(s) => quote!(#key: #s),
+            Bson::I32(int32) => quote!(#key: #int32),
             _ => panic!("Developer error. Found an unexpected index document val of type {:?}. This is a bug within the wither framework. Please open an issue here: https://github.com/thedodd/wither/issues/new", val),
         }
     }).collect::<Vec<TokenStream>>();
@@ -104,7 +106,7 @@ fn option_to_tokens_for_weights(doc_opt: Option<Document>) -> TokenStream {
         Some(doc) => {
             let key_vals = doc.iter().map(|(key, val)| {
                 match val { // Weights can only be mapped to an i32 in this system.
-                    bson::Bson::I32(int32) => quote!(#key: #int32),
+                    Bson::I32(int32) => quote!(#key: #int32),
                     _ => panic!("Developer error. Found unexpected type for index weights value {:?}. This is a bug within the wither framework. Please open an issue here: https://github.com/thedodd/wither/issues/new", val),
                 }
             }).collect::<Vec<TokenStream>>();

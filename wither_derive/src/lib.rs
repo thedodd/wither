@@ -2,9 +2,8 @@
 
 #![recursion_limit="200"]
 
-#[macro_use]
-extern crate bson;
 extern crate inflector;
+#[macro_use]
 extern crate mongodb;
 extern crate proc_macro;
 extern crate proc_macro2;
@@ -49,12 +48,12 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
             const COLLECTION_NAME: &'static str = #collection_name;
 
             /// Get a cloned copy of this instance's ID.
-            fn id(&self) -> ::std::option::Option<::bson::oid::ObjectId> {
+            fn id(&self) -> ::std::option::Option<mongodb::oid::ObjectId> {
                 self.id.clone()
             }
 
             /// Set this instance's ID.
-            fn set_id(&mut self, oid: ::bson::oid::ObjectId) {
+            fn set_id(&mut self, oid: mongodb::oid::ObjectId) {
                 self.id = Some(oid);
             }
 
