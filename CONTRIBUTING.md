@@ -37,5 +37,12 @@ For the compile tests, you will need to use nightly.
 
 ```bash
 # Run the compile tests.
-cargo +nightly test -p wither_derive --tests --lib
+cargo +nightly test -p wither_tests -p wither_derive --tests --lib
+```
+
+For doc tests, you will also need to use nightly.
+
+```bash
+# From the wither dir.
+cargo +nightly test --features docinclude --doc
 ```

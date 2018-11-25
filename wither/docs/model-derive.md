@@ -6,7 +6,7 @@ All `Model` struct & field attributes are declared inside of `model(...)` attrib
 Deriving `Model` for your struct is straightforward.
 
 - Ensure that your struct has at least the following derivations: `#[derive(Model, Serialize, Deserialize)]`.
-- Ensure that you have a field named `id`, of type `Option<bson::oid::ObjectId>`, with the following serde attributes: `#[serde(rename="_id", skip_serializing_if="Option::is_none")]`.
+- Ensure that you have a field named `id`, of type `Option<ObjectId>`, with the following serde attributes: `#[serde(rename="_id", skip_serializing_if="Option::is_none")]`.
 
 For now, it seems logical to disallow customization of the PK. An argument could be made for allowing full customization of the PK for a MongoDB collection, but there really is no end-all reasoning for this argument which I am aware of. If you need to treat a different field as PK, then just add the needed index to the field, and you are good to go. More on indexing soon.
 
@@ -67,7 +67,7 @@ As you can see, everything is declared within `#[model(index(...))]` attributes.
 ##### index
 Everything related to an index declaration must be declared within these parens. If the field is using a serde `rename` attribute, this system will account for that and use the value of `rename` as the initial field name for the new index.
 
-##### type
+##### index_type
 This declares the type of index for the field which this attribute appears on, which will also be the first field of the generated index. The value must be one of the valid MongoDB index types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"` & `"hashed"`.
 
 ##### with

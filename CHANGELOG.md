@@ -1,6 +1,11 @@
 changelog
 =========
 
+## 0.7
+Minimal changes per this release. The main issue being addressed here is [#20](https://github.com/thedodd/wither/issues/20). It is arguable that this is just a bug fix, but the interface for `Model.update` has changed enough with these updates that a minor version increment is merited.
+
+The main thing to observe here is that `Model.update` now takes an optional filter document. If none is given, then this method will create a filter doc and populate it with the model's ID. If a doc is given, then it will have the `_id` key set (potentially overwritten) to the model's ID. Lastly, this method now returns `Result<Option<Self>>` to reflect the fallible nature of the update with a filter.
+
 ## 0.6
 Wow! So much stuff here. `0.6` is a big step forward for the ergonomics & usability of the wither system. A custom derive has been introduced (`#[derive(Model)]`), and it is now the recommended way to use this system. This should greatly simplify the process of getting started. Overall this has been an awesome experience putting this together and delving into the custom derive system in Rust. Here are a few of the changes to highlight.
 - Use `#[derive(Model)]` to turn your struct into a wither `Model`.

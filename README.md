@@ -62,7 +62,7 @@ fn main() {
     me.save(db.clone(), None);
 
     // Update user's email address.
-    me = me.update(db.clone(), doc!{"$set": doc!{"email": "new.email@example.com"}}, None).unwrap();
+    me.update(db.clone(), None, doc!{"$set": doc!{"email": "new.email@example.com"}}, None).unwrap();
 
     // Fetch all users.
     let all_users = User::find(db.clone(), None, None).unwrap();

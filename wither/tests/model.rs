@@ -135,12 +135,13 @@ fn model_update_should_perform_expected_updates_against_self() {
     let db = fixture.get_db();
     let mut user = User{id: None, email: String::from("test@test.com")};
     user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let update_doc = doc!{"$set" => doc!{"email" => "new@test.com"}};
+    let update_doc = doc!{"$set": doc!{"email": "new@test.com"}};
     let mut opts = FindOneAndUpdateOptions::default();
     opts.return_document = Some(ReturnDocument::After);
 
-    let user = user.update(db.clone(), update_doc, Some(opts))
-        .expect("Expected a successful update operation.");
+    let user = user.update(db.clone(), None, update_doc, Some(opts))
+        .expect("Expected a successful update operation.")
+        .expect("Expected populated value.");
 
     assert_eq!(user.email, String::from("new@test.com"));
 }
@@ -153,10 +154,43 @@ fn model_update_should_return_error_with_invalid_update_document() {
     user.save(db.clone(), None).expect("Expected a successful save operation.");
     let update_doc = doc!{"invalid_update_key" => "should_fail"};
 
-    let err = user.update(db.clone(), update_doc, None)
-        .expect_err("Expected a successful update operation.");
+    let err = user.update(db.clone(), None, update_doc, None)
+        .expect_err("Expected an errored update operation.");
 
     assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
+}
+
+#[test]
+fn model_update_should_noop_where_filter_selects_on_nonextant_field() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": true}});
+    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
+
+    let val = user.update(db.clone(), filter_doc, update_doc, None)
+        .expect("Expected a successful update operation.");
+
+    assert!(val.is_none());
+}
+
+#[test]
+fn model_update_should_perform_expected_update_with_added_filters() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": false}});
+    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
+    let mut opts = FindOneAndUpdateOptions::default();
+    opts.return_document = Some(ReturnDocument::After);
+
+    let user = user.update(db.clone(), filter_doc, update_doc, Some(opts))
+        .expect("Expected a successful update operation.")
+        .expect("Expected populated value.");
+
+    assert_eq!(user.email, String::from("test2@test.com"));
 }
 
 //////////////////////////////////////////////////////////////////////////////
