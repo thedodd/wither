@@ -245,11 +245,9 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// Update the current model instance.
     ///
-    /// As this method is simply a wrapper around MongoDB's
-    /// [FindOneAndUpdate](https://docs.mongodb.com/v3.2/reference/method/db.collection.findOneAndUpdate/)
-    /// operation, the `update` argument must be a valid update document. This operation targets the model
-    /// instance by the instance's ID. If its ID is `None`, this method will return an error.
-    /// All other aspects of this method's input are passthrough.
+    /// This operation will always target the model instance by the instance's ID. If its ID is
+    /// `None`, this method will return an error. If a filter document is provided, this method
+    /// will ensure that the key `_id` is set to this model's ID.
     ///
     /// This method will consume `self`, and will return a new instance of `Self` based on the given
     /// return options (`ReturnDocument::Before | ReturnDocument:: After`).
@@ -258,7 +256,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// concern `journaling` is set to `true`, so that we can receive a complete output document.
     ///
     /// If this model instance was never written to the database, this operation will return an error.
-    fn update(self, db: Database, update: Document, opts: Option<FindOneAndUpdateOptions>) -> Result<Self> {
+    fn update(self, db: Database, filter: Option<Document>, update: Document, opts: Option<FindOneAndUpdateOptions>) -> Result<Option<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
         // Extract model's ID & use as filter for this operation.
@@ -268,10 +266,17 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
                 return Err(ArgumentError("Model must have an ObjectId for this operation.".to_owned()));
             }
         };
-        let filter = doc!{"_id": id};
+
+        // Ensure we have a valid filter.
+        let filter = match filter {
+            Some(mut doc) => {
+                doc.insert("_id", id);
+                doc
+            }
+            None => doc!{"_id": id},
+        };
 
         // Ensure that journaling is set to true for this call for full output document.
-        // TODO: should probably encapsulate this as a unit-testable function.
         let options = match opts {
             Some(mut options) => {
                 options.write_concern = match options.write_concern {
@@ -298,13 +303,13 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
         // Perform a FindOneAndUpdate operation on this model's document by ID. Will fail if this
         // model instance was never saved to the database to begin with.
-        let updated_doc = match coll.find_one_and_update(filter, update, Some(options))? {
-            Some(doc) => doc,
-            None => return Err(ResponseError("Server failed to return the updated document. Update may have failed.".to_owned())),
-        };
-
-        // Deserialize the return document into a model instance & return.
-        return Self::instance_from_document(updated_doc);
+        coll.find_one_and_update(filter, update, Some(options)).and_then(|docopt| match docopt {
+            Some(doc) => match Self::instance_from_document(doc) {
+                Ok(model) => Ok(Some(model)),
+                Err(err) => Err(err),
+            }
+            None => Ok(None),
+        })
     }
 
     /////////////////////////
