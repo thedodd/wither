@@ -301,8 +301,7 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
             }
         };
 
-        // Perform a FindOneAndUpdate operation on this model's document by ID. Will fail if this
-        // model instance was never saved to the database to begin with.
+        // Perform a FindOneAndUpdate operation on this model's document by ID.
         coll.find_one_and_update(filter, update, Some(options)).and_then(|docopt| match docopt {
             Some(doc) => match Self::instance_from_document(doc) {
                 Ok(model) => Ok(Some(model)),
