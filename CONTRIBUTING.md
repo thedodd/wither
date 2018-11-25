@@ -11,7 +11,7 @@ To publish a new version of `wither` or `wither_derive`, execute the following c
 
 Keep in mind that we need to keep the major and minor versions of these two crates in sync. Else, it could cause some serious confusion.
 
-**Don't forget to tag the release it git.**
+**Don't forget to tag the release in git.**
 
 ### development
 #### tests
