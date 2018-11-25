@@ -9,7 +9,7 @@ license = "Apache-2.0"
 name = "wither"
 readme = "../README.md"
 repository = "https://github.com/thedodd/wither"
-version = "0.6.3"
+version = "0.7.0"
 
 [dependencies]
 chrono = "0.4"
@@ -20,7 +20,7 @@ serde_derive = "1"
 
 [dev-dependencies]
 lazy_static = "1"
-wither_derive = { version = "0.6", path = "../wither_derive" }
+wither_derive = { version = "0.7", path = "../wither_derive" }
 
 [features]
 docinclude = [] # Used only for activating `doc(include="...")` on nightly.
