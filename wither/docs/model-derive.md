@@ -65,13 +65,17 @@ struct MyModel {
 As you can see, everything is declared within `#[model(index(...))]` attributes. Let's break this down.
 
 ##### index
-Everything related to an index declaration must be declared within these parens. If the field is using a serde `rename` attribute, this system will account for that and use the value of `rename` as the initial field name for the new index.
+Everything related to an index declaration must be declared within these parens. The initial field of the index will be the field which this declaration appears on. If the field is using a serde `rename` attribute, this system will account for that and use the value of `rename` as the initial field name for the new index.
+
+If you need to index a subdocument underneath this field, you can use the combination `subfield="subdoc1.subdoc2.target_field"`. Use dot notation to traverse to deeper subdocuments. The value provided to `subfield` will be concatenated with the field name of the field which this index declaration appears on to ensure a proper index is built. If the field has a serde `rename` attribute, it will be accounted for.
 
 ##### index_type
 This declares the type of index for the field which this attribute appears on, which will also be the first field of the generated index. The value must be one of the valid MongoDB index types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"` & `"hashed"`.
 
 ##### with
-This is optional. For compound indexes, this is where you declare the other fields which the generated index is to be created with. Inside of these parens, you map field names to index types. The field name must be the name of the target field as it will be in the MongoDB collection. The value must be one of the valid MongoDB index types, as described above.
+This is optional. For compound indexes, this is where you declare the other fields which the generated index is to be created with. Inside of these parens, you must provide exactly two key-value pairs as follows: `with(field="field_name", index_type="asc")`. You may use dot notation in the field name for indexing subdocuments. The value for `index_type` must be one of the valid index types, as [mentioned above](#index_type). Simply provide multiple `with` tokens to the containing `index(...)` attribute for each additional field which needs to be indexed.
+
+In versions `0.6 — 0.7`, this attribute took key-value pairs corresponding to field names and index types. As keys in Rust’s [syn::MetaNameValue](https://docs.rs/syn/0.15.22/syn/struct.MetaNameValue.html) system are not allowed to contain the character `.`, this pattern was inadequate for indexing subdocuments. That is the main reason for the current implementation of this attribute.
 
 ##### weights
 This is optional. Values here simply map field names to `i32` values wrapped in strings.
