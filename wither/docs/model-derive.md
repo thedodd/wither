@@ -46,11 +46,11 @@ struct MyModel {
     # pub id: Option<mongodb::oid::ObjectId>,
 
     /// This field has a unique index on it.
-    #[model(index(index_type="dsc", unique="true"))]
+    #[model(index(index="dsc", unique="true"))]
     pub email: String,
 
     /// First field of a compound index.
-    #[model(index(index_type="dsc", with(last_name="dsc")))]
+    #[model(index(index="dsc", with(field="last_name", index="dsc")))]
     pub first_name: String,
 
     /// Is indexed along with `first_name`, but nothing special is declared here.
@@ -65,20 +65,52 @@ struct MyModel {
 As you can see, everything is declared within `#[model(index(...))]` attributes. Let's break this down.
 
 ##### index
-Everything related to an index declaration must be declared within these parens. The initial field of the index will be the field which this declaration appears on. If the field is using a serde `rename` attribute, this system will account for that and use the value of `rename` as the initial field name for the new index.
+Everything related to an index declaration must be declared within these parens. The initial field of the index will be the field which this declaration appears on. If the field is using a serde `rename` attribute, this system will use the value of `rename` as the initial field name for the new index. For indexing embedded documents, see the [embedded index](#embedded-index) section.
 
-If you need to index a subdocument underneath this field, you can use the combination `subfield="subdoc1.subdoc2.target_field"`. Use dot notation to traverse to deeper subdocuments. The value provided to `subfield` will be concatenated with the field name of the field which this index declaration appears on to ensure a proper index is built. If the field has a serde `rename` attribute, it will be accounted for.
+##### index type
+Use `index="TYPE"` to declare the type of index for the field which this attribute appears on. The value must be one of the valid MongoDB index types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"` & `"hashed"`.
 
-##### index_type
-This declares the type of index for the field which this attribute appears on, which will also be the first field of the generated index. The value must be one of the valid MongoDB index types:  `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"` & `"hashed"`.
+##### embedded index
+If you need to index an embedded document underneath the field which the index declaration appears on, use the attribute `embedded="subdoc1.subdoc2.subdocN.target_field"`. Use dot notation to traverse to more deeply embedded documents. The value provided to `embedded` will be concatenated with the field name of the field which this index declaration appears on. If the root field has a serde `rename` attribute, it will be accounted for. Embedded structs which have serde `rename` attributes will not be accounted for by this system, you must specify the name correctly, as it will be in the database, when declaring the `embedded="..."` value.
+
+Consider the following example.
+
+```rust
+# #[macro_use]
+# extern crate mongodb;
+# extern crate serde;
+# #[macro_use(Serialize, Deserialize)]
+# extern crate serde_derive;
+# extern crate wither;
+# #[macro_use(Model)]
+# extern crate wither_derive;
+#
+# use wither::prelude::*;
+# use mongodb::coll::options::IndexModel;
+use mongodb::Document;
+
+#[derive(Model, Serialize, Deserialize)]
+struct MyModel {
+    # #[serde(rename="_id", skip_serializing_if="Option::is_none")]
+    # pub id: Option<mongodb::oid::ObjectId>,
+    // ... other model fields
+
+    /// A subdocument which may be another struct or a BSON Document.
+    #[model(index(index="asc", embedded="targetField"))]
+    pub metadata: Document,
+}
+# fn main() {}
+```
+
+In the above example, an `ascending` index will be generated on `metadata.targetField`.
 
 ##### with
-This is optional. For compound indexes, this is where you declare the other fields which the generated index is to be created with. Inside of these parens, you must provide exactly two key-value pairs as follows: `with(field="field_name", index_type="asc")`. You may use dot notation in the field name for indexing subdocuments. The value for `index_type` must be one of the valid index types, as [mentioned above](#index_type). Simply provide multiple `with` tokens to the containing `index(...)` attribute for each additional field which needs to be indexed.
+This is optional. For compound indexes, this is where you declare the other fields which the generated index is to be created with. Inside of these parens, you must provide exactly two key-value pairs as follows: `with(field="field_name", index="asc")`. You may use dot notation in the field name for indexing embedded documents. The value for `index="..."` must be one of the valid index types, as mentioned in the [index types](#index-type) section. Declare an additional `with` token for each additional field which needs to be a part of this index.
 
-In versions `0.6 — 0.7`, this attribute took key-value pairs corresponding to field names and index types. As keys in Rust’s [syn::MetaNameValue](https://docs.rs/syn/0.15.22/syn/struct.MetaNameValue.html) system are not allowed to contain the character `.`, this pattern was inadequate for indexing subdocuments. That is the main reason for the current implementation of this attribute.
+In versions `0.6 — 0.7`, this attribute took key-value pairs corresponding to field names and index types. As keys in Rust’s [syn::MetaNameValue](https://docs.rs/syn/latest/syn/struct.MetaNameValue.html) system are not allowed to contain the character `.`, this pattern was inadequate for indexing embedded documents. That is the main reason for the current implementation of this attribute.
 
 ##### weights
-This is optional. Values here simply map field names to `i32` values wrapped in strings.
+This is optional. When using `text` indexes, you may declare the weights of specific fields of the index using the syntax `weight(field="...", value="...")`, where `field` is the field name (may be an embedded document field), and `value` is an `i32` wrapped in a string.
 
 ```rust
 # #[macro_use]
@@ -100,11 +132,14 @@ This is optional. Values here simply map field names to `i32` values wrapped in 
 
     // ... other model fields
 
-    // A text search field, so we add a `weights` field on our index for optimization.
-    #[model(index(index_type="text", with(text1="text"), weights(text0="10", text1="5")))]
+    /// A text search field, so we add `weight` attrs for index for configuration.
+    #[model(index(
+        index="text", with(field="text1", index="text"),
+        weight(field="text0", value="10"), weight(field="text1", value="5"),
+    ))]
     pub text0: String,
 
-    // The other field of our text index. No `model` attributes need to be added here.
+    /// The other field of our text index. No `model` attributes need to be added here.
     pub text1: String,
 
     // ... other model fields
@@ -118,6 +153,5 @@ Check out the MongoDB docs on [Control Search Results with Weights](https://docs
 Other attributes, like `unique` or `sparse`, are optional. Simply use the name of the attribute, followed by `=`, followed by the desired value (which must be quoted). Be sure to comma-separate each attribute-value pair. All attributes supported by the underlying MongoDB driver are supported by this framework. A list of all attributes can be found in the docs for [IndexOptions](https://docs.rs/mongodb/latest/mongodb/coll/options/struct.IndexOptions.html).
 
 ##### known issues
-- As of the `0.6.0` implementation, specifying the additional fields of a compound index using this system my be theoretically limiting. Technically, the field names are declared as Rust `syn::Ident`s, which carries the restriction of being a valid variable name, which is more limiting than that of MongoDB's field naming restrictions. **Please open an issue** if you find this to be limiting. There are workarounds, but if this is a big issue, I definitely want to know. There are other ways this could be implemented.
-- Indexing subdocuments is in progress, but not done yet. Will probably come as `0.7` or something.
-- To index a field on a subdocument which is not modelled (EG, using `Document` as a value for a field), you will have to manually implement `Model` for your struct & then manually specify the indexes. See the section on [manually implementing model](#manually-implementing-model).
+- there is a bug in the underlying mongodb driver which is currently making it impossible to declare `geoHaystack` indexes from within this framework. See issue [#23](https://github.com/thedodd/wither/issues/23).
+- there is a bug in the underlying mongodb driver which is currently making it impossible to declare an index `storage_engine`, as the type is declared incorrectly. See issue [#22](https://github.com/thedodd/wither/issues/22).
