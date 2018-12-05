@@ -4,20 +4,17 @@ pub(crate) const ID_FIELD_SERDE_REQ: &str = r#"A `Model` struct must have a fiel
 /// An error message indicating the required form of `Model` attributes.
 pub(crate) const MODEL_ATTR_FORM: &str = "All `Model` attributes must take the form `#[model(...)]`.";
 
-/// An error message indicating the required form of `Model` attributes.
-pub(crate) const MODEL_STRUCT_ATTRS: &str = r#"Available struct level model attrs are `collection_name="..."` & `skip_serde_checks`."#;
-
 /// An error message indicating the required form of a `#[model(index(...))]` attribute.
 pub(crate) const MODEL_ATTR_INDEX_FORM: &str = "The `model(index)` attribute must have its own set of values, as such: `#[model(index(...))]`.";
 
-/// An error message indicating the required form of elements within an index declaration.
-pub(crate) const MODEL_ATTR_INDEX_ELEMENT_FORM: &str = "Index declarations on your model fields may only contain name-value pairs or the nested `with(...)` element.";
-
 /// An error message indicating the allowed values for `#[model(index(direction))]`.
-pub(crate) const MODEL_ATTR_INDEX_TYPE_ALLOWED_VALUES: &str = r#"The index `direction` value must be one of `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"`, or `"hashed"`."#;
+pub(crate) const MODEL_ATTR_INDEX_TYPE_ALLOWED_VALUES: &str = r#"The value for `index="..."` must be one of `"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"`, or `"hashed"`."#;
 
 /// An error message indicating the allowed form for `#[model(index(weights(...)))]`.
-pub(crate) const MODEL_ATTR_INDEX_WEIGHTS_FORM: &str = r#"The `model(index(weights(...))) attr may contain only mappings of field names to integers. The integers must be wrapped in a string for rust proc-macro hygiene."#;
+pub(crate) const MODEL_ATTR_INDEX_WEIGHTS_FORM: &str = r#"The `model(index(weight(...))) attr must be of form `weight(field="...", weight="...")`, where `field` is the field name, and `weight` is an `i32` wrapped in a string."#;
 
 /// An error message indicating the allowed form for `#[model(index(with(...)))]`.
-pub(crate) const MODEL_ATTR_INDEX_WITH_FORM: &str = r#"The `model(index(with(...))) attr may contain only mappings of field names to index type (`"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"`, `"hashed"`)."#;
+pub(crate) const MODEL_ATTR_INDEX_WITH_FORM: &str = r#"The `model(index(with(...))) attr must be of form `with(field="...", index="...")` where `field="..."` is the field to include and `index="..."` is one of the valid index types (`"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"`, `"hashed"`)."#;
+
+/// An error message indicating the allowed form for `#[model(index(embedded="..."))]`.
+pub(crate) const MODEL_ATTR_INDEX_EMBEDDED_FORM: &str = r#"The `model(index(embedded)) attr must be of the form `embedded="..."`."#;

@@ -105,12 +105,12 @@ struct MyModel {
 In the above example, an `ascending` index will be generated on `metadata.targetField`.
 
 ##### with
-This is optional. For compound indexes, this is where you declare the other fields which the generated index is to be created with. Inside of these parens, you must provide exactly two key-value pairs as follows: `with(field="field_name", index="asc")`. You may use dot notation in the field name for indexing embedded documents. The value for `index="..."` must be one of the valid index types, as mentioned in the [index types](#index-type) section. Declare an additional `with` token for each additional field which needs to be a part of this index.
+This is optional. For compound indexes, this is where you declare the other fields which the generated index is to be created with. Inside of these parens, you must provide exactly two key-value pairs as follows: `with(field="...", index="...")`. Where `field="..."` is the field to include in the index. You may use dot notation for indexing embedded documents. The value for `index="..."` must be one of the valid index types, as mentioned in the [index types](#index-type) section. Declare an additional `with` token for each additional field which needs to be a part of this index.
 
 In versions `0.6 — 0.7`, this attribute took key-value pairs corresponding to field names and index types. As keys in Rust’s [syn::MetaNameValue](https://docs.rs/syn/latest/syn/struct.MetaNameValue.html) system are not allowed to contain the character `.`, this pattern was inadequate for indexing embedded documents. That is the main reason for the current implementation of this attribute.
 
-##### weights
-This is optional. When using `text` indexes, you may declare the weights of specific fields of the index using the syntax `weight(field="...", value="...")`, where `field` is the field name (may be an embedded document field), and `value` is an `i32` wrapped in a string.
+##### weight
+This is optional. When using `text` indexes, you may declare the weights of specific fields of the index using the syntax `weight(field="...", weight="...")`, where `field` is the field name (may be an embedded document field), and `weight` is an `i32` wrapped in a string.
 
 ```rust
 # #[macro_use]
@@ -135,7 +135,7 @@ This is optional. When using `text` indexes, you may declare the weights of spec
     /// A text search field, so we add `weight` attrs for index for configuration.
     #[model(index(
         index="text", with(field="text1", index="text"),
-        weight(field="text0", value="10"), weight(field="text1", value="5"),
+        weight(field="text0", weight="10"), weight(field="text1", weight="5"),
     ))]
     pub text0: String,
 

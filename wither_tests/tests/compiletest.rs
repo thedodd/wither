@@ -15,5 +15,5 @@ fn run_mode(mode: &'static str) {
 #[test]
 fn compile_test() {
     run_mode("compile-fail");
-    run_mode("run-pass");
+    // NOTE: any other top-level files in this directory will essentailly act as `run-pass` compiletests.
 }

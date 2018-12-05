@@ -24,44 +24,50 @@ struct DerivedModel {
 
     // A field to test base line index options with index of type `asc`.
     #[model(index(
-        index_type="asc",
+        index="asc",
         background="true", sparse="true", unique="true", expire_after_seconds="15", name="field0", version="1",
     ))]
     pub field0: String,
 
     // A field to test base line index options with index of type `dsc`.
     #[model(index(
-        index_type="dsc",
-        background="false", sparse="false", unique="false", with(text_field_a="dsc", field0="asc"),
+        index="dsc",
+        background="false", sparse="false", unique="false",
+        with(field="text_field_a", index="dsc"), with(field="field0", index="asc"),
     ))]
     pub field1: String,
 
     // A field to test index of type `text`.
     #[model(index(
-        index_type="text", with(text_field_b="text"), weights(text_field_a="10", text_field_b="5"),
+        index="text", with(field="text_field_b", index="text"),
+        weight(field="text_field_a", weight="10"), weight(field="text_field_b", weight="5"),
         text_version="3", default_language="en", language_override="override_field",
     ))]
     pub text_field_a: String,
     pub text_field_b: String,
 
     // A field to test index of type `hashed`.
-    #[model(index(index_type="hashed"))]
+    #[model(index(index="hashed"))]
     pub hashed_field: String,
 
     // A field to test index of type `2d`.
-    #[model(index(index_type="2d", with(field_2d_b="2d"), min="-180.0", max="180.0", bits="1"))]
+    #[model(index(index="2d", with(field="field_2d_b", index="2d"), min="-180.0", max="180.0", bits="1"))]
     pub field_2d_a: Vec<f64>,
     pub field_2d_b: Vec<f64>,
 
     // A field to test index of type `2dsphere`.
-    #[model(index(index_type="2dsphere", sphere_version="3", with(field_2dsphere_filter="asc")))]
+    #[model(index(index="2dsphere", sphere_version="3", with(field="field_2dsphere_filter", index="asc")))]
     pub field_2dsphere: Document,
     pub field_2dsphere_filter: String,
 
     // A field to test index of type `geoHaystack`.
-    #[model(index(index_type="geoHaystack", bucket_size="5", with(field_geo_haystack_filter="asc")))]
+    #[model(index(index="geoHaystack", bucket_size="5", with(field="field_geo_haystack_filter", index="asc")))]
     pub field_geo_haystack: Document,
     pub field_geo_haystack_filter: String,
+
+    // A field to test embedded documents.
+    #[model(index(index="asc", embedded="subdoc1.subdoc2.subdocN.field", name="field_embedded"))]
+    pub field_embedded: Document,
 }
 
 /// This model tests the generation of an accurate collection name based on the model's ident.
@@ -85,11 +91,11 @@ fn test_model_collection_name_defaults() {
 #[test]
 fn test_first_model_indexes() {
     let indexes = DerivedModel::indexes();
-    assert_eq!(7, indexes.len());
+    assert_eq!(8, indexes.len());
 
-    let (idx1, idx2, idx3, idx4, idx5, idx6, idx7) = (
+    let (idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8) = (
         indexes[0].clone(), indexes[1].clone(), indexes[2].clone(), indexes[3].clone(),
-        indexes[4].clone(), indexes[5].clone(), indexes[6].clone()
+        indexes[4].clone(), indexes[5].clone(), indexes[6].clone(), indexes[7].clone(),
     );
 
     IndexShapeAssert::new(idx1, doc!{"field0": 1i32})
@@ -117,6 +123,9 @@ fn test_first_model_indexes() {
 
     IndexShapeAssert::new(idx7, doc!{"field_geo_haystack": "geoHaystack", "field_geo_haystack_filter": 1i32})
         .bucket_size(Some(5i32)).assert();
+
+    IndexShapeAssert::new(idx8, doc!{"field_embedded.subdoc1.subdoc2.subdocN.field": 1i32})
+        .name(Some("field_embedded".to_string())).assert();
 }
 
 #[test]

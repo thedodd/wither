@@ -123,28 +123,31 @@ pub struct DerivedModel {
 
     // A field to test base line index options with index of type `asc`.
     #[model(index(
-        index_type="asc", name="idx2",
+        index="asc", name="idx2",
         background="true", sparse="true", unique="true", expire_after_seconds="15", version="1",
     ))]
     pub field0: String,
 
     // A field to test base line index options with index of type `dsc`.
     #[model(index(
-        index_type="dsc", name="idx3",
-        background="false", sparse="false", unique="false", with(text_field_a="dsc", field0="asc"),
+        index="dsc", name="idx3",
+        background="false", sparse="false", unique="false",
+        with(field="text_field_a", index="dsc"), with(field="field0", index="asc"),
     ))]
     pub field1: String,
 
     // A field to test index of type `text`.
     #[model(index(
-        index_type="text", name="idx4", with(text_field_b="text"), weights(text_field_a="10", text_field_b="5"),
+        index="text", name="idx4",
+        with(field="text_field_b", index="text"),
+        weight(field="text_field_a", weight="10"), weight(field="text_field_b", weight="5"),
         text_version="3", default_language="en", language_override="override_field",
     ))]
     pub text_field_a: String,
     pub text_field_b: String,
 
     // A field to test index of type `hashed`.
-    #[model(index(index_type="hashed", name="idx5"))]
+    #[model(index(index="hashed", name="idx5"))]
     pub hashed_field: String,
 }
 
@@ -155,7 +158,7 @@ pub struct Derived2dModel {
     pub id: Option<ObjectId>,
 
     // A field to test index of type `2d`.
-    #[model(index(index_type="2d", with(field_2d_filter="asc"), min="-180.0", max="180.0", bits="1"))]
+    #[model(index(index="2d", with(field="field_2d_filter", index="asc"), min="-180.0", max="180.0", bits="1"))]
     pub field_2d_a: Vec<f64>,
     pub field_2d_filter: String,
 }
@@ -167,7 +170,7 @@ pub struct Derived2dsphereModel {
     pub id: Option<ObjectId>,
 
     // A field to test index of type `2dsphere`.
-    #[model(index(index_type="2dsphere", sphere_version="3", with(field_2dsphere_filter="asc")))]
+    #[model(index(index="2dsphere", sphere_version="3", with(field="field_2dsphere_filter", index="asc")))]
     pub field_2dsphere: Document,
     pub field_2dsphere_filter: String,
 }
@@ -179,7 +182,7 @@ pub struct DerivedGeoHaystackModel {
     pub id: Option<ObjectId>,
 
     // A field to test index of type `geoHaystack`.
-    #[model(index(index_type="geoHaystack", bucket_size="5", with(field_geo_haystack_filter="asc")))]
+    #[model(index(index="geoHaystack", bucket_size="5", with(field="field_geo_haystack_filter", index="asc")))]
     pub field_geo_haystack: Document,
     pub field_geo_haystack_filter: String,
 }

@@ -51,7 +51,7 @@ struct User {
     pub id: Option<ObjectId>,
 
     /// This field has a unique index on it.
-    #[model(index(index_type="dsc", unique="true"))]
+    #[model(index(index="dsc", unique="true"))]
     pub email: String,
 }
 

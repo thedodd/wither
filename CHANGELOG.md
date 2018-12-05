@@ -1,6 +1,18 @@
 changelog
 =========
 
+## 0.8
+The core `wither` crate is 100% backwards compatible with this relase.
+
+The `wither_derive` crate has received a few backwareds incompatible changes. The motivation behind doing this is detailed in [#21](https://github.com/thedodd/wither/issues/21). The main issue is that we need the derive system to be abstract enough to deal with embedded documents. The backwards incompatible changes are here.
+- within `#[model(index())]`, the `index_type` attr has been reduced to simply be `index`. All of the same rules apply as before. This change was made for ergonomic reasons. Less typing. Easier to follow.
+- within `#[model(index())]`, the `with(...)` attr has been updated to support subdocuments. The new syntax for this attr is `with(field="...", index="...")`. Supply a `with(...)` attr for each independent field to include.
+- within `#[model(index())]`, the `weights(...)` attr has been updated for the same reason as `with`. Now, you need to supply one `weight(field="...", weight="...")` per field weight you are specifying.
+
+The only net-new item being added here is that now, within `#[model(index())]`, you can use the attr `embedded="..."` to cause the index declaration to apply to the embedded document/field specified. [See the docs for more details](https://docs.rs/wither/latest/wither/model/trait.Model.html#embedded-index).
+
+**It is my sincere hope** that this is the last breaking change I will need to make to this crate before promoting this crate to a `1.0.0` release. Let's hope! Please let me know if there are any issues you have with these updates.
+
 ## 0.7
 Minimal changes per this release. The main issue being addressed here is [#20](https://github.com/thedodd/wither/issues/20). It is arguable that this is just a bug fix, but the interface for `Model.update` has changed enough with these updates that a minor version increment is merited.
 

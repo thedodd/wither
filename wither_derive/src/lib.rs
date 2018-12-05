@@ -3,7 +3,6 @@
 #![recursion_limit="200"]
 
 extern crate inflector;
-#[macro_use]
 extern crate mongodb;
 extern crate proc_macro;
 extern crate proc_macro2;
