@@ -81,7 +81,7 @@ fn unpack_model_attr(meta: &syn::Meta, struct_data: &mut MetaModelStructData) {
                 match innermeta {
                     syn::Meta::Word(ident) => handle_ident_attr(ident, struct_data),
                     syn::Meta::NameValue(kv) => handle_kv_attr(kv, struct_data),
-                    _ => panic!(msg::MODEL_STRUCT_ATTRS),
+                    _ => panic!(format!("Unrecognized struct-level `Model` attribute '{}'.", innermeta.name())),
                 }
             }),
         _ => panic!(msg::MODEL_ATTR_FORM),
