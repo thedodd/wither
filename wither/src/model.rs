@@ -9,6 +9,7 @@ use mongodb::{
         Collection,
         options::{
             CountOptions,
+            FindOneAndDeleteOptions,
             FindOneAndUpdateOptions,
             FindOptions,
             IndexModel,
@@ -58,6 +59,7 @@ pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, e
 #[cfg_attr(feature="docinclude", doc(include="../docs/model-sync.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/logging.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/manually-implementing-model.md"))]
+#[cfg_attr(feature="docinclude", doc(include="../docs/underlying-driver.md"))]
 pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// The name of the collection where this model's data is stored.
@@ -69,8 +71,8 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// Set the ID for this model.
     fn set_id(&mut self, ObjectId);
 
-    ///////////////////////////////
-    // Write Concern Abstraction //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Write Concern Abstraction /////////////////////////////////////////////////////////////////
 
     /// The model's write concern for database writes.
     ///
@@ -168,8 +170,44 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         Ok(Some(instance))
     }
 
-    ////////////////////
-    // Instance Layer //
+    /// Finds a single document and deletes it, returning the original.
+    fn find_one_and_delete(db: Database, filter: Document, options: Option<FindOneAndDeleteOptions>) -> Result<Option<Self>> {
+        db.collection(Self::COLLECTION_NAME).find_one_and_delete(filter, options)
+            .and_then(|docopt| match docopt {
+                Some(doc) => match Self::instance_from_document(doc) {
+                    Ok(model) => Ok(Some(model)),
+                    Err(err) => Err(err),
+                }
+                None => Ok(None),
+            })
+    }
+
+    /// Finds a single document and replaces it, returning either the original or replaced document.
+    fn find_one_and_replace(db: Database, filter: Document, replacement: Document, options: Option<FindOneAndUpdateOptions>) -> Result<Option<Self>> {
+        db.collection(Self::COLLECTION_NAME).find_one_and_replace(filter, replacement, options)
+            .and_then(|docopt| match docopt {
+                Some(doc) => match Self::instance_from_document(doc) {
+                    Ok(model) => Ok(Some(model)),
+                    Err(err) => Err(err),
+                }
+                None => Ok(None),
+            })
+    }
+
+    /// Finds a single document and updates it, returning either the original or updated document.
+    fn find_one_and_update(db: Database, filter: Document, update: Document, options: Option<FindOneAndUpdateOptions>) -> Result<Option<Self>> {
+        db.collection(Self::COLLECTION_NAME).find_one_and_update(filter, update, options)
+            .and_then(|docopt| match docopt {
+                Some(doc) => match Self::instance_from_document(doc) {
+                    Ok(model) => Ok(Some(model)),
+                    Err(err) => Err(err),
+                }
+                None => Ok(None),
+            })
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Instance Layer ////////////////////////////////////////////////////////////////////////////
 
     /// Delete this model instance by ID.
     fn delete(&self, db: Database) -> Result<()> {
@@ -311,8 +349,8 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         })
     }
 
-    /////////////////////////
-    // Convenience Methods //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Convenience Methods ///////////////////////////////////////////////////////////////////////
 
     /// Attempt to serialize the given bson document into an instance of this model.
     fn instance_from_document(document: Document) -> Result<Self> {
@@ -322,8 +360,8 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
         }
     }
 
-    ///////////////////////
-    // Maintenance Layer //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Maintenance Layer /////////////////////////////////////////////////////////////////////////
 
     /// Get the vector of index models for this model.
     fn indexes() -> Vec<IndexModel> {

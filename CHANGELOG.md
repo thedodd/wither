@@ -2,7 +2,7 @@ changelog
 =========
 
 ## 0.8
-The core `wither` crate is 100% backwards compatible with this relase.
+The core `wither` crate is 100% backwards compatible with this relase, but the `Model` trait has received a few additional methods. Namely the `find_one_and_(delete|replace|update)` methods. Came across a use case where I needed them and then realized that I never implemented them. Now they are here. Woot woot!
 
 The `wither_derive` crate has received a few backwareds incompatible changes. The motivation behind doing this is detailed in [#21](https://github.com/thedodd/wither/issues/21). The main issue is that we need the derive system to be abstract enough to deal with embedded documents. The backwards incompatible changes are here.
 - within `#[model(index())]`, the `index_type` attr has been reduced to simply be `index`. All of the same rules apply as before. This change was made for ergonomic reasons. Less typing. Easier to follow.
