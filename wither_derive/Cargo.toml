@@ -9,7 +9,7 @@ license = "Apache-2.0"
 name = "wither_derive"
 readme = "README.md"
 repository = "https://github.com/thedodd/wither"
-version = "0.8.0-beta.0"
+version = "0.8.0"
 
 [lib]
 proc-macro = true

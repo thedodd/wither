@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "wither"
-version = "0.8.0-beta.0"
+version = "0.8.0"
 dependencies = [
  "chrono 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -651,12 +651,12 @@ dependencies = [
  "mongodb 0.3.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "wither_derive 0.8.0-beta.0",
+ "wither_derive 0.8.0",
 ]
 
 [[package]]
 name = "wither_derive"
-version = "0.8.0-beta.0"
+version = "0.8.0"
 dependencies = [
  "Inflector 0.11.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "mongodb 0.3.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -674,8 +674,8 @@ dependencies = [
  "mongodb 0.3.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.80 (registry+https://github.com/rust-lang/crates.io-index)",
- "wither 0.8.0-beta.0",
- "wither_derive 0.8.0-beta.0",
+ "wither 0.8.0",
+ "wither_derive 0.8.0",
 ]
 
 [metadata]
