@@ -2,9 +2,9 @@ changelog
 =========
 
 ## 0.8
-The core `wither` crate is 100% backwards compatible with this relase, but the `Model` trait has received a few additional methods. Namely the `find_one_and_(delete|replace|update)` methods. Came across a use case where I needed them and then realized that I never implemented them. Now they are here. Woot woot!
+The core `wither` crate is 100% backwards compatible with this release, but the `Model` trait has received a few additional methods. Namely the `find_one_and_(delete|replace|update)` methods. Came across a use case where I needed them and then realized that I never implemented them. Now they are here. Woot woot!
 
-The `wither_derive` crate has received a few backwareds incompatible changes. The motivation behind doing this is detailed in [#21](https://github.com/thedodd/wither/issues/21). The main issue is that we need the derive system to be abstract enough to deal with embedded documents. The backwards incompatible changes are here.
+The `wither_derive` crate has received a few backwards incompatible changes. The motivation behind doing this is detailed in [#21](https://github.com/thedodd/wither/issues/21). The main issue is that we need the derive system to be abstract enough to deal with embedded documents. The backwards incompatible changes are here.
 - within `#[model(index())]`, the `index_type` attr has been reduced to simply be `index`. All of the same rules apply as before. This change was made for ergonomic reasons. Less typing. Easier to follow.
 - within `#[model(index())]`, the `with(...)` attr has been updated to support subdocuments. The new syntax for this attr is `with(field="...", index="...")`. Supply a `with(...)` attr for each independent field to include.
 - within `#[model(index())]`, the `weights(...)` attr has been updated for the same reason as `with`. Now, you need to supply one `weight(field="...", weight="...")` per field weight you are specifying.
