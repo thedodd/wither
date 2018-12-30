@@ -2,7 +2,7 @@
 authors = ["Anthony Dodd <dodd.anthonyjosiah@gmail.com>"]
 categories = ["database", "data-structures"]
 description = "An ODM for MongoDB built upon the mongo rust driver."
-documentation = "https://github.com/thedodd/wither"
+documentation = "https://docs.rs/wither"
 homepage = "https://github.com/thedodd/wither"
 keywords = ["mongodb", "odm", "orm"]
 license = "Apache-2.0"
