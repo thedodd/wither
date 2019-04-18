@@ -86,8 +86,7 @@ fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
     let users_from_db = User::find(db.clone(), None, None)
         .expect("Expected a successful lookup.");
 
-    assert_eq!((&users_from_db).len(), 1);
-    // assert!((&users_from_db).len() > 0);
+    assert_eq!(users_from_db.len(), 1);
 }
 
 #[test]
@@ -101,9 +100,30 @@ fn model_find_should_find_instances_of_model_matching_filter() {
     let users_from_db = User::find(db.clone(), Some(doc), None)
         .expect("Expected a successful lookup.");
 
-    assert_eq!((&users_from_db).len(), 1);
+    assert_eq!(users_from_db.len(), 1);
     assert_eq!(&users_from_db[0].id, &user.id);
     assert_eq!(&users_from_db[0].email, &user.email);
+}
+
+#[test]
+fn model_find_should_return_empty_vec_where_collection_is_empty() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let users_from_db = User::find(db.clone(), None, None)
+        .expect("Expected a successful lookup.");
+
+    assert_eq!(users_from_db.len(), 0);
+}
+
+#[test]
+#[should_panic]
+fn model_find_should_return_empty_vec_where_collection_is_empty_and_not_synced() {
+    let fixture = Fixture::new().with_dropped_database();
+    let db = fixture.get_db();
+    let users_from_db = User::find(db.clone(), None, None)
+        .expect("Expected a successful lookup.");
+
+    assert_eq!(users_from_db.len(), 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////

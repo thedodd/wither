@@ -121,17 +121,9 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> Result<Vec<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
-        // Unwrap cursor.
-        let mut cursor = match coll.find(filter, options) {
-            Ok(cursor) => cursor,
-            Err(err) => return Err(err),
-        };
-
         // Collect all items in the cursor.
-        let bson_docs = match cursor.drain_current_batch() {
-            Ok(docs) => docs,
-            Err(err) => return Err(err),
-        };
+        let mut cursor = coll.find(filter, options)?;
+        let bson_docs = cursor.drain_current_batch()?;
 
         // Deserialize bson docs onto struct models.
         let mut instances: Vec<Self> = vec![];
@@ -153,13 +145,8 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> Result<Option<Self>> {
         let coll = db.collection(Self::COLLECTION_NAME);
 
-        // Unwrap result.
-        let doc_option = match coll.find_one(filter, options) {
-            Ok(doc_option) => doc_option,
-            Err(err) => return Err(err),
-        };
-
-        // Unwrap option.
+        // Unpack data.
+        let doc_option = coll.find_one(filter, options)?;
         let doc = match doc_option {
             Some(doc) => doc,
             None => return Ok(None),
