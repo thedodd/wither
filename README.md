@@ -56,8 +56,11 @@ struct User {
 }
 
 fn main() {
-    // Create a user.
+    // Get a database connection & sync your model.
     let db = mongodb::Client::with_uri("mongodb://localhost:27017/").unwrap().db("mydb");
+    User::sync(db.clone()).unwrap();
+
+    // Create a user.
     let mut me = User{id: None, email: "my.email@example.com".to_string()};
     me.save(db.clone(), None);
 
