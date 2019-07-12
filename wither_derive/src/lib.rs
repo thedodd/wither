@@ -9,6 +9,7 @@ extern crate proc_macro2;
 #[macro_use]
 extern crate quote;
 extern crate serde;
+#[macro_use(parse_quote)]
 extern crate syn;
 
 mod model;
@@ -18,7 +19,7 @@ mod msg;
 mod tokens;
 
 use proc_macro::TokenStream;
-use syn::DeriveInput;
+use syn::{DeriveInput, GenericParam, LifetimeDef};
 
 use model::MetaModel;
 use tokens::Indexes;
@@ -41,9 +42,28 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
         model.struct_name(), model.collection_name(),
         model.write_concern_w(), model.write_concern_w_timeout(), model.write_concern_j(), model.write_concern_fsync(),
     );
+
+    let generics = model.generics();
+
+    let (_, ty_generics, where_clause) = generics.split_for_impl();
+
+    let mut generics_cloned = generics.clone();
+
+    let mut de: LifetimeDef = parse_quote!('_de);
+
+    for param in generics.params.iter() {
+        if let GenericParam::Lifetime(lifetime) = param {
+            de.bounds.push(lifetime.lifetime.clone());
+        }
+    }
+
+    generics_cloned.params.push(GenericParam::Lifetime(de));
+
+    let (impl_generics, _, _) = generics_cloned.split_for_impl();
+
     let indexes = Indexes(model.indexes());
     let expanded = quote! {
-        impl<'a> wither::Model<'a> for #name {
+        impl #impl_generics wither::Model<'_de> for #name #ty_generics #where_clause {
             const COLLECTION_NAME: &'static str = #collection_name;
 
             /// Get a cloned copy of this instance's ID.

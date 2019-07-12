@@ -8,6 +8,7 @@ use msg;
 /// A meta representation of the `Model` derivation target.
 pub(crate) struct MetaModel {
     ident: syn::Ident,
+    generics: syn::Generics,
     struct_fields: syn::FieldsNamed,
     struct_data: MetaModelStructData,
     field_data: MetaModelFieldData,
@@ -18,6 +19,7 @@ impl MetaModel {
     pub fn new(input: DeriveInput) -> Self {
         // The target's ident.
         let ident = input.ident;
+        let generics = input.generics;
 
         // Extract struct data. We only support model derivation on structs.
         let struct_fields = match input.data {
@@ -32,7 +34,7 @@ impl MetaModel {
         let struct_data = MetaModelStructData::new(input.attrs.as_slice(), &ident);
         let field_data = MetaModelFieldData::new(&struct_fields);
 
-        MetaModel{ident, struct_fields, struct_data, field_data}
+        MetaModel{ident, generics, struct_fields, struct_data, field_data}
     }
 
     /// The collection name to be used for this model.
@@ -110,6 +112,11 @@ impl MetaModel {
     /// The target struct's ident.
     pub fn struct_name(&self) -> &syn::Ident {
         &self.ident
+    }
+
+    /// The target struct's generics.
+    pub fn generics(&self) -> &syn::Generics {
+        &self.generics
     }
 
     /// The write replication settings for this model. Defaults to `1`.
