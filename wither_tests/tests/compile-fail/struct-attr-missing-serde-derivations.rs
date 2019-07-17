@@ -16,5 +16,5 @@ use mongodb::coll::options::IndexModel;
 struct BadModel {
     id: Option<mongodb::oid::ObjectId>,
 }
-//~^^^^^ the trait bound `BadModel: serde::Deserialize<'a>` is not satisfied [E0277]
+//~^^^^^ the trait bound `BadModel: serde::Deserialize<'_de>` is not satisfied [E0277]
 //~^^^^^^ the trait bound `BadModel: serde::Serialize` is not satisfied [E0277]
