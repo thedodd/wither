@@ -13,6 +13,10 @@ The only net-new item being added here is that now, within `#[model(index())]`, 
 
 **It is my sincere hope** that this is the last breaking change I will need to make to this crate before promoting this crate to a `1.0.0` release. Let's hope! Please let me know if there are any issues you have with these updates.
 
+#### 0.8.1 (pending)
+
+- In order to avoid writing `use mongodb::coll::options::IndexModel` explicitly, use the full path of `IndexModel` when sending code back to compiler.
+
 ## 0.7
 Minimal changes per this release. The main issue being addressed here is [#20](https://github.com/thedodd/wither/issues/20). It is arguable that this is just a bug fix, but the interface for `Model.update` has changed enough with these updates that a minor version increment is merited.
 

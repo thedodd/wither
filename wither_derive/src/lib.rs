@@ -57,7 +57,7 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
             }
 
             /// All indexes currently on this model.
-            fn indexes() -> Vec<IndexModel> {
+            fn indexes() -> Vec<mongodb::coll::options::IndexModel> {
                 #indexes
             }
 
