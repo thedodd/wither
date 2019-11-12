@@ -1,6 +1,6 @@
 //! Withers custom derive module.
 
-#![recursion_limit="200"]
+#![recursion_limit = "200"]
 
 extern crate inflector;
 extern crate mongodb;
@@ -23,7 +23,6 @@ use syn::DeriveInput;
 use model::MetaModel;
 use tokens::Indexes;
 
-
 /// Please see the wither crate's documentation for details on the Model derive system.
 #[proc_macro_derive(Model, attributes(model))]
 pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
@@ -38,8 +37,12 @@ pub fn proc_macro_derive_model(input: TokenStream) -> TokenStream {
 
     // Build output code for deriving `Model`.
     let (name, collection_name, wc_w, wc_t, wc_j, wc_f) = (
-        model.struct_name(), model.collection_name(),
-        model.write_concern_w(), model.write_concern_w_timeout(), model.write_concern_j(), model.write_concern_fsync(),
+        model.struct_name(),
+        model.collection_name(),
+        model.write_concern_w(),
+        model.write_concern_w_timeout(),
+        model.write_concern_j(),
+        model.write_concern_fsync(),
     );
     let indexes = Indexes(model.indexes());
     let expanded = quote! {

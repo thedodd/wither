@@ -2,7 +2,8 @@
 pub(crate) const ID_FIELD_SERDE_REQ: &str = r#"A `Model` struct must have a field named `id`, and it must have the following attribute: `#[serde(rename="_id", skip_serializing_if="Option::is_none")]`."#;
 
 /// An error message indicating the required form of `Model` attributes.
-pub(crate) const MODEL_ATTR_FORM: &str = "All `Model` attributes must take the form `#[model(...)]`.";
+pub(crate) const MODEL_ATTR_FORM: &str =
+    "All `Model` attributes must take the form `#[model(...)]`.";
 
 /// An error message indicating the required form of a `#[model(index(...))]` attribute.
 pub(crate) const MODEL_ATTR_INDEX_FORM: &str = "The `model(index)` attribute must have its own set of values, as such: `#[model(index(...))]`.";
@@ -17,4 +18,5 @@ pub(crate) const MODEL_ATTR_INDEX_WEIGHTS_FORM: &str = r#"The `model(index(weigh
 pub(crate) const MODEL_ATTR_INDEX_WITH_FORM: &str = r#"The `model(index(with(...))) attr must be of form `with(field="...", index="...")` where `field="..."` is the field to include and `index="..."` is one of the valid index types (`"asc"`, `"dsc"`, `"2d"`, `"2dsphere"`, `"geoHaystack"`, `"text"`, `"hashed"`)."#;
 
 /// An error message indicating the allowed form for `#[model(index(embedded="..."))]`.
-pub(crate) const MODEL_ATTR_INDEX_EMBEDDED_FORM: &str = r#"The `model(index(embedded)) attr must be of the form `embedded="..."`."#;
+pub(crate) const MODEL_ATTR_INDEX_EMBEDDED_FORM: &str =
+    r#"The `model(index(embedded)) attr must be of the form `embedded="..."`."#;

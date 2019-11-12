@@ -1,9 +1,9 @@
-use quote::ToTokens;
 use proc_macro2::TokenStream;
+use quote::ToTokens;
 
 use mongodb::{
-    Bson, Document,
     coll::options::{IndexModel, IndexOptions},
+    Bson, Document,
 };
 
 pub struct Indexes(pub Vec<IndexModel>);
@@ -16,7 +16,7 @@ impl ToTokens for Indexes {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         // If we have no indexes, then code an empty vec.
         if self.0.len() == 0 {
-            tokens.extend(quote!{vec![]});
+            tokens.extend(quote! {vec![]});
             return;
         }
 
@@ -59,7 +59,7 @@ impl ToTokens for Indexes {
             })
         }).collect::<Vec<TokenStream>>();
 
-        tokens.extend(quote!{
+        tokens.extend(quote! {
             use mongodb::coll::options::{IndexModel, IndexOptions};
             vec![
                 #(#index_tokens),*
@@ -79,7 +79,7 @@ fn build_index_keys(doc: &Document) -> TokenStream {
         }
     }).collect::<Vec<TokenStream>>();
 
-    quote!(doc!{ #(#key_vals),* })
+    quote!(doc! { #(#key_vals),* })
 }
 
 fn option_to_tokens<T: ToTokens>(target: Option<T>) -> TokenStream {
@@ -110,7 +110,7 @@ fn option_to_tokens_for_weights(doc_opt: Option<Document>) -> TokenStream {
                     _ => panic!("Developer error. Found unexpected type for index weights value {:?}. This is a bug within the wither framework. Please open an issue here: https://github.com/thedodd/wither/issues/new", val),
                 }
             }).collect::<Vec<TokenStream>>();
-            quote!(Some(doc!{ #(#key_vals),* }))
+            quote!(Some(doc! { #(#key_vals),* }))
         }
     }
 }

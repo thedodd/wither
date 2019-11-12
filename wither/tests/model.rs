@@ -15,20 +15,20 @@ mod fixtures;
 use std::error::Error;
 
 use mongodb::{
-    Document,
     coll::options::{FindOneAndUpdateOptions, ReturnDocument},
     db::ThreadedDatabase,
+    Document,
 };
 use wither::prelude::*;
 
 use fixtures::{
-    Fixture,
-    User,
-    UserModelBadMigrations,
-    DerivedModel,
     Derived2dModel,
     Derived2dsphereModel,
     // DerivedGeoHaystackModel,
+    DerivedModel,
+    Fixture,
+    User,
+    UserModelBadMigrations,
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -38,12 +38,16 @@ use fixtures::{
 fn model_count_should_return_expected_count_matching_filter() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let doc = doc!{"_id" => (user.id.clone().unwrap())};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    let doc = doc! {"_id" => (user.id.clone().unwrap())};
 
-    let count = User::count(db.clone(), Some(doc), None)
-        .expect("Expected a successful count operation.");
+    let count =
+        User::count(db.clone(), Some(doc), None).expect("Expected a successful count operation.");
 
     assert_eq!(count, 1);
 }
@@ -55,9 +59,13 @@ fn model_count_should_return_expected_count_matching_filter() {
 fn model_save_should_save_model_instance_and_add_id() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
 
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
 
     assert!(user.id != None)
 }
@@ -68,7 +76,9 @@ fn derived_model_save_should_save_model_instance_and_add_id() {
     let db = fixture.get_db();
     let mut model = DerivedModel::default();
 
-    model.save(db.clone(), None).expect("Expected a successful save operation.");
+    model
+        .save(db.clone(), None)
+        .expect("Expected a successful save operation.");
 
     assert!(model.id != None)
 }
@@ -80,11 +90,14 @@ fn derived_model_save_should_save_model_instance_and_add_id() {
 fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
 
-    let users_from_db = User::find(db.clone(), None, None)
-        .expect("Expected a successful lookup.");
+    let users_from_db = User::find(db.clone(), None, None).expect("Expected a successful lookup.");
 
     assert_eq!((&users_from_db).len(), 1);
     // assert!((&users_from_db).len() > 0);
@@ -94,12 +107,16 @@ fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
 fn model_find_should_find_instances_of_model_matching_filter() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let doc = doc!{"_id" => (user.id.clone().unwrap())};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    let doc = doc! {"_id" => (user.id.clone().unwrap())};
 
-    let users_from_db = User::find(db.clone(), Some(doc), None)
-        .expect("Expected a successful lookup.");
+    let users_from_db =
+        User::find(db.clone(), Some(doc), None).expect("Expected a successful lookup.");
 
     assert_eq!((&users_from_db).len(), 1);
     assert_eq!(&users_from_db[0].id, &user.id);
@@ -113,11 +130,15 @@ fn model_find_should_find_instances_of_model_matching_filter() {
 fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
 
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
 
-    let doc = doc!{"_id" => (user.id.clone().unwrap())};
+    let doc = doc! {"_id" => (user.id.clone().unwrap())};
     let user_from_db = User::find_one(db.clone(), Some(doc), None)
         .expect("Expected a successful lookup.")
         .expect("Expected a populated value from backend.");
@@ -133,13 +154,23 @@ fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
 fn model_find_one_and_delete_should_delete_the_target_doc() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
 
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    user2.save(db.clone(), None).expect("Expected a successful save operation.");
-    let output = User::find_one_and_delete(db.clone(), doc!{"email": "test@test.com"}, None)
-        .expect("Expected a operation.").unwrap();
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    user2
+        .save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    let output = User::find_one_and_delete(db.clone(), doc! {"email": "test@test.com"}, None)
+        .expect("Expected a operation.")
+        .unwrap();
 
     assert_eq!(&output.email, &user.email);
 }
@@ -151,19 +182,30 @@ fn model_find_one_and_delete_should_delete_the_target_doc() {
 fn model_find_one_and_replace_should_replace_the_target_doc_and_return_new_doc() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndUpdateOptions::new();
     opts.return_document = Some(ReturnDocument::After);
 
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    user2
+        .save(db.clone(), None)
+        .expect("Expected a successful save operation.");
     let output = User::find_one_and_replace(
         db.clone(),
-        doc!{"email": "test@test.com"},
-        doc!{"email": "test3@test.com"},
+        doc! {"email": "test@test.com"},
+        doc! {"email": "test3@test.com"},
         Some(opts),
-    ).expect("Expected a operation.").unwrap();
+    )
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test3@test.com");
 }
@@ -172,19 +214,30 @@ fn model_find_one_and_replace_should_replace_the_target_doc_and_return_new_doc()
 fn model_find_one_and_replace_should_replace_the_target_doc_and_return_old_doc() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndUpdateOptions::new();
     opts.return_document = Some(ReturnDocument::Before);
 
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    user2
+        .save(db.clone(), None)
+        .expect("Expected a successful save operation.");
     let output = User::find_one_and_replace(
         db.clone(),
-        doc!{"email": "test@test.com"},
-        doc!{"email": "test3@test.com"},
+        doc! {"email": "test@test.com"},
+        doc! {"email": "test3@test.com"},
         Some(opts),
-    ).expect("Expected a operation.").unwrap();
+    )
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test@test.com");
 }
@@ -196,19 +249,30 @@ fn model_find_one_and_replace_should_replace_the_target_doc_and_return_old_doc()
 fn model_find_one_and_update_should_update_target_document_and_return_new() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndUpdateOptions::new();
     opts.return_document = Some(ReturnDocument::After);
 
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    user2
+        .save(db.clone(), None)
+        .expect("Expected a successful save operation.");
     let output = User::find_one_and_update(
         db.clone(),
-        doc!{"email": "test@test.com"},
-        doc!{"$set": doc!{"email": "test3@test.com"}},
+        doc! {"email": "test@test.com"},
+        doc! {"$set": doc!{"email": "test3@test.com"}},
         Some(opts),
-    ).expect("Expected a operation.").unwrap();
+    )
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test3@test.com");
 }
@@ -217,19 +281,30 @@ fn model_find_one_and_update_should_update_target_document_and_return_new() {
 fn model_find_one_and_update_should_update_target_document_and_return_old() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndUpdateOptions::new();
     opts.return_document = Some(ReturnDocument::Before);
 
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    user2
+        .save(db.clone(), None)
+        .expect("Expected a successful save operation.");
     let output = User::find_one_and_update(
         db.clone(),
-        doc!{"email": "test@test.com"},
-        doc!{"$set": doc!{"email": "test3@test.com"}},
+        doc! {"email": "test@test.com"},
+        doc! {"$set": doc!{"email": "test3@test.com"}},
         Some(opts),
-    ).expect("Expected a operation.").unwrap();
+    )
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test@test.com");
 }
@@ -241,13 +316,18 @@ fn model_find_one_and_update_should_update_target_document_and_return_old() {
 fn model_update_should_perform_expected_updates_against_self() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let update_doc = doc!{"$set": doc!{"email": "new@test.com"}};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    let update_doc = doc! {"$set": doc!{"email": "new@test.com"}};
     let mut opts = FindOneAndUpdateOptions::default();
     opts.return_document = Some(ReturnDocument::After);
 
-    let user = user.update(db.clone(), None, update_doc, Some(opts))
+    let user = user
+        .update(db.clone(), None, update_doc, Some(opts))
         .expect("Expected a successful update operation.")
         .expect("Expected populated value.");
 
@@ -258,11 +338,16 @@ fn model_update_should_perform_expected_updates_against_self() {
 fn model_update_should_return_error_with_invalid_update_document() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let update_doc = doc!{"invalid_update_key" => "should_fail"};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    let update_doc = doc! {"invalid_update_key" => "should_fail"};
 
-    let err = user.update(db.clone(), None, update_doc, None)
+    let err = user
+        .update(db.clone(), None, update_doc, None)
         .expect_err("Expected an errored update operation.");
 
     assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
@@ -272,12 +357,17 @@ fn model_update_should_return_error_with_invalid_update_document() {
 fn model_update_should_noop_where_filter_selects_on_nonextant_field() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": true}});
-    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    let filter_doc = Some(doc! {"nonextant_field": doc!{"$exists": true}});
+    let update_doc = doc! {"$set": doc!{"email": "test2@test.com"}};
 
-    let val = user.update(db.clone(), filter_doc, update_doc, None)
+    let val = user
+        .update(db.clone(), filter_doc, update_doc, None)
         .expect("Expected a successful update operation.");
 
     assert!(val.is_none());
@@ -287,14 +377,19 @@ fn model_update_should_noop_where_filter_selects_on_nonextant_field() {
 fn model_update_should_perform_expected_update_with_added_filters() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
-    user.save(db.clone(), None).expect("Expected a successful save operation.");
-    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": false}});
-    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
+    user.save(db.clone(), None)
+        .expect("Expected a successful save operation.");
+    let filter_doc = Some(doc! {"nonextant_field": doc!{"$exists": false}});
+    let update_doc = doc! {"$set": doc!{"email": "test2@test.com"}};
     let mut opts = FindOneAndUpdateOptions::default();
     opts.return_document = Some(ReturnDocument::After);
 
-    let user = user.update(db.clone(), filter_doc, update_doc, Some(opts))
+    let user = user
+        .update(db.clone(), filter_doc, update_doc, Some(opts))
         .expect("Expected a successful update operation.")
         .expect("Expected populated value.");
 
@@ -310,14 +405,16 @@ fn model_sync_should_create_expected_indices_on_collection() {
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(User::COLLECTION_NAME);
-    let initial_indices: Vec<Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = User::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -328,8 +425,14 @@ fn model_sync_should_create_expected_indices_on_collection() {
 
     assert!(output_indices_len > initial_indices_len);
     assert_eq!(output_indices_len, 2);
-    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.users"});
-    assert_eq!(&idx2, &doc!{"v": idx2.get_i32("v").unwrap(), "unique": true, "key": doc!{"email": 1}, "name": "unique-email", "ns": "witherTestDB.users", "background": true});
+    assert_eq!(
+        &idx1,
+        &doc! {"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.users"}
+    );
+    assert_eq!(
+        &idx2,
+        &doc! {"v": idx2.get_i32("v").unwrap(), "unique": true, "key": doc!{"email": 1}, "name": "unique-email", "ns": "witherTestDB.users", "background": true}
+    );
 }
 
 #[test]
@@ -338,14 +441,16 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_model() {
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(DerivedModel::COLLECTION_NAME);
-    let initial_indices: Vec<Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = DerivedModel::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -359,41 +464,56 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_model() {
 
     assert!(output_indices_len > initial_indices_len);
     assert_eq!(output_indices_len, 5);
-    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derivations"});
-    assert_eq!(&idx2, &doc!{
-        "v": idx2.get_i32("v").unwrap(),
-        "unique": true,
-        "key": doc!{"field0": 1},
-        "name": "idx2",
-        "ns": "witherTestDB.derivations",
-        "background": true,
-        "expireAfterSeconds": 15i32,
-        "sparse": true,
-    });
-    assert_eq!(&idx3, &doc!{
-        "v": idx3.get_i32("v").unwrap(),
-        "key": doc!{"field1": -1i32, "text_field_a": -1i32, "field0": 1i32},
-        "name": "idx3",
-        "ns": "witherTestDB.derivations",
-        "background": false,
-        "sparse": false,
-    });
-    assert_eq!(&idx4, &doc!{
-        "v": idx4.get_i32("v").unwrap(),
-        "key": doc!{"_fts": "text", "_ftsx": 1i32},
-        "name": "idx4",
-        "ns": "witherTestDB.derivations",
-        "default_language": "en",
-        "language_override": "override_field",
-        "weights": doc!{"text_field_a": 10i32, "text_field_b": 5i32},
-        "textIndexVersion": 3i32,
-    });
-    assert_eq!(&idx5, &doc!{
-        "v": idx5.get_i32("v").unwrap(),
-        "key": doc!{"hashed_field": "hashed"},
-        "name": "idx5",
-        "ns": "witherTestDB.derivations",
-    });
+    assert_eq!(
+        &idx1,
+        &doc! {"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derivations"}
+    );
+    assert_eq!(
+        &idx2,
+        &doc! {
+            "v": idx2.get_i32("v").unwrap(),
+            "unique": true,
+            "key": doc!{"field0": 1},
+            "name": "idx2",
+            "ns": "witherTestDB.derivations",
+            "background": true,
+            "expireAfterSeconds": 15i32,
+            "sparse": true,
+        }
+    );
+    assert_eq!(
+        &idx3,
+        &doc! {
+            "v": idx3.get_i32("v").unwrap(),
+            "key": doc!{"field1": -1i32, "text_field_a": -1i32, "field0": 1i32},
+            "name": "idx3",
+            "ns": "witherTestDB.derivations",
+            "background": false,
+            "sparse": false,
+        }
+    );
+    assert_eq!(
+        &idx4,
+        &doc! {
+            "v": idx4.get_i32("v").unwrap(),
+            "key": doc!{"_fts": "text", "_ftsx": 1i32},
+            "name": "idx4",
+            "ns": "witherTestDB.derivations",
+            "default_language": "en",
+            "language_override": "override_field",
+            "weights": doc!{"text_field_a": 10i32, "text_field_b": 5i32},
+            "textIndexVersion": 3i32,
+        }
+    );
+    assert_eq!(
+        &idx5,
+        &doc! {
+            "v": idx5.get_i32("v").unwrap(),
+            "key": doc!{"hashed_field": "hashed"},
+            "name": "idx5",
+            "ns": "witherTestDB.derivations",
+        }
+    );
 }
 
 #[test]
@@ -402,14 +522,16 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2d_model(
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(Derived2dModel::COLLECTION_NAME);
-    let initial_indices: Vec<Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = Derived2dModel::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -420,11 +542,23 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2d_model(
 
     assert!(output_indices_len > initial_indices_len);
     assert_eq!(output_indices_len, 2);
-    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2d_models"});
+    assert_eq!(
+        &idx1,
+        &doc! {"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2d_models"}
+    );
     // NOTE WELL: doc comparison was failing for some reason. Not sure why. Doing manual asserts now.
-    assert_eq!(idx2.get("key").unwrap().as_document().unwrap(), &doc!{"field_2d_a": "2d", "field_2d_filter": 1i32});
-    assert_eq!(idx2.get("name").unwrap().as_str().unwrap(), "field_2d_a_2d_field_2d_filter_1");
-    assert_eq!(idx2.get("ns").unwrap().as_str().unwrap(), "witherTestDB.derived_2d_models");
+    assert_eq!(
+        idx2.get("key").unwrap().as_document().unwrap(),
+        &doc! {"field_2d_a": "2d", "field_2d_filter": 1i32}
+    );
+    assert_eq!(
+        idx2.get("name").unwrap().as_str().unwrap(),
+        "field_2d_a_2d_field_2d_filter_1"
+    );
+    assert_eq!(
+        idx2.get("ns").unwrap().as_str().unwrap(),
+        "witherTestDB.derived_2d_models"
+    );
     assert_eq!(idx2.get("min").unwrap().as_f64().unwrap(), -180.0f64);
     assert_eq!(idx2.get("max").unwrap().as_f64().unwrap(), 180.0f64);
     assert_eq!(idx2.get("bits").unwrap().as_i32().unwrap(), 1i32);
@@ -436,14 +570,16 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2dsphere_
     let fixture = Fixture::new().with_synced_models().with_empty_collections();
     let db = fixture.get_db();
     let coll = db.collection(Derived2dsphereModel::COLLECTION_NAME);
-    let initial_indices: Vec<Document> = coll.list_indexes()
+    let initial_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor pre-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
     let initial_indices_len = initial_indices.len();
 
     let _ = Derived2dsphereModel::sync(db.clone()).expect("Expected a successful sync operation.");
-    let mut output_indices: Vec<Document> = coll.list_indexes()
+    let mut output_indices: Vec<Document> = coll
+        .list_indexes()
         .expect("Expected to successfully open indices cursor post-test.")
         .filter_map(|doc_res| doc_res.ok())
         .collect();
@@ -454,11 +590,26 @@ fn model_sync_should_create_expected_indices_on_collection_for_derived_2dsphere_
 
     assert!(output_indices_len > initial_indices_len);
     assert_eq!(output_indices_len, 2);
-    assert_eq!(&idx1, &doc!{"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2dsphere_models"});
-    assert_eq!(idx2.get("key").unwrap().as_document().unwrap(), &doc!{"field_2dsphere": "2dsphere", "field_2dsphere_filter": 1i32});
-    assert_eq!(idx2.get("name").unwrap().as_str().unwrap(), "field_2dsphere_2dsphere_field_2dsphere_filter_1");
-    assert_eq!(idx2.get("ns").unwrap().as_str().unwrap(), "witherTestDB.derived_2dsphere_models");
-    assert_eq!(idx2.get("2dsphereIndexVersion").unwrap().as_i32().unwrap(), 3i32);
+    assert_eq!(
+        &idx1,
+        &doc! {"v": idx1.get_i32("v").unwrap(), "key": doc!{"_id": 1}, "name": "_id_", "ns": "witherTestDB.derived_2dsphere_models"}
+    );
+    assert_eq!(
+        idx2.get("key").unwrap().as_document().unwrap(),
+        &doc! {"field_2dsphere": "2dsphere", "field_2dsphere_filter": 1i32}
+    );
+    assert_eq!(
+        idx2.get("name").unwrap().as_str().unwrap(),
+        "field_2dsphere_2dsphere_field_2dsphere_filter_1"
+    );
+    assert_eq!(
+        idx2.get("ns").unwrap().as_str().unwrap(),
+        "witherTestDB.derived_2dsphere_models"
+    );
+    assert_eq!(
+        idx2.get("2dsphereIndexVersion").unwrap().as_i32().unwrap(),
+        3i32
+    );
 }
 
 // TODO: enable this test once https://github.com/mongodb-labs/mongo-rust-driver-prototype/issues/289 lands.
@@ -501,29 +652,47 @@ fn model_sync_should_execute_expected_migrations_against_collection() {
     let fixture = Fixture::new().with_dropped_database();
     let db = fixture.get_db();
     let coll = db.collection(User::COLLECTION_NAME);
-    let mut new_user = User{id: None, email: String::from("test@test.com")};
-    new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
+    let mut new_user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
+    new_user
+        .save(db.clone(), None)
+        .expect("Expected to successfully save new user instance.");
 
     let _ = User::migrate(db.clone()).expect("Expected a successful migration operation.");
-    let migrated_doc = coll.find_one(Some(doc!{"_id": new_user.id.clone().unwrap()}), None)
+    let migrated_doc = coll
+        .find_one(Some(doc! {"_id": new_user.id.clone().unwrap()}), None)
         .expect("Expect a successful find operation.")
         .expect("Expect a populated document.");
 
-    assert_eq!(migrated_doc, doc!{
-        "_id": new_user.id.clone().unwrap(),
-        "email": new_user.email,
-        "testfield": "test",
-    });
+    assert_eq!(
+        migrated_doc,
+        doc! {
+            "_id": new_user.id.clone().unwrap(),
+            "email": new_user.email,
+            "testfield": "test",
+        }
+    );
 }
 
 #[test]
 fn model_sync_should_error_if_migration_with_no_set_and_no_unset_given() {
     let fixture = Fixture::new().with_dropped_database().with_synced_models();
     let db = fixture.get_db();
-    let mut new_user = UserModelBadMigrations{id: None, email: String::from("test@test.com")};
-    new_user.save(db.clone(), None).expect("Expected to successfully save new user instance.");
+    let mut new_user = UserModelBadMigrations {
+        id: None,
+        email: String::from("test@test.com"),
+    };
+    new_user
+        .save(db.clone(), None)
+        .expect("Expected to successfully save new user instance.");
 
-    let err = UserModelBadMigrations::migrate(db.clone()).expect_err("Expected a failure from migration operation.");
+    let err = UserModelBadMigrations::migrate(db.clone())
+        .expect_err("Expected a failure from migration operation.");
 
-    assert_eq!(err.description(), "One of '$set' or '$unset' must be specified.");
+    assert_eq!(
+        err.description(),
+        "One of '$set' or '$unset' must be specified."
+    );
 }

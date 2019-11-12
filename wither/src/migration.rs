@@ -4,20 +4,14 @@ use std::error::Error;
 
 use chrono;
 use mongodb::{
-    Bson, Document,
-    db::{
-        Database,
-        ThreadedDatabase,
-    },
-    coll::{
-        Collection,
-        options::UpdateOptions,
-    },
+    coll::{options::UpdateOptions, Collection},
     common::WriteConcern,
+    db::{Database, ThreadedDatabase},
     error::{
         Error::{DefaultError, WriteError},
         Result,
     },
+    Bson, Document,
 };
 
 use crate::model::Model;
@@ -79,17 +73,25 @@ pub struct IntervalMigration {
 
 impl Migration for IntervalMigration {
     fn execute<'c>(&self, coll: &'c Collection) -> Result<()> {
-        info!("Executing migration '{}' against '{}'.", &self.name, coll.namespace);
+        info!(
+            "Executing migration '{}' against '{}'.",
+            &self.name, coll.namespace
+        );
         // If the migrations threshold has been passed, then no-op.
         if chrono::Utc::now() > self.threshold {
-            info!("Successfully executed migration '{}' against '{}'. No-op.", &self.name, coll.namespace);
+            info!(
+                "Successfully executed migration '{}' against '{}'. No-op.",
+                &self.name, coll.namespace
+            );
             return Ok(());
         };
 
         // Build update document.
-        let mut update = doc!{};
+        let mut update = doc! {};
         if self.set.clone().is_none() && self.unset.clone().is_none() {
-            return Err(DefaultError(String::from("One of '$set' or '$unset' must be specified.")));
+            return Err(DefaultError(String::from(
+                "One of '$set' or '$unset' must be specified.",
+            )));
         };
         if let Some(set) = self.set.clone() {
             update.insert_bson(String::from("$set"), Bson::from(set));
@@ -99,7 +101,15 @@ impl Migration for IntervalMigration {
         }
 
         // Build up & execute the migration.
-        let options = UpdateOptions{upsert: Some(false), write_concern: Some(WriteConcern{w: 1, w_timeout: 0, j: true, fsync: false})};
+        let options = UpdateOptions {
+            upsert: Some(false),
+            write_concern: Some(WriteConcern {
+                w: 1,
+                w_timeout: 0,
+                j: true,
+                fsync: false,
+            }),
+        };
         let res = coll.update_many(self.filter.clone(), update, Some(options))?;
 
         // Handle nested error condition.
@@ -107,7 +117,10 @@ impl Migration for IntervalMigration {
             error!("Error executing migration: {:?}", err.description());
             return Err(WriteError(err));
         }
-        info!("Successfully executed migration '{}' against '{}'. {} matched. {} modified.", &self.name, coll.namespace, res.matched_count, res.modified_count);
+        info!(
+            "Successfully executed migration '{}' against '{}'. {} matched. {} modified.",
+            &self.name, coll.namespace, res.matched_count, res.modified_count
+        );
         Ok(())
     }
 }

@@ -32,7 +32,12 @@ impl MetaModel {
         let struct_data = MetaModelStructData::new(input.attrs.as_slice(), &ident);
         let field_data = MetaModelFieldData::new(&struct_fields);
 
-        MetaModel{ident, struct_fields, struct_data, field_data}
+        MetaModel {
+            ident,
+            struct_fields,
+            struct_data,
+            field_data,
+        }
     }
 
     /// The collection name to be used for this model.
@@ -50,7 +55,9 @@ impl MetaModel {
             };
 
             // We are only looking for the `id` field.
-            if "id" != &ident { continue }
+            if "id" != &ident {
+                continue;
+            }
 
             // If serde checks have been disabled, then we are done here.
             if self.struct_data.skip_serde_checks {
@@ -67,14 +74,19 @@ impl MetaModel {
                     continue;
                 }
                 let id_attrs = match meta {
-                    syn::Meta::List(ref list) => list.nested.iter().by_ref()
+                    syn::Meta::List(ref list) => list
+                        .nested
+                        .iter()
+                        .by_ref()
                         .filter_map(|nested_meta| match nested_meta {
                             syn::NestedMeta::Meta(meta) => Some(meta),
                             _ => None,
-                        }).filter_map(|meta| match meta {
+                        })
+                        .filter_map(|meta| match meta {
                             syn::Meta::NameValue(kv) => Some(kv),
                             _ => None,
-                        }).fold(NeededIdFieldSerdeAttrs::default(), |mut acc, kv| {
+                        })
+                        .fold(NeededIdFieldSerdeAttrs::default(), |mut acc, kv| {
                             let val = match &kv.lit {
                                 syn::Lit::Str(ref lit) => lit.value(),
                                 _ => return acc,
@@ -82,11 +94,11 @@ impl MetaModel {
                             match kv.ident.to_string().as_str() {
                                 "rename" => {
                                     acc.rename = val;
-                                },
+                                }
                                 "skip_serializing_if" => {
                                     acc.skip_serializing_if = val;
                                 }
-                                _ => ()
+                                _ => (),
                             };
                             acc
                         }),
@@ -144,10 +156,14 @@ impl NeededIdFieldSerdeAttrs {
     /// Validate that the fields are holding the needed values.
     fn validate(&self) {
         if self.rename != "_id" {
-            panic!(r#"A `Model`'s 'id' field must have a serde `rename` attribute with a value of `"_id"`."#)
+            panic!(
+                r#"A `Model`'s 'id' field must have a serde `rename` attribute with a value of `"_id"`."#
+            )
         }
         if self.skip_serializing_if != "Option::is_none" {
-            panic!(r#"A `Model`'s 'id' field must have a serde `skip_serializing_if` attribute with a value of `"Option::is_none"`."#)
+            panic!(
+                r#"A `Model`'s 'id' field must have a serde `skip_serializing_if` attribute with a value of `"Option::is_none"`."#
+            )
         }
     }
 }

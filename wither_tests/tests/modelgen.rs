@@ -8,73 +8,108 @@ extern crate wither;
 #[macro_use(Model)]
 extern crate wither_derive;
 
+use mongodb::{coll::options::IndexModel, Document};
 use wither::prelude::*;
-use mongodb::{Document, coll::options::IndexModel};
 
 /// This model tests all of the major code generation bits.
 ///
 /// NOTE: do not attempt to sync indices for this model, as MongoDB will reject it for having
 /// too many geo indexes. This is just for testing code generation.
 #[derive(Serialize, Deserialize, Model, Default)]
-#[model(collection_name="derivations")]
+#[model(collection_name = "derivations")]
 struct DerivedModel {
     /// The ID of the model.
-    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<mongodb::oid::ObjectId>,
 
     // A field to test base line index options with index of type `asc`.
     #[model(index(
-        index="asc",
-        background="true", sparse="true", unique="true", expire_after_seconds="15", name="field0", version="1",
+        index = "asc",
+        background = "true",
+        sparse = "true",
+        unique = "true",
+        expire_after_seconds = "15",
+        name = "field0",
+        version = "1",
     ))]
     pub field0: String,
 
     // A field to test base line index options with index of type `dsc`.
     #[model(index(
-        index="dsc",
-        background="false", sparse="false", unique="false",
-        with(field="text_field_a", index="dsc"), with(field="field0", index="asc"),
+        index = "dsc",
+        background = "false",
+        sparse = "false",
+        unique = "false",
+        with(field = "text_field_a", index = "dsc"),
+        with(field = "field0", index = "asc"),
     ))]
     pub field1: String,
 
     // A field to test index of type `text`.
     #[model(index(
-        index="text", with(field="text_field_b", index="text"),
-        weight(field="text_field_a", weight="10"), weight(field="text_field_b", weight="5"),
-        text_version="3", default_language="en", language_override="override_field",
+        index = "text",
+        with(field = "text_field_b", index = "text"),
+        weight(field = "text_field_a", weight = "10"),
+        weight(field = "text_field_b", weight = "5"),
+        text_version = "3",
+        default_language = "en",
+        language_override = "override_field",
     ))]
     pub text_field_a: String,
     pub text_field_b: String,
 
     // A field to test index of type `hashed`.
-    #[model(index(index="hashed"))]
+    #[model(index(index = "hashed"))]
     pub hashed_field: String,
 
     // A field to test index of type `2d`.
-    #[model(index(index="2d", with(field="field_2d_b", index="2d"), min="-180.0", max="180.0", bits="1"))]
+    #[model(index(
+        index = "2d",
+        with(field = "field_2d_b", index = "2d"),
+        min = "-180.0",
+        max = "180.0",
+        bits = "1"
+    ))]
     pub field_2d_a: Vec<f64>,
     pub field_2d_b: Vec<f64>,
 
     // A field to test index of type `2dsphere`.
-    #[model(index(index="2dsphere", sphere_version="3", with(field="field_2dsphere_filter", index="asc")))]
+    #[model(index(
+        index = "2dsphere",
+        sphere_version = "3",
+        with(field = "field_2dsphere_filter", index = "asc")
+    ))]
     pub field_2dsphere: Document,
     pub field_2dsphere_filter: String,
 
     // A field to test index of type `geoHaystack`.
-    #[model(index(index="geoHaystack", bucket_size="5", with(field="field_geo_haystack_filter", index="asc")))]
+    #[model(index(
+        index = "geoHaystack",
+        bucket_size = "5",
+        with(field = "field_geo_haystack_filter", index = "asc")
+    ))]
     pub field_geo_haystack: Document,
     pub field_geo_haystack_filter: String,
 
     // A field to test embedded documents.
-    #[model(index(index="asc", embedded="subdoc1.subdoc2.subdocN.field", name="field_embedded"))]
+    #[model(index(
+        index = "asc",
+        embedded = "subdoc1.subdoc2.subdocN.field",
+        name = "field_embedded"
+    ))]
     pub field_embedded: Document,
 }
 
 /// This model tests the generation of an accurate collection name based on the model's ident.
 #[derive(Model, Serialize, Deserialize)]
-#[model(wc_replication="2", wc_timeout="300", wc_journaling="false", wc_fsync="true")]
+#[model(
+    wc_replication = "2",
+    wc_timeout = "300",
+    wc_journaling = "false",
+    wc_fsync = "true"
+)]
 struct SecondModel {
-    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
+    #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     id: Option<mongodb::oid::ObjectId>,
 }
 
@@ -94,38 +129,72 @@ fn test_first_model_indexes() {
     assert_eq!(8, indexes.len());
 
     let (idx1, idx2, idx3, idx4, idx5, idx6, idx7, idx8) = (
-        indexes[0].clone(), indexes[1].clone(), indexes[2].clone(), indexes[3].clone(),
-        indexes[4].clone(), indexes[5].clone(), indexes[6].clone(), indexes[7].clone(),
+        indexes[0].clone(),
+        indexes[1].clone(),
+        indexes[2].clone(),
+        indexes[3].clone(),
+        indexes[4].clone(),
+        indexes[5].clone(),
+        indexes[6].clone(),
+        indexes[7].clone(),
     );
 
-    IndexShapeAssert::new(idx1, doc!{"field0": 1i32})
-        .background(Some(true)).sparse(Some(true)).unique(Some(true)).version(Some(1i32))
-        .expire_after_seconds(Some(15i32)).name(Some("field0".to_string()))
+    IndexShapeAssert::new(idx1, doc! {"field0": 1i32})
+        .background(Some(true))
+        .sparse(Some(true))
+        .unique(Some(true))
+        .version(Some(1i32))
+        .expire_after_seconds(Some(15i32))
+        .name(Some("field0".to_string()))
         .assert();
 
-    IndexShapeAssert::new(idx2, doc!{"field1": -1i32, "text_field_a": -1i32, "field0": 1i32})
-        .background(Some(false)).sparse(Some(false)).unique(Some(false)).assert();
+    IndexShapeAssert::new(
+        idx2,
+        doc! {"field1": -1i32, "text_field_a": -1i32, "field0": 1i32},
+    )
+    .background(Some(false))
+    .sparse(Some(false))
+    .unique(Some(false))
+    .assert();
 
-    IndexShapeAssert::new(idx3, doc!{"text_field_a": String::from("text"), "text_field_b": String::from("text")})
-        .default_language(Some("en".to_string()))
-        .language_override(Some("override_field".to_string()))
-        .text_version(Some(3i32))
-        .weights(Some(doc!{"text_field_a": 10i32, "text_field_b": 5i32}))
+    IndexShapeAssert::new(
+        idx3,
+        doc! {"text_field_a": String::from("text"), "text_field_b": String::from("text")},
+    )
+    .default_language(Some("en".to_string()))
+    .language_override(Some("override_field".to_string()))
+    .text_version(Some(3i32))
+    .weights(Some(doc! {"text_field_a": 10i32, "text_field_b": 5i32}))
+    .assert();
+
+    IndexShapeAssert::new(idx4, doc! {"hashed_field": "hashed"}).assert();
+
+    IndexShapeAssert::new(idx5, doc! {"field_2d_a": "2d", "field_2d_b": "2d"})
+        .min(Some(-180.0f64))
+        .max(Some(180.0f64))
+        .bits(Some(1i32))
         .assert();
 
-    IndexShapeAssert::new(idx4, doc!{"hashed_field": "hashed"}).assert();
+    IndexShapeAssert::new(
+        idx6,
+        doc! {"field_2dsphere": "2dsphere", "field_2dsphere_filter": 1i32},
+    )
+    .sphere_version(Some(3i32))
+    .assert();
 
-    IndexShapeAssert::new(idx5, doc!{"field_2d_a": "2d", "field_2d_b": "2d"})
-        .min(Some(-180.0f64)).max(Some(180.0f64)).bits(Some(1i32)).assert();
+    IndexShapeAssert::new(
+        idx7,
+        doc! {"field_geo_haystack": "geoHaystack", "field_geo_haystack_filter": 1i32},
+    )
+    .bucket_size(Some(5i32))
+    .assert();
 
-    IndexShapeAssert::new(idx6, doc!{"field_2dsphere": "2dsphere", "field_2dsphere_filter": 1i32})
-        .sphere_version(Some(3i32)).assert();
-
-    IndexShapeAssert::new(idx7, doc!{"field_geo_haystack": "geoHaystack", "field_geo_haystack_filter": 1i32})
-        .bucket_size(Some(5i32)).assert();
-
-    IndexShapeAssert::new(idx8, doc!{"field_embedded.subdoc1.subdoc2.subdocN.field": 1i32})
-        .name(Some("field_embedded".to_string())).assert();
+    IndexShapeAssert::new(
+        idx8,
+        doc! {"field_embedded.subdoc1.subdoc2.subdocN.field": 1i32},
+    )
+    .name(Some("field_embedded".to_string()))
+    .assert();
 }
 
 #[test]
@@ -179,11 +248,25 @@ struct IndexShapeAssert {
 impl IndexShapeAssert {
     /// Build a new instance for asserting on index shape.
     pub fn new(model: IndexModel, keys: Document) -> Self {
-        IndexShapeAssert{
-            model, keys,
-            background: None, expire_after_seconds: None, name: None, sparse: None, storage_engine: None,
-            unique: None, version: None, default_language: None, language_override: None, text_version: None,
-            weights: None, sphere_version: None, bits: None, max: None, min: None, bucket_size: None,
+        IndexShapeAssert {
+            model,
+            keys,
+            background: None,
+            expire_after_seconds: None,
+            name: None,
+            sparse: None,
+            storage_engine: None,
+            unique: None,
+            version: None,
+            default_language: None,
+            language_override: None,
+            text_version: None,
+            weights: None,
+            sphere_version: None,
+            bits: None,
+            max: None,
+            min: None,
+            bucket_size: None,
         }
     }
 
@@ -194,7 +277,10 @@ impl IndexShapeAssert {
         assert_eq!(self.model.options.bits, self.bits);
         assert_eq!(self.model.options.bucket_size, self.bucket_size);
         assert_eq!(self.model.options.default_language, self.default_language);
-        assert_eq!(self.model.options.expire_after_seconds, self.expire_after_seconds);
+        assert_eq!(
+            self.model.options.expire_after_seconds,
+            self.expire_after_seconds
+        );
         assert_eq!(self.model.options.language_override, self.language_override);
         assert_eq!(self.model.options.max, self.max);
         assert_eq!(self.model.options.min, self.min);

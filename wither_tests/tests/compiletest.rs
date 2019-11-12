@@ -4,7 +4,9 @@ use std::path::PathBuf;
 
 fn run_mode(mode: &'static str) {
     let mut config = compiletest::Config::default();
-    config.mode = mode.parse().expect("Argument `mode` must be a valid FS path.");
+    config.mode = mode
+        .parse()
+        .expect("Argument `mode` must be a valid FS path.");
     config.src_base = PathBuf::from(format!("tests/{}", mode));
     config.link_deps(); // Populate config.target_rustcflags with dependencies on the path.
     config.clean_rmeta(); // If your tests import the parent crate, this helps with E0464.

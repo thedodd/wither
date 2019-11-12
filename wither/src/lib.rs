@@ -1,5 +1,5 @@
-#![cfg_attr(feature="docinclude", feature(external_doc))]
-#![cfg_attr(feature="docinclude", doc(include="../README.md"))]
+#![cfg_attr(feature = "docinclude", feature(external_doc))]
+#![cfg_attr(feature = "docinclude", doc(include = "../README.md"))]
 
 extern crate chrono;
 #[macro_use]
@@ -12,20 +12,11 @@ pub mod migration;
 pub mod model;
 
 // Expose lower symbols in the top level module.
-pub use migration::{
-    IntervalMigration,
-    Migration,
-};
-pub use model::{
-    basic_index_options,
-    Model,
-};
+pub use migration::{IntervalMigration, Migration};
+pub use model::{basic_index_options, Model};
 
 pub mod prelude {
     //! All traits needed for basic usage of the wither system.
-    pub use ::migration::{
-        Migrating,
-        Migration,
-    };
-    pub use ::model::Model;
+    pub use migration::{Migrating, Migration};
+    pub use model::Model;
 }
