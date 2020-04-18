@@ -1,6 +1,21 @@
 changelog
 =========
 
+## [unreleased]
+
+### added
+- Added new `ModelCursor` type which wraps a cursor and yields model instances.
+
+### changed
+- Cutting over to edition 2018.
+- Updated lots of deps.
+    - `bson@0.14` and is now a public export of this crate.
+    - `mongodb@0.9` and is now a public export of this crate.
+- Updated `Model::find` to match new driver's interface, and returns a `ModelCursor` wrapping the standard cursor.
+- Updated `Model::model_write_concern` to `Model::write_concern` and updated defaults to match driver defaults.
+
+### removed
+
 ## 0.8
 The core `wither` crate is 100% backwards compatible with this release, but the `Model` trait has received a few additional methods. Namely the `find_one_and_(delete|replace|update)` methods. Came across a use case where I needed them and then realized that I never implemented them. Now they are here. Woot woot!
 

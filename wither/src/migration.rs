@@ -2,23 +2,13 @@
 
 use std::error::Error;
 
+use bson::{Bson, Document};
+use bson::{bson, doc};
 use chrono;
-use mongodb::{
-    Bson, Document,
-    db::{
-        Database,
-        ThreadedDatabase,
-    },
-    coll::{
-        Collection,
-        options::UpdateOptions,
-    },
-    common::WriteConcern,
-    error::{
-        Error::{DefaultError, WriteError},
-        Result,
-    },
-};
+use mongodb::{Collection, Database};
+use mongodb::options::{UpdateOptions, WriteConcern};
+use mongodb::error::ErrorKind::{WriteError};
+use mongodb::error::Result;
 
 use crate::model::Model;
 
@@ -33,12 +23,12 @@ pub trait Migrating<'m>: Model<'m> {
         let migrations = Self::migrations();
 
         // Execute each migration.
-        info!("Starting migrations for '{}'.", coll.namespace);
+        log::info!("Starting migrations for '{}'.", coll.namespace);
         for migration in migrations {
             migration.execute(&coll)?;
         }
 
-        info!("Finished migrations for '{}'.", coll.namespace);
+        log::info!("Finished migrations for '{}'.", coll.namespace);
         Ok(())
     }
 }
@@ -79,10 +69,10 @@ pub struct IntervalMigration {
 
 impl Migration for IntervalMigration {
     fn execute<'c>(&self, coll: &'c Collection) -> Result<()> {
-        info!("Executing migration '{}' against '{}'.", &self.name, coll.namespace);
+        log::info!("Executing migration '{}' against '{}'.", &self.name, coll.namespace);
         // If the migrations threshold has been passed, then no-op.
         if chrono::Utc::now() > self.threshold {
-            info!("Successfully executed migration '{}' against '{}'. No-op.", &self.name, coll.namespace);
+            log::info!("Successfully executed migration '{}' against '{}'. No-op.", &self.name, coll.namespace);
             return Ok(());
         };
 
@@ -104,10 +94,10 @@ impl Migration for IntervalMigration {
 
         // Handle nested error condition.
         if let Some(err) = res.write_exception {
-            error!("Error executing migration: {:?}", err.description());
+            log::error!("Error executing migration: {:?}", err.description());
             return Err(WriteError(err));
         }
-        info!("Successfully executed migration '{}' against '{}'. {} matched. {} modified.", &self.name, coll.namespace, res.matched_count, res.modified_count);
+        log::info!("Successfully executed migration '{}' against '{}'. {} matched. {} modified.", &self.name, coll.namespace, res.matched_count, res.modified_count);
         Ok(())
     }
 }

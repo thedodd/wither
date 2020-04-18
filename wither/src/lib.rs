@@ -1,17 +1,17 @@
 #![cfg_attr(feature="docinclude", feature(external_doc))]
 #![cfg_attr(feature="docinclude", doc(include="../README.md"))]
 
-extern crate chrono;
-#[macro_use]
-extern crate log;
-#[macro_use(doc, bson)]
-pub extern crate mongodb;
-extern crate serde;
+////////////////
+// Re-exports //
+pub use bson;
+pub use mongodb;
 
+mod cursor;
 pub mod migration;
 pub mod model;
 
 // Expose lower symbols in the top level module.
+pub use cursor::ModelCursor;
 pub use migration::{
     IntervalMigration,
     Migration,
@@ -23,9 +23,9 @@ pub use model::{
 
 pub mod prelude {
     //! All traits needed for basic usage of the wither system.
-    pub use ::migration::{
+    pub use crate::migration::{
         Migrating,
         Migration,
     };
-    pub use ::model::Model;
+    pub use crate::model::Model;
 }
