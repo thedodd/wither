@@ -7,12 +7,13 @@ changelog
 - Added new `ModelCursor` type which wraps a cursor and yields model instances.
 
 ### changed
-- Cutting over to edition 2018.
-- Updated lots of deps.
+- Cut all crates over to edition 2018.
+- Updated lots of deps. Importantly:
     - `bson@0.14` and is now a public export of this crate.
     - `mongodb@0.9` and is now a public export of this crate.
 - Updated `Model::find` to match new driver's interface, and returns a `ModelCursor` wrapping the standard cursor.
 - Updated `Model::model_write_concern` to `Model::write_concern` and updated defaults to match driver defaults.
+- Models are now constrained by `DeserializeOwned` now, instead of `Deserialize`.
 
 ### removed
 
@@ -28,7 +29,7 @@ The only net-new item being added here is that now, within `#[model(index())]`, 
 
 **It is my sincere hope** that this is the last breaking change I will need to make to this crate before promoting this crate to a `1.0.0` release. Let's hope! Please let me know if there are any issues you have with these updates.
 
-#### 0.8.1 (pending)
+#### 0.8.1
 
 - In order to avoid writing `use mongodb::coll::options::IndexModel` explicitly, use the full path of `IndexModel` when sending code back to compiler.
 
