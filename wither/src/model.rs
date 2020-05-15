@@ -70,6 +70,9 @@ pub trait Model where Self: Serialize + DeserializeOwned {
     }
 
     /// The model's selection criteria.
+    ///
+    /// When deriving a model, a function or an associated function should be specified which
+    /// should be used to produce the desired value.
     fn selection_criteria() -> Option<options::SelectionCriteria> {
         None
     }
@@ -309,7 +312,8 @@ pub trait Model where Self: Serialize + DeserializeOwned {
     /// defined in the response from `Self.indexes()`.
     fn sync(db: Database) -> Result<()> {
         db.create_collection(Self::COLLECTION_NAME, None)?;
-        let coll = Self::collection(db);
+        let _coll = Self::collection(db);
+        // let coll = Self::collection(db);
         // sync_model_indexes(&coll, Self::indexes())?; // TODO: blocked by https://jira.mongodb.org/projects/RUST/issues/RUST-166
         Ok(())
     }
@@ -382,29 +386,29 @@ pub trait Model where Self: Serialize + DeserializeOwned {
 //     Ok(())
 // }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn basic_index_options_returns_expected_output() {
-        let output = basic_index_options("testing", true, None, None, None);
+//     #[test]
+//     fn basic_index_options_returns_expected_output() {
+//         let output = basic_index_options("testing", true, None, None, None);
 
-        assert!(output.name == Some("testing".to_string()));
-        assert!(output.background == Some(true));
-        assert!(output.unique == None);
-        assert!(output.expire_after_seconds == None);
-        assert!(output.sparse == None);
-        assert!(output.storage_engine == None);
-        assert!(output.version == None);
-        assert!(output.default_language == None);
-        assert!(output.language_override == None);
-        assert!(output.text_version == None);
-        assert!(output.weights == None);
-        assert!(output.sphere_version == None);
-        assert!(output.bits == None);
-        assert!(output.max == None);
-        assert!(output.min == None);
-        assert!(output.bucket_size == None);
-    }
-}
+//         assert!(output.name == Some("testing".to_string()));
+//         assert!(output.background == Some(true));
+//         assert!(output.unique == None);
+//         assert!(output.expire_after_seconds == None);
+//         assert!(output.sparse == None);
+//         assert!(output.storage_engine == None);
+//         assert!(output.version == None);
+//         assert!(output.default_language == None);
+//         assert!(output.language_override == None);
+//         assert!(output.text_version == None);
+//         assert!(output.weights == None);
+//         assert!(output.sphere_version == None);
+//         assert!(output.bits == None);
+//         assert!(output.max == None);
+//         assert!(output.min == None);
+//         assert!(output.bucket_size == None);
+//     }
+// }

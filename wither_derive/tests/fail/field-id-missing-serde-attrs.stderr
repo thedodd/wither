@@ -1,0 +1,5 @@
+error: the ID field of wither::Models must have the attribute `#[serde(rename="_id", skip_serializing_if="Option::is_none")]`
+ --> $DIR/field-id-missing-serde-attrs.rs:7:5
+  |
+7 |     id: Option<ObjectId>,
+  |     ^^

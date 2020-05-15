@@ -5,6 +5,7 @@
 // Re-exports //
 pub use bson;
 pub use mongodb;
+pub use wither_derive::Model;
 
 mod cursor;
 pub mod migration;
@@ -28,4 +29,5 @@ pub mod prelude {
         Migration,
     };
     pub use crate::model::Model;
+    pub use wither_derive::Model;
 }

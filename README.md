@@ -12,7 +12,9 @@ wither
 
 An ODM for MongoDB built upon the [mongo rust driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype). Please ⭐ on [github](https://github.com/thedodd/wither)!
 
-The primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.2`, `3.4`, `3.6` & `4.0`.
+The primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.2`, `3.4`, `3.6`, `4.0` & `4.2`.
+
+**GREAT NEWS!!!** We've finally updated from the [experimental driver](https://github.com/mongodb-labs/mongo-rust-driver-prototype) over to the officially supported [Rust driver](https://github.com/mongodb/mongo-rust-driver). This project is still non-async for the time being. We squarely depend upon the underlying driver to support async IO first.
 
 ### items of interest
 - [docs](https://docs.rs/wither): all the good stuff is here.
@@ -20,28 +22,13 @@ The primary goal of this project is to provide a simple, sane & predictable inte
 - [contributing & development guidelines](https://github.com/thedodd/wither/blob/master/CONTRIBUTING.md): details on how to get started with doing development on this project.
 
 ### getting started
-To get started, simply derive `Model` on your struct along with a few other serde derivations. Let's step through a full example with imports and all.
+To get started, simply derive `Model` on your struct along with a few other serde derivations. Let's step through a full example.
 
 ```rust ,no_run
-// First, we add import statements for the crates that we need.
-// In Rust 2018, `extern crate` declarations will no longer be needed.
-#[macro_use]
-extern crate mongodb;
-extern crate serde;
-#[macro_use(Serialize, Deserialize)]
-extern crate serde_derive;
-extern crate wither;
-#[macro_use(Model)]
-extern crate wither_derive;
-
-// Next we bring a few types into scope for our example.
-use mongodb::{
-    Client, ThreadedClient,
-    db::{Database, ThreadedDatabase},
-    coll::options::IndexModel,
-    oid::ObjectId,
-};
+use serde::{Serialize, Deserialize};
 use wither::prelude::*;
+use wither::bson::oid::ObjectId;
+use wither::mongodb::Client;
 
 // Now we define our model. Simple as deriving a few traits.
 #[derive(Model, Serialize, Deserialize)]
@@ -57,8 +44,8 @@ struct User {
 
 fn main() {
     // Create a user.
-    let db = mongodb::Client::with_uri("mongodb://localhost:27017/").unwrap().db("mydb");
-    let mut me = User{id: None, email: "my.email@example.com".to_string()};
+    let db = Client::with_uri_str("mongodb://localhost:27017/").unwrap().db("mydb");
+    let mut me = User{id: None, email: String::from("my.email@example.com")};
     me.save(db.clone(), None);
 
     // Update user's email address.

@@ -13,7 +13,7 @@ changelog
     - `mongodb@0.9` and is now a public export of this crate.
 - Updated `Model::find` to match new driver's interface, and returns a `ModelCursor` wrapping the standard cursor.
 - Updated `Model::model_write_concern` to `Model::write_concern` and updated defaults to match driver defaults.
-- Models are now constrained by `DeserializeOwned` now, instead of `Deserialize`.
+- Models are now constrained by `DeserializeOwned`, instead of `Deserialize`.
 
 ### removed
 

@@ -1,0 +1,5 @@
+error: wither models must have named fields
+ --> $DIR/model-no-fields.rs:5:1
+  |
+5 | struct BadModel;
+  | ^^^^^^^^^^^^^^^^

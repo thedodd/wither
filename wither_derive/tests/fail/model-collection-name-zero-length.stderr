@@ -1,0 +1,5 @@
+error: wither model collection names must be at least one character in length
+ --> $DIR/model-collection-name-zero-length.rs:5:9
+  |
+5 | #[model(collection_name="")]
+  |         ^^^^^^^^^^^^^^^^^^

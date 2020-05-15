@@ -18,10 +18,10 @@ chrono = "0.4"
 log = "0.4"
 mongodb = "0.9.2"
 serde = { version="1", features=["derive"] }
+wither_derive = { version = "0.8.0", path = "../wither_derive" }
 
 [dev-dependencies]
 lazy_static = "1"
-wither_derive = { version = "0.8.0", path = "../wither_derive" }
 
 [features]
 docinclude = [] # Used only for activating `doc(include="...")` on nightly.

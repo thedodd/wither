@@ -1,0 +1,8 @@
+error: malformed wither model read concern attribute
+
+  = help: Unknown literal value `invalid`
+
+ --> $DIR/model-read-concern-invalid.rs:5:9
+  |
+5 | #[model(read_concern="invalid")]
+  |         ^^^^^^^^^^^^^^^^^^^^^^
