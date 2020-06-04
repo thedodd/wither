@@ -311,7 +311,6 @@ pub trait Model where Self: Serialize + DeserializeOwned {
     /// This routine will destroy any indexes found on this model's collection which are not
     /// defined in the response from `Self.indexes()`.
     fn sync(db: Database) -> Result<()> {
-        db.create_collection(Self::COLLECTION_NAME, None)?;
         let _coll = Self::collection(db);
         // let coll = Self::collection(db);
         // sync_model_indexes(&coll, Self::indexes())?; // TODO: blocked by https://jira.mongodb.org/projects/RUST/issues/RUST-166
