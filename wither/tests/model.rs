@@ -1,305 +1,287 @@
-// extern crate chrono;
-// #[macro_use]
-// extern crate lazy_static;
-// #[macro_use(doc, bson)]
-// extern crate mongodb;
-// extern crate serde;
-// #[macro_use(Serialize, Deserialize)]
-// extern crate serde_derive;
-// extern crate wither;
-// #[macro_use(Model)]
-// extern crate wither_derive;
+mod fixtures;
 
-// mod fixtures;
+use wither::prelude::*;
+use wither::bson::doc;
+use wither::mongodb::options::{FindOneAndReplaceOptions, FindOneAndUpdateOptions, ReturnDocument};
 
-// use std::error::Error;
+use fixtures::{Fixture, User};
 
-// use mongodb::{
-//     Document,
-//     coll::options::{FindOneAndUpdateOptions, ReturnDocument},
-//     db::ThreadedDatabase,
-// };
-// use wither::prelude::*;
+//////////////////////////////////////////////////////////////////////////////
+// Model::find ///////////////////////////////////////////////////////////////
 
-// use fixtures::{
-//     Fixture,
-//     User,
-//     UserModelBadMigrations,
-//     DerivedModel,
-//     Derived2dModel,
-//     Derived2dsphereModel,
-//     // DerivedGeoHaystackModel,
-// };
+#[test]
+fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model::count //////////////////////////////////////////////////////////////
+    let mut users_from_db: Vec<_> = User::find(db.clone(), None, None)
+        .expect("Expected a successful lookup.")
+        .into_iter()
+        .collect();
 
-// #[test]
-// fn model_count_should_return_expected_count_matching_filter() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let doc = doc!{"_id" => (user.id.clone().unwrap())};
+    assert_eq!(users_from_db.len(), 1);
+    let userdb = users_from_db.pop().unwrap();
+    assert!(userdb.is_ok());
+    let userdb = userdb.unwrap();
+    user.id = userdb.id.clone();
+    assert_eq!(userdb, user);
+}
 
-//     let count = User::count(db.clone(), Some(doc), None)
-//         .expect("Expected a successful count operation.");
+#[test]
+fn model_find_should_find_instances_of_model_matching_filter() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let doc = doc!{"_id" => (user.id.clone().unwrap())};
 
-//     assert_eq!(count, 1);
-// }
+    let mut users_from_db: Vec<_> = User::find(db.clone(), Some(doc), None)
+        .expect("Expected a successful lookup.")
+        .into_iter()
+        .collect();
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model.save ////////////////////////////////////////////////////////////////
+    assert_eq!(users_from_db.len(), 1);
+    let userdb = users_from_db.pop().unwrap();
+    assert!(userdb.is_ok());
+    let userdb = userdb.unwrap();
+    user.id = userdb.id.clone();
+    assert_eq!(userdb, user);
+}
 
-// #[test]
-// fn model_save_should_save_model_instance_and_add_id() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
+//////////////////////////////////////////////////////////////////////////////
+// Model::find_one ///////////////////////////////////////////////////////////
 
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
+#[test]
+fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
 
-//     assert!(user.id != None)
-// }
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
 
-// #[test]
-// fn derived_model_save_should_save_model_instance_and_add_id() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut model = DerivedModel::default();
+    let doc = doc!{"_id" => (user.id.clone().unwrap())};
+    let user_from_db = User::find_one(db.clone(), Some(doc), None)
+        .expect("Expected a successful lookup.")
+        .expect("Expected a populated value from backend.");
 
-//     model.save(db.clone(), None).expect("Expected a successful save operation.");
+    assert_eq!(&user_from_db.id, &user.id);
+    assert_eq!(&user_from_db.email, &user.email);
+}
 
-//     assert!(model.id != None)
-// }
+//////////////////////////////////////////////////////////////////////////////
+// Model::find_one_and_delete ////////////////////////////////////////////////
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model::find ///////////////////////////////////////////////////////////////
+#[test]
+fn model_find_one_and_delete_should_delete_the_target_doc() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
 
-// #[test]
-// fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    let output = User::find_one_and_delete(db.clone(), doc!{"email": "test@test.com"}, None)
+        .expect("Expected a operation.").unwrap();
 
-//     let users_from_db = User::find(db.clone(), None, None)
-//         .expect("Expected a successful lookup.");
+    assert_eq!(&output.email, &user.email);
+}
 
-//     assert_eq!((&users_from_db).len(), 1);
-//     // assert!((&users_from_db).len() > 0);
-// }
+//////////////////////////////////////////////////////////////////////////////
+// Model::find_one_and_replace ///////////////////////////////////////////////
 
-// #[test]
-// fn model_find_should_find_instances_of_model_matching_filter() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let doc = doc!{"_id" => (user.id.clone().unwrap())};
+#[test]
+fn model_find_one_and_replace_should_replace_the_target_doc_and_return_new_doc() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut opts = FindOneAndReplaceOptions::builder().build();
+    opts.return_document = Some(ReturnDocument::After);
 
-//     let users_from_db = User::find(db.clone(), Some(doc), None)
-//         .expect("Expected a successful lookup.");
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    let output = User::find_one_and_replace(
+        db.clone(),
+        doc!{"email": "test@test.com"},
+        doc!{"email": "test3@test.com"},
+        Some(opts),
+    ).expect("Expected a operation.").unwrap();
 
-//     assert_eq!((&users_from_db).len(), 1);
-//     assert_eq!(&users_from_db[0].id, &user.id);
-//     assert_eq!(&users_from_db[0].email, &user.email);
-// }
+    assert_eq!(&output.email, "test3@test.com");
+}
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model::find_one ///////////////////////////////////////////////////////////
+#[test]
+fn model_find_one_and_replace_should_replace_the_target_doc_and_return_old_doc() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut opts = FindOneAndReplaceOptions::builder().build();
+    opts.return_document = Some(ReturnDocument::Before);
 
-// #[test]
-// fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    let output = User::find_one_and_replace(
+        db.clone(),
+        doc!{"email": "test@test.com"},
+        doc!{"email": "test3@test.com"},
+        Some(opts),
+    ).expect("Expected a operation.").unwrap();
 
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
+    assert_eq!(&output.email, "test@test.com");
+}
 
-//     let doc = doc!{"_id" => (user.id.clone().unwrap())};
-//     let user_from_db = User::find_one(db.clone(), Some(doc), None)
-//         .expect("Expected a successful lookup.")
-//         .expect("Expected a populated value from backend.");
+//////////////////////////////////////////////////////////////////////////////
+// Model::find_one_and_update ////////////////////////////////////////////////
 
-//     assert_eq!(&user_from_db.id, &user.id);
-//     assert_eq!(&user_from_db.email, &user.email);
-// }
+#[test]
+fn model_find_one_and_update_should_update_target_document_and_return_new() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut opts = FindOneAndUpdateOptions::builder().build();
+    opts.return_document = Some(ReturnDocument::After);
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model::find_one_and_delete ////////////////////////////////////////////////
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    let output = User::find_one_and_update(
+        db.clone(),
+        doc!{"email": "test@test.com"},
+        doc!{"$set": doc!{"email": "test3@test.com"}},
+        Some(opts),
+    ).expect("Expected a operation.").unwrap();
 
-// #[test]
-// fn model_find_one_and_delete_should_delete_the_target_doc() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    assert_eq!(&output.email, "test3@test.com");
+}
 
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     user2.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let output = User::find_one_and_delete(db.clone(), doc!{"email": "test@test.com"}, None)
-//         .expect("Expected a operation.").unwrap();
+#[test]
+fn model_find_one_and_update_should_update_target_document_and_return_old() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut opts = FindOneAndUpdateOptions::builder().build();
+    opts.return_document = Some(ReturnDocument::Before);
 
-//     assert_eq!(&output.email, &user.email);
-// }
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    user2.save(db.clone(), None).expect("Expected a successful save operation.");
+    let output = User::find_one_and_update(
+        db.clone(),
+        doc!{"email": "test@test.com"},
+        doc!{"$set": doc!{"email": "test3@test.com"}},
+        Some(opts),
+    ).expect("Expected a operation.").unwrap();
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model::find_one_and_replace ///////////////////////////////////////////////
+    assert_eq!(&output.email, "test@test.com");
+}
 
-// #[test]
-// fn model_find_one_and_replace_should_replace_the_target_doc_and_return_new_doc() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     let mut user2 = User{id: None, email: "test2@test.com".to_string()};
-//     let mut opts = FindOneAndUpdateOptions::new();
-//     opts.return_document = Some(ReturnDocument::After);
+//////////////////////////////////////////////////////////////////////////////
+// Model.save ////////////////////////////////////////////////////////////////
 
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     user2.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let output = User::find_one_and_replace(
-//         db.clone(),
-//         doc!{"email": "test@test.com"},
-//         doc!{"email": "test3@test.com"},
-//         Some(opts),
-//     ).expect("Expected a operation.").unwrap();
+#[test]
+fn model_save_should_save_model_instance_and_add_id() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
 
-//     assert_eq!(&output.email, "test3@test.com");
-// }
+    let precount = User::collection(db.clone()).count_documents(None, None).unwrap();
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let postcount = User::collection(db.clone()).count_documents(None, None).unwrap();
 
-// #[test]
-// fn model_find_one_and_replace_should_replace_the_target_doc_and_return_old_doc() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     let mut user2 = User{id: None, email: "test2@test.com".to_string()};
-//     let mut opts = FindOneAndUpdateOptions::new();
-//     opts.return_document = Some(ReturnDocument::Before);
+    assert!(user.id != None);
+    assert_eq!(precount, 0);
+    assert_eq!(postcount, 1);
+    assert!(precount != postcount);
+}
 
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     user2.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let output = User::find_one_and_replace(
-//         db.clone(),
-//         doc!{"email": "test@test.com"},
-//         doc!{"email": "test3@test.com"},
-//         Some(opts),
-//     ).expect("Expected a operation.").unwrap();
+//////////////////////////////////////////////////////////////////////////////
+// Model.update //////////////////////////////////////////////////////////////
 
-//     assert_eq!(&output.email, "test@test.com");
-// }
+#[test]
+fn model_update_should_perform_expected_updates_against_self() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let update_doc = doc!{"$set": doc!{"email": "new@test.com"}};
+    let mut opts = FindOneAndUpdateOptions::default();
+    opts.return_document = Some(ReturnDocument::After);
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model::find_one_and_update ////////////////////////////////////////////////
+    let user = user.update(db.clone(), None, update_doc, Some(opts))
+        .expect("Expected a successful update operation.");
 
-// #[test]
-// fn model_find_one_and_update_should_update_target_document_and_return_new() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     let mut user2 = User{id: None, email: "test2@test.com".to_string()};
-//     let mut opts = FindOneAndUpdateOptions::new();
-//     opts.return_document = Some(ReturnDocument::After);
+    assert_eq!(user.email, String::from("new@test.com"));
+}
 
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     user2.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let output = User::find_one_and_update(
-//         db.clone(),
-//         doc!{"email": "test@test.com"},
-//         doc!{"$set": doc!{"email": "test3@test.com"}},
-//         Some(opts),
-//     ).expect("Expected a operation.").unwrap();
+#[test]
+fn model_update_should_return_error_with_invalid_update_document() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let update_doc = doc!{"invalid_update_key" => "should_fail"};
 
-//     assert_eq!(&output.email, "test3@test.com");
-// }
+    let err = user.update(db.clone(), None, update_doc, None)
+        .expect_err("Expected an errored update operation.");
 
-// #[test]
-// fn model_find_one_and_update_should_update_target_document_and_return_old() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: "test@test.com".to_string()};
-//     let mut user2 = User{id: None, email: "test2@test.com".to_string()};
-//     let mut opts = FindOneAndUpdateOptions::new();
-//     opts.return_document = Some(ReturnDocument::Before);
+    assert_eq!(err.to_string(), "An invalid argument was provided to a database operation: update document must have first key starting with '$");
+}
 
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     user2.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let output = User::find_one_and_update(
-//         db.clone(),
-//         doc!{"email": "test@test.com"},
-//         doc!{"$set": doc!{"email": "test3@test.com"}},
-//         Some(opts),
-//     ).expect("Expected a operation.").unwrap();
+#[test]
+fn model_update_should_noop_where_filter_selects_on_nonextant_field() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": true}});
+    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
 
-//     assert_eq!(&output.email, "test@test.com");
-// }
+    let res = user.update(db.clone(), filter_doc, update_doc, None);
 
-// //////////////////////////////////////////////////////////////////////////////
-// // Model.update //////////////////////////////////////////////////////////////
+    assert!(res.is_err());
+}
 
-// #[test]
-// fn model_update_should_perform_expected_updates_against_self() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: String::from("test@test.com")};
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let update_doc = doc!{"$set": doc!{"email": "new@test.com"}};
-//     let mut opts = FindOneAndUpdateOptions::default();
-//     opts.return_document = Some(ReturnDocument::After);
+#[test]
+fn model_update_should_perform_expected_update_with_added_filters() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: String::from("test@test.com")};
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": false}});
+    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
+    let mut opts = FindOneAndUpdateOptions::default();
+    opts.return_document = Some(ReturnDocument::After);
 
-//     let user = user.update(db.clone(), None, update_doc, Some(opts))
-//         .expect("Expected a successful update operation.")
-//         .expect("Expected populated value.");
+    let user = user.update(db.clone(), filter_doc, update_doc, Some(opts))
+        .expect("Expected a successful update operation.");
 
-//     assert_eq!(user.email, String::from("new@test.com"));
-// }
+    assert_eq!(user.email, String::from("test2@test.com"));
+}
 
-// #[test]
-// fn model_update_should_return_error_with_invalid_update_document() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: String::from("test@test.com")};
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let update_doc = doc!{"invalid_update_key" => "should_fail"};
+//////////////////////////////////////////////////////////////////////////////
+// Model.delete //////////////////////////////////////////////////////////////
 
-//     let err = user.update(db.clone(), None, update_doc, None)
-//         .expect_err("Expected an errored update operation.");
+#[test]
+fn model_delete_should_delete_model_instance() {
+    let fixture = Fixture::new().with_dropped_database().with_synced_models();
+    let db = fixture.get_db();
+    let mut user = User{id: None, email: "test@test.com".to_string()};
 
-//     assert_eq!(err.description(), "Update only works with $ operators."); // NOTE: comes from `mongodb` lib.
-// }
+    let presave = User::collection(db.clone()).count_documents(None, None).unwrap();
+    user.save(db.clone(), None).expect("Expected a successful save operation.");
+    let postsave = User::collection(db.clone()).count_documents(None, None).unwrap();
+    user.delete(db.clone()).unwrap();
+    let postdelete = User::collection(db.clone()).count_documents(None, None).unwrap();
 
-// #[test]
-// fn model_update_should_noop_where_filter_selects_on_nonextant_field() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: String::from("test@test.com")};
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": true}});
-//     let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
-
-//     let val = user.update(db.clone(), filter_doc, update_doc, None)
-//         .expect("Expected a successful update operation.");
-
-//     assert!(val.is_none());
-// }
-
-// #[test]
-// fn model_update_should_perform_expected_update_with_added_filters() {
-//     let fixture = Fixture::new().with_dropped_database().with_synced_models();
-//     let db = fixture.get_db();
-//     let mut user = User{id: None, email: String::from("test@test.com")};
-//     user.save(db.clone(), None).expect("Expected a successful save operation.");
-//     let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": false}});
-//     let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
-//     let mut opts = FindOneAndUpdateOptions::default();
-//     opts.return_document = Some(ReturnDocument::After);
-
-//     let user = user.update(db.clone(), filter_doc, update_doc, Some(opts))
-//         .expect("Expected a successful update operation.")
-//         .expect("Expected populated value.");
-
-//     assert_eq!(user.email, String::from("test2@test.com"));
-// }
+    assert_eq!(presave, 0);
+    assert_eq!(postsave, 1);
+    assert_eq!(postdelete, 0);
+    assert!(presave != postsave);
+    assert!(postsave != postdelete);
+}
 
 // //////////////////////////////////////////////////////////////////////////////
 // // Model::sync ///////////////////////////////////////////////////////////////

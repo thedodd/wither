@@ -18,21 +18,6 @@ use crate::cursor::ModelCursor;
 /// The name of the default index created by MongoDB.
 pub const DEFAULT_INDEX: &str = "_id";
 
-/// A convenience function for basic index options.
-pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, expire_after_seconds: Option<i32>, sparse: Option<bool>) -> Document {
-    let mut doc = doc!{"name": name, "background": background};
-    if let Some(val) = unique {
-        doc.insert("unique", val);
-    }
-    if let Some(val) = expire_after_seconds {
-        doc.insert("expire_after_seconds", val);
-    }
-    if let Some(val) = sparse {
-        doc.insert("sparse", val);
-    }
-    doc
-}
-
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
 ///
 /// Wither models are a thin abstraction over a standard MongoDB collection. Typically, the value
@@ -152,15 +137,6 @@ pub trait Model where Self: Serialize + DeserializeOwned {
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Instance Layer ////////////////////////////////////////////////////////////////////////////
 
-    /// Delete this model instance by ID.
-    ///
-    /// Wraps the driver's `Collection.delete_one` method.
-    fn delete(&self, db: Database) -> Result<DeleteResult> {
-        // Return an error if the instance was never saved.
-        let id = self.id().ok_or_else(|| BsonEncode(bson::EncoderError::Unknown("This instance has no ID. It can not be deleted.".into())))?;
-        Self::collection(db).delete_one(doc!{"_id": id}, None)
-    }
-
     /// Save the current model instance.
     ///
     /// In order to make this method as flexible as possible, its behavior varies a little based
@@ -277,6 +253,15 @@ pub trait Model where Self: Serialize + DeserializeOwned {
             .ok_or_else(|| ResponseError{message: "Expected server to return a response document, none found.".into()})?)
     }
 
+    /// Delete this model instance by ID.
+    ///
+    /// Wraps the driver's `Collection.delete_one` method.
+    fn delete(&self, db: Database) -> Result<DeleteResult> {
+        // Return an error if the instance was never saved.
+        let id = self.id().ok_or_else(|| BsonEncode(bson::EncoderError::Unknown("This instance has no ID. It can not be deleted.".into())))?;
+        Self::collection(db).delete_one(doc!{"_id": id}, None)
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience Methods ///////////////////////////////////////////////////////////////////////
 
@@ -383,31 +368,4 @@ pub trait Model where Self: Serialize + DeserializeOwned {
 
 //     log::info!("Finished synchronizing indexes for '{}'.", ns);
 //     Ok(())
-// }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn basic_index_options_returns_expected_output() {
-//         let output = basic_index_options("testing", true, None, None, None);
-
-//         assert!(output.name == Some("testing".to_string()));
-//         assert!(output.background == Some(true));
-//         assert!(output.unique == None);
-//         assert!(output.expire_after_seconds == None);
-//         assert!(output.sparse == None);
-//         assert!(output.storage_engine == None);
-//         assert!(output.version == None);
-//         assert!(output.default_language == None);
-//         assert!(output.language_override == None);
-//         assert!(output.text_version == None);
-//         assert!(output.weights == None);
-//         assert!(output.sphere_version == None);
-//         assert!(output.bits == None);
-//         assert!(output.max == None);
-//         assert!(output.min == None);
-//         assert!(output.bucket_size == None);
-//     }
 // }

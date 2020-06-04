@@ -17,10 +17,7 @@ pub use migration::{
     IntervalMigration,
     Migration,
 };
-pub use model::{
-    basic_index_options,
-    Model,
-};
+pub use model::Model;
 
 /// All traits needed for basic usage of the wither system.
 pub mod prelude {

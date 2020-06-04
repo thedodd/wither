@@ -1,26 +1,16 @@
 version: '3'
 services:
-  mongodb.3-2:
-    image: mongo:3.2
-    ports:
-      - 27017:27017
-
-  mongodb.3-4:
-    image: mongo:3.4
-    ports:
-      - 27117:27017
-
-  mongodb.3-6:
+  mongodb-3.6:
     image: mongo:3.6
     ports:
       - 27217:27017
 
-  mongodb.4-0:
+  mongodb-4.0:
     image: mongo:4.0
     ports:
-      - 27317:27017
+      - 27117:27017
 
-  mongodb.4-2:
+  mongodb-4.2:
     image: mongo:4.2
     ports:
-      - 27417:27017
+      - 27017:27017

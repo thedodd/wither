@@ -80,8 +80,7 @@ impl<'a> wither::Model<'a> for User {
         return vec![
             IndexModel{
                 keys: doc!{"email": 1},
-                // Args are: name, background, unique, ttl, sparse.
-                options: wither::basic_index_options("unique-email", true, Some(true), None, None),
+                options: Some(doc!{"name": "unique-email", "unique": true, "background": true}),
             },
         ];
     }

@@ -10,7 +10,6 @@ struct User {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
     pub id: Option<ObjectId>,
-
     /// This field has a unique index on it.
     pub email: String,
 }

@@ -7,20 +7,18 @@ services:
 
 before_install:
   - docker-compose up -d
-  - rustup install nightly-2018-11-10
+  - rustup install nightly-2020-05-25
   - cargo clean
 
 script:
   # Test code generation & compilation.
-  - cargo +nightly-2018-11-10 test -p wither_tests -p wither_derive --tests --lib
+  - cargo +nightly-2020-05-25 test -p wither_derive --tests --lib
   # Test doc samples.
-  - cd wither && cargo +nightly-2018-11-10 test --features docinclude --doc; cd -
-  - cd wither_derive && cargo +nightly-2018-11-10 test --doc; cd -
-  # Test against MongoDB 3.2.
-  - HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
-  # Test against MongoDB 3.4.
-  - HOST=localhost PORT=27117 cargo test -p wither --tests --lib -- --test-threads=1
+  - cd wither && cargo +nightly-2020-05-25 test --features docinclude --doc; cd -
+  - cd wither_derive && cargo +nightly-2020-05-25 test --doc; cd -
   # Test against MongoDB 3.6.
   - HOST=localhost PORT=27217 cargo test -p wither --tests --lib -- --test-threads=1
   # Test against MongoDB 4.0.
-  - HOST=localhost PORT=27317 cargo test -p wither --tests --lib -- --test-threads=1
+  - HOST=localhost PORT=27117 cargo test -p wither --tests --lib -- --test-threads=1
+  # Test against MongoDB 4.2.
+  - HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
