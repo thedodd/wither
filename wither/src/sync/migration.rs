@@ -1,20 +1,19 @@
 #![cfg_attr(feature="docinclude", doc(include="../docs/migrations-overview.md"))]
 
-use async_trait::async_trait;
 use mongodb::bson::{Bson, Document, doc};
-use mongodb::{Collection, Database, options};
+use mongodb::options;
+use mongodb::sync::{Collection, Database};
 
 use crate::error::{Result, WitherError};
-use crate::model::Model;
+use crate::sync::ModelSync;
 
 /// A trait describing a `Model` which has associated migrations.
-#[async_trait]
-pub trait Migrating: Model {
+pub trait MigratingSync: ModelSync {
     /// All migrations associated with this model.
-    fn migrations() -> Vec<Box<dyn Migration>>;
+    fn migrations() -> Vec<Box<dyn MigrationSync>>;
 
     /// Execute all migrations for this model.
-    async fn migrate(db: Database) -> Result<()> {
+    fn migrate(db: Database) -> Result<()> {
         let coll = Self::collection(db);
         let ns = coll.namespace();
         let migrations = Self::migrations();
@@ -22,7 +21,7 @@ pub trait Migrating: Model {
         // Execute each migration.
         log::info!("Starting migrations for '{}'.", ns);
         for migration in migrations {
-            migration.execute(&coll).await?;
+            migration.execute(&coll)?;
         }
 
         log::info!("Finished migrations for '{}'.", ns);
@@ -31,10 +30,9 @@ pub trait Migrating: Model {
 }
 
 /// A trait describing objects which encapsulate a schema migration.
-#[async_trait]
-pub trait Migration: Send + Sync {
+pub trait MigrationSync {
     /// The function which is to execute this migration.
-    async fn execute<'c>(&self, coll: &'c Collection) -> Result<()>;
+    fn execute<'c>(&self, coll: &'c Collection) -> Result<()>;
 }
 
 /// A migration type which allows execution until the specifed `threshold` date. Then will no-op.
@@ -46,7 +44,7 @@ pub trait Migration: Send + Sync {
 /// write-heavy workloads, as the final instance to be updated will ensure schema convergence.
 /// As long as you ensure your migrations are idempotent — **WHICH YOU ALWAYS SHOULD** — this
 /// will work quite nicely.
-pub struct IntervalMigration {
+pub struct IntervalMigrationSync {
     /// The name for this migration. Must be unique per collection.
     pub name: String,
     /// The UTC datetime when this migration should no longer execute.
@@ -61,9 +59,8 @@ pub struct IntervalMigration {
     pub unset: Option<Document>,
 }
 
-#[async_trait]
-impl Migration for IntervalMigration {
-    async fn execute<'c>(&self, coll: &'c Collection) -> Result<()> {
+impl MigrationSync for IntervalMigrationSync {
+    fn execute<'c>(&self, coll: &'c Collection) -> Result<()> {
         let ns = coll.namespace();
         log::info!("Executing migration '{}' against '{}'.", &self.name, ns);
 
@@ -94,7 +91,7 @@ impl Migration for IntervalMigration {
                 .build()
             ))
             .build();
-        let res = coll.update_many(self.filter.clone(), update, Some(options)).await?;
+        let res = coll.update_many(self.filter.clone(), update, Some(options))?;
         log::info!("Successfully executed migration '{}' against '{}'. {} matched. {} modified.", &self.name, ns, res.matched_count, res.modified_count);
         Ok(())
     }

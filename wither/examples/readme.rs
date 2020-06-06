@@ -1,7 +1,8 @@
+use futures::stream::StreamExt;
 use serde::{Serialize, Deserialize};
 use wither::prelude::*;
 use wither::bson::{doc, oid::ObjectId};
-use wither::mongodb::{Client, error::Result};
+use wither::mongodb::Client;
 
 // Now we define our model. Simple as deriving a few traits.
 #[derive(Debug, Model, Serialize, Deserialize)]
@@ -14,20 +15,22 @@ struct User {
     pub email: String,
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Connect & sync indexes.
-    let db = Client::with_uri_str("mongodb://localhost:27017/")?.database("mydb");
-    User::sync(db.clone())?;
+    let db = Client::with_uri_str("mongodb://localhost:27417/").await?.database("mydb");
+    User::sync(db.clone()).await?;
 
     // Create a user.
     let mut me = User{id: None, email: String::from("my.email@example.com")};
-    me.save(db.clone(), None)?;
+    me.save(db.clone(), None).await?;
 
     // Update user's email address.
-    me.update(db.clone(), None, doc!{"$set": doc!{"email": "new.email@example.com"}}, None)?;
+    me.update(db.clone(), None, doc!{"$set": doc!{"email": "new.email@example.com"}}, None).await?;
 
     // Fetch all users.
-    for user in User::find(db.clone(), None, None)? {
+    let mut cursor = User::find(db.clone(), None, None).await?;
+    while let Some(user) = cursor.next().await {
         println!("{:?}", user);
     }
     Ok(())

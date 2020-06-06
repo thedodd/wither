@@ -5,7 +5,7 @@ use wither::Model;
 #[model(bad_attr="val")]
 struct BadModel {
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<wither::bson::oid::ObjectId>,
 }
 
 fn main() {}

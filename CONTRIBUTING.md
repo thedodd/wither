@@ -14,18 +14,12 @@ Keep in mind that we need to keep the major and minor versions of these two crat
 
 ### development
 #### tests
-For easy backend integration, this project is using docker compose to manage MongoDB instances. Before kicking off tests locally, simply execute `docker-compose up -d` to bring up all of the different MongoDB instances.
+For easy backend integration, this project is using docker compose to manage MongoDB instances. Before kicking off tests locally, simply execute `docker-compose up -d` to bring up the latest version of MongoDB for testing. Modify the file if older versions are needed.
 
 Now you just need to invoke the tests with the appropriate environment variables exposed:
 
 ```bash
-# Test against MongoDB 3.6.
-HOST=localhost PORT=27217 cargo test -p wither --tests --lib -- --test-threads=1
-
-# Test against MongoDB 4.0.
-HOST=localhost PORT=27117 cargo test -p wither --tests --lib -- --test-threads=1
-
-# Test against MongoDB 4.2.
+# Execute tests & point to the mongo instance via env vars.
 HOST=localhost PORT=27017 cargo test -p wither --tests --lib -- --test-threads=1
 ```
 

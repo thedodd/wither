@@ -1,4 +1,4 @@
-#![cfg(not(feature="sync"))]
+#![cfg(feature="sync")]
 
 use std::env;
 
@@ -7,25 +7,25 @@ use lazy_static::lazy_static;
 use serde::{Serialize, Deserialize};
 use wither::bson::doc;
 use wither::bson::oid::ObjectId;
-use wither::mongodb::{Client, Database};
+use wither::mongodb::sync::{Client, Database};
 use wither::prelude::*;
 
 lazy_static!{
-    static ref HOST: String = {
-        env::var("HOST").expect("environment variable HOST must be defined")
-    };
-    static ref PORT: String = {
-        env::var("PORT").expect("environment variable PORT must be defined")
-    };
-    static ref CONNECTION_STRING: String = {
-        format!("mongodb://{}:{}/", HOST.as_str(), PORT.as_str())
+    static ref DB: Database = {
+        let host = env::var("HOST").expect("Environment variable HOST must be defined.");
+        let port = env::var("PORT").expect("Environment variable PORT must be defined.")
+            .parse::<u32>().expect("Environment variable PORT must be an instance of `u32`.");
+        let connection_string = format!("mongodb://{}:{:?}/", host, port);
+        Client::with_uri_str(&connection_string)
+            .expect("Expected MongoDB instance to be available for testing.")
+            .database("witherTestDB")
     };
 }
 
 //////////////////////////////////////////////////////////////////////////////
 // User //////////////////////////////////////////////////////////////////////
 
-#[derive(Model, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[derive(ModelSync, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[model(collection_name="users")]
 #[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"name": "unique-email", "unique": true, "background": true}"#))]
 pub struct User {
@@ -37,11 +37,11 @@ pub struct User {
     pub email: String,
 }
 
-impl Migrating for User {
-    fn migrations() -> Vec<Box<dyn wither::Migration>> {
+impl MigratingSync for User {
+    fn migrations() -> Vec<Box<dyn MigrationSync>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.
-            Box::new(wither::IntervalMigration{
+            Box::new(wither::IntervalMigrationSync{
                 name: String::from("test-migration"),
                 threshold: chrono::Utc.ymd(2100, 1, 1).and_hms(1, 0, 0),
                 filter: doc!{"email": doc!{"$exists": true}},
@@ -55,7 +55,7 @@ impl Migrating for User {
 //////////////////////////////////////////////////////////////////////////////
 // UserModelBadMigrations ////////////////////////////////////////////////////
 
-#[derive(Model, Serialize, Deserialize, Debug, Clone)]
+#[derive(ModelSync, Serialize, Deserialize, Debug, Clone)]
 #[model(collection_name="users_bad_migrations")]
 #[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"name": "unique-email", "unique": true, "background": true}"#))]
 pub struct UserModelBadMigrations {
@@ -67,11 +67,11 @@ pub struct UserModelBadMigrations {
     pub email: String,
 }
 
-impl Migrating for UserModelBadMigrations {
-    fn migrations() -> Vec<Box<dyn wither::Migration>> {
+impl MigratingSync for UserModelBadMigrations {
+    fn migrations() -> Vec<Box<dyn MigrationSync>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.
-            Box::new(wither::IntervalMigration{
+            Box::new(wither::IntervalMigrationSync{
                 name: String::from("test-migration"),
                 threshold: chrono::Utc.ymd(2100, 1, 1).and_hms(1, 0, 0),
                 filter: doc!{"email": doc!{"$exists": true}},
@@ -82,25 +82,22 @@ impl Migrating for UserModelBadMigrations {
     }
 }
 
+
 /// A singular type representing the various fixtures available in this harness.
 ///
 /// This type represents some combination of desired states which this system's dependencies must
 /// be in. Generally speaking, this represents the backend database; however it is not necessarily
 /// limited to only the backend database.
-pub struct Fixture {
-    client: Client,
-}
+#[derive(Default)]
+pub struct Fixture;
 
 //////////////////////////////////////////////////////////////////////////////
 // Public Builder Interface //////////////////////////////////////////////////
 
 impl Fixture {
     /// Create a new fixture.
-    pub async fn new() -> Self {
-        let client = Client::with_uri_str(&CONNECTION_STRING)
-            .await
-            .expect("failed to connect to database");
-        Fixture{client}
+    pub fn new() -> Self {
+        Fixture::default()
     }
 
     // /// Remove all documents & indexes from the collections of the data models used by this harness.
@@ -111,14 +108,14 @@ impl Fixture {
     // }
 
     /// Drop the database which is used by this harness.
-    pub async fn with_dropped_database(self) -> Self {
-        self.get_db().drop(None).await.expect("failed to drop database");
+    pub fn with_dropped_database(self) -> Self {
+        DB.clone().drop(None).expect("failed to drop database");
         self
     }
 
     /// Sync all of the data models used by this harness.
-    pub async fn with_synced_models(self) -> Self {
-        User::sync(self.get_db()).await.expect("failed to sync `User` model");
+    pub fn with_synced_models(self) -> Self {
+        User::sync(DB.clone()).expect("failed to sync `User` model");
         self
     }
 }
@@ -129,6 +126,6 @@ impl Fixture {
 impl Fixture {
     /// Get a handle to the database used by this harness.
     pub fn get_db(&self) -> Database {
-        self.client.database("witherTestDB")
+        DB.clone()
     }
 }

@@ -5,7 +5,7 @@ use wither::Model;
 #[derive(Serialize, Deserialize, Model)]
 #[model(skip_serde_checks)]
 struct DerivedModel {
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<wither::bson::oid::ObjectId>,
 }
 
 fn main() {

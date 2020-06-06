@@ -1,5 +1,5 @@
-use bson::doc;
 use serde::{Serialize, Deserialize};
+use wither::bson::doc;
 use wither::Model;
 
 #[derive(Default, Serialize, Deserialize, Model)]
@@ -10,7 +10,7 @@ use wither::Model;
 )]
 struct DerivedModel {
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<bson::oid::ObjectId>,
+    pub id: Option<wither::bson::oid::ObjectId>,
 }
 
 fn main() {

@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
 
 jobs:
   build:
@@ -16,9 +17,13 @@ jobs:
     strategy:
       matrix:
         mongo_version: ["mongo:4.2", "mongo:4.0", "mongo:3.6"]
+        features: ["--features=tokio-runtime", "--no-default-features --features=async-std-runtime", "--no-default-features --features=sync"]
     services:
       mongo:
         image: ${{ matrix.mongo_version }}
+    env:
+      HOST: mongo
+      PORT: 27017
 
     steps:
     - uses: actions/checkout@v2
@@ -29,9 +34,9 @@ jobs:
     - name: clippy
       run: cargo clippy
     - name: test wither
-      run: HOST=mongo PORT=27017 RUST_BACKTRACE=1 cargo test -p wither --tests --lib -- --test-threads=1
+      run: cd wither; cargo test ${{ matrix.features }} --tests --lib -- --test-threads=1; cd -
     - name: test wither derive
-      run: cargo test -p wither_derive --tests --lib
+      run: cd wither_derive; cargo test --tests --lib; cd -
 
   doc:
     runs-on: ubuntu-latest

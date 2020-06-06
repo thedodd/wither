@@ -77,7 +77,56 @@ impl<'a> MetaModel<'a> {
         let selection_criteria = OptionSelectionCriteria(&self.selection_criteria);
         let indexes = &self.indexes;
         quote! {
+            #[async_trait::async_trait]
             impl wither::Model for #name {
+                const COLLECTION_NAME: &'static str = #collection_name;
+
+                /// Get a cloned copy of this instance's ID.
+                fn id(&self) -> ::std::option::Option<wither::bson::oid::ObjectId> {
+                    self.id.clone()
+                }
+
+                /// Set this instance's ID.
+                fn set_id(&mut self, oid: wither::bson::oid::ObjectId) {
+                    self.id = Some(oid);
+                }
+
+                /// The model's read concern.
+                fn read_concern() -> Option<wither::mongodb::options::ReadConcern> {
+                    #read_concern
+                }
+
+                /// The model's write concern.
+                fn write_concern() -> Option<wither::mongodb::options::WriteConcern> {
+                    #write_concern
+                }
+
+                /// The model's selection criteria.
+                ///
+                /// When deriving a model, a function or an associated function should be specified which
+                /// should be used to produce the desired value.
+                fn selection_criteria() -> Option<wither::mongodb::options::SelectionCriteria> {
+                    #selection_criteria
+                }
+
+                /// All indexes currently on this model.
+                fn indexes() -> Vec<wither::mongodb::options::IndexModel> {
+                    vec![#(#indexes),*]
+                }
+            }
+        }
+    }
+
+    /// Expand the model into the full sync model impl output.
+    pub fn expand_sync(&self) -> proc_macro2::TokenStream {
+        let name = self.ident;
+        let collection_name = self.get_collection_name();
+        let read_concern = OptionReadConcern(&self.read_concern);
+        let write_concern = OptionWriteConcern(&self.write_concern);
+        let selection_criteria = OptionSelectionCriteria(&self.selection_criteria);
+        let indexes = &self.indexes;
+        quote! {
+            impl wither::ModelSync for #name {
                 const COLLECTION_NAME: &'static str = #collection_name;
 
                 /// Get a cloned copy of this instance's ID.
@@ -344,11 +393,11 @@ impl quote::ToTokens for OptionReadConcern<'_> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self.0 {
             None => tokens.extend(quote!(None)),
-            Some(ReadConcern::Local) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::Local))),
-            Some(ReadConcern::Majority) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::Majority))),
-            Some(ReadConcern::Linearizable) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::Linearizable))),
-            Some(ReadConcern::Available) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::Available))),
-            Some(ReadConcern::Custom(val)) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::Custom(String::from(#val))))),
+            Some(ReadConcern::Local) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::local()))),
+            Some(ReadConcern::Majority) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::majority()))),
+            Some(ReadConcern::Linearizable) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::linearizable()))),
+            Some(ReadConcern::Available) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::available()))),
+            Some(ReadConcern::Custom(val)) => tokens.extend(quote!(Some(wither::mongodb::options::ReadConcern::custom(String::from(#val))))),
         }
     }
 }
@@ -372,7 +421,7 @@ pub struct WriteConcern {
 pub enum Acknowledgment {
     Nodes(i32),
     Majority,
-    Tag(String),
+    Custom(String),
 }
 
 pub struct OptionWriteConcern<'a>(&'a Option<WriteConcern>);
@@ -386,7 +435,7 @@ impl quote::ToTokens for OptionWriteConcern<'_> {
                     Some(ack) => match ack {
                         Acknowledgment::Nodes(val) => quote!(Some(wither::mongodb::options::Acknowledgment::Nodes(#val))),
                         Acknowledgment::Majority => quote!(Some(wither::mongodb::options::Acknowledgment::Majority)),
-                        Acknowledgment::Tag(val) => quote!(Some(wither::mongodb::options::Acknowledgment::Tag(String::from(#val)))),
+                        Acknowledgment::Custom(val) => quote!(Some(wither::mongodb::options::Acknowledgment::Custom(String::from(#val)))),
                     }
                     None => quote!(None),
                 };
@@ -398,11 +447,7 @@ impl quote::ToTokens for OptionWriteConcern<'_> {
                     Some(val) => quote!(Some(#val)),
                     None => quote!(None),
                 };
-                tokens.extend(quote!(Some(wither::mongodb::options::WriteConcern{
-                    w: #w,
-                    w_timeout: #w_timeout,
-                    journal: #journal,
-                })));
+                tokens.extend(quote!(Some(wither::mongodb::options::WriteConcern::builder().w(#w).w_timeout(#w_timeout).journal(#journal).build())));
             }
         }
     }
@@ -462,6 +507,6 @@ impl quote::ToTokens for IndexModelTokens {
             None => quote!(None),
         };
         let keys = &self.keys;
-        tokens.extend(quote!(wither::mongodb::options::IndexModel{keys:#keys,options:#options}));
+        tokens.extend(quote!(wither::mongodb::options::IndexModel::builder().keys(#keys).options(#options).build()));
     }
 }
