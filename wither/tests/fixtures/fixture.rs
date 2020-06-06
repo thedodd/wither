@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use wither::prelude::*;
 use wither::mongodb::{Client, Database};
 
-use super::{User, UserModelBadMigrations};
+use super::User;
 
 lazy_static!{
     static ref DB: Database = {
@@ -35,12 +35,12 @@ impl Fixture {
         Fixture::default()
     }
 
-    /// Remove all documents & indexes from the collections of the data models used by this harness.
-    pub fn with_empty_collections(self) -> Self {
-        DB.clone().collection(User::COLLECTION_NAME).drop(None).expect("failed to drop collection");
-        DB.clone().collection(UserModelBadMigrations::COLLECTION_NAME).drop(None).expect("failed to drop collection");
-        self
-    }
+    // /// Remove all documents & indexes from the collections of the data models used by this harness.
+    // pub fn with_empty_collections(self) -> Self {
+    //     DB.clone().collection(User::COLLECTION_NAME).drop(None).expect("failed to drop collection");
+    //     DB.clone().collection(UserModelBadMigrations::COLLECTION_NAME).drop(None).expect("failed to drop collection");
+    //     self
+    // }
 
     /// Drop the database which is used by this harness.
     pub fn with_dropped_database(self) -> Self {

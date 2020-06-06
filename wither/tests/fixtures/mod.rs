@@ -3,7 +3,6 @@ use serde::{Serialize, Deserialize};
 use wither::prelude::*;
 use wither::bson::doc;
 use wither::bson::oid::ObjectId;
-use wither::mongodb::options::IndexModel;
 
 pub mod fixture;
 
@@ -12,7 +11,9 @@ pub use self::fixture::Fixture;
 //////////////////////////////////////////////////////////////////////////////
 // User //////////////////////////////////////////////////////////////////////
 
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Model, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[model(collection_name="users")]
+#[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"name": "unique-email", "unique": true, "background": true}"#))]
 pub struct User {
     /// The user's unique ID.
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -20,25 +21,6 @@ pub struct User {
 
     /// The user's unique email.
     pub email: String,
-}
-
-impl Model for User {
-    const COLLECTION_NAME: &'static str = "users";
-
-    fn id(&self) -> Option<ObjectId> {
-        return self.id.clone();
-    }
-
-    fn set_id(&mut self, oid: ObjectId) {
-        self.id = Some(oid);
-    }
-
-    fn indexes() -> Vec<IndexModel> {
-        vec![IndexModel{
-            keys: doc!{"email": 1},
-            options: Some(doc!{"name": "unique-email", "unique": true, "background": true}),
-        }]
-    }
 }
 
 impl Migrating for User {
@@ -59,7 +41,9 @@ impl Migrating for User {
 //////////////////////////////////////////////////////////////////////////////
 // UserModelBadMigrations ////////////////////////////////////////////////////
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Model, Serialize, Deserialize, Debug, Clone)]
+#[model(collection_name="users_bad_migrations")]
+#[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"name": "unique-email", "unique": true, "background": true}"#))]
 pub struct UserModelBadMigrations {
     /// The user's unique ID.
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -67,25 +51,6 @@ pub struct UserModelBadMigrations {
 
     /// The user's unique email.
     pub email: String,
-}
-
-impl Model for UserModelBadMigrations {
-    const COLLECTION_NAME: &'static str = "users_bad_migrations";
-
-    fn id(&self) -> Option<ObjectId> {
-        return self.id.clone();
-    }
-
-    fn set_id(&mut self, oid: ObjectId) {
-        self.id = Some(oid);
-    }
-
-    fn indexes() -> Vec<IndexModel> {
-        vec![IndexModel{
-            keys: doc!{"email": 1},
-            options: Some(doc!{"name": "unique-email", "unique": true, "background": true}),
-        }]
-    }
 }
 
 impl Migrating for UserModelBadMigrations {

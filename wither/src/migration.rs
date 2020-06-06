@@ -1,7 +1,6 @@
 #![cfg_attr(feature="docinclude", doc(include="../docs/migrations-overview.md"))]
 
 use bson::{Bson, Document, doc};
-use chrono;
 use mongodb::{Collection, Database, options};
 use mongodb::error::{ErrorKind, Result};
 
@@ -73,7 +72,7 @@ impl Migration for IntervalMigration {
         // Build update document.
         let mut update = doc!{};
         if self.set.clone().is_none() && self.unset.clone().is_none() {
-            Err(ErrorKind::ArgumentError{message: "One of '$set' or '$unset' must be specified.".into()})?;
+            return Err(ErrorKind::ArgumentError{message: "One of '$set' or '$unset' must be specified.".into()}.into());
         };
         if let Some(set) = self.set.clone() {
             update.insert_bson("$set".into(), Bson::from(set));
@@ -86,7 +85,7 @@ impl Migration for IntervalMigration {
         let options = options::UpdateOptions{
             upsert: Some(false),
             write_concern: Some(options::WriteConcern{
-                w: Some(options::Acknowledgment::Nodes(1)),
+                w: Some(options::Acknowledgment::Majority),
                 journal: Some(true),
                 ..Default::default()
             }),

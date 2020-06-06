@@ -101,7 +101,7 @@ pub trait Model where Self: Serialize + DeserializeOwned {
     {
         Ok(Self::collection(db)
             .find_one(filter, options)?
-            .map(|doc| Self::instance_from_document(doc))
+            .map(Self::instance_from_document)
             .transpose()?)
     }
 
@@ -275,7 +275,7 @@ pub trait Model where Self: Serialize + DeserializeOwned {
         to_bson(&self)
             .and_then(|val| match val {
                 Bson::Document(doc) => Ok(doc),
-                bsn @ _ => Err(bson::EncoderError::Unknown(format!("Expected Bson::Document found {:?}", bsn)))
+                bsn => Err(bson::EncoderError::Unknown(format!("Expected Bson::Document found {:?}", bsn)))
             })
             .map_err(|err| Error{kind: Arc::new(BsonEncode(err))})
     }

@@ -142,11 +142,11 @@ impl<'a> MetaModel<'a> {
         let name = match meta {
             syn::Meta::NameValue(val) => match &val.lit {
                 syn::Lit::Str(inner) => inner.value(),
-                lit @ _ => abort!(lit, "this must be a string literal"),
+                lit => abort!(lit, "this must be a string literal"),
             }
             _ => abort!(meta, META_MUST_BE_KV_PAIR),
         };
-        if name.len() == 0 {
+        if name.is_empty() {
             abort!(meta, "wither model collection names must be at least one character in length");
         }
         if self.collection_name.is_some() {
@@ -228,8 +228,7 @@ impl<'a> MetaModel<'a> {
 
     /// Get collection name which is to be used for this model.
     fn get_collection_name(&self) -> String {
-        self.collection_name.as_ref()
-            .map(|val| val.clone())
+        self.collection_name.as_ref().cloned()
             .unwrap_or_else(|| self.ident.to_string().to_table_case().to_plural())
     }
 
