@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: rust:1.44-slim-buster
+    strategy:
+      matrix:
+        mongo_version: ["mongo:4.2", "mongo:4.0", "mongo:3.6"]
+    services:
+      mongo:
+        image: ${{ matrix.mongo_version }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install clippy
+      run: rustup component add clippy
+    - name: build
+      run: cargo build
+    - name: clippy
+      run: cargo clippy
+    - name: test wither
+      run: HOST=mongo PORT=27017 RUST_BACKTRACE=1 cargo test -p wither --tests --lib -- --test-threads=1
+    - name: test wither derive
+      run: cargo test -p wither_derive --tests --lib
+
+  doc:
+    runs-on: ubuntu-latest
+    container: rust:1.44-slim-buster
+    steps:
+    - uses: actions/checkout@v2
+    - name: install nightly
+      run: rustup install nightly-2020-05-25
+    - name: test wither docs
+      run: cd wither && cargo +nightly-2020-05-25 test --features docinclude --doc; cd -
+    - name: test wither docs
+      run: cd wither_derive && cargo +nightly-2020-05-25 test --doc; cd -
