@@ -13,6 +13,8 @@ pub use wither_derive::ModelSync;
 // Common //
 mod error;
 pub use error::{Result, WitherError};
+mod common;
+pub use common::IndexModel;
 
 // Async //
 #[cfg(not(feature="sync"))]

@@ -12,6 +12,7 @@ use serde::{Serialize, de::DeserializeOwned};
 
 use crate::error::{Result, WitherError};
 use crate::sync::ModelCursorSync;
+use crate::common::IndexModel;
 
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
 ///
@@ -278,7 +279,7 @@ pub trait ModelSync where Self: Serialize + DeserializeOwned {
     // Maintenance Layer /////////////////////////////////////////////////////////////////////////
 
     /// Get the vector of index models for this model.
-    fn indexes() -> Vec<options::IndexModel> {
+    fn indexes() -> Vec<IndexModel> {
         vec![]
     }
 

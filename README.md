@@ -18,9 +18,14 @@ An ODM for MongoDB built upon the official <a href="https://github.com/mongodb/m
 
 The primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.6`, `4.0` & `4.2`.
 
-**GREAT NEWS!** We've finally updated to the officially supported [Rust driver](https://github.com/mongodb/mongo-rust-driver). **Even better news!** The driver team has been hard at work, and has implemented support for async IO in `mongodb@0.10.x` and on. Our next major focus with the Wither project is to make it compatible with the async driver.
+**GREAT NEWS!** Wither is now based on the official [MongoDB Rust driver](https://github.com/mongodb/mongo-rust-driver). Thanks to advancements in the driver, Wither is now fully asynchronous, but optionally exposes the synchronous interface via feature switch. Everything is async by default.
 
-Due to updates in the underlying driver, there is a fair number of breaking changes in the `Model` trait, as well as the `Model` derive macro. Details can be found in the changelog and the documentation.
+Simply mirroring the features of the underlying MongoDB driver, Wither supports the following runtime models:
+- `tokio-runtime` (default) activates [the tokio runtime](tokio.rs/).
+- `async-std-runtime` activates [the async-std runtime](https://async.rs/).
+- `sync` activates the synchronous blocking-IO interface.
+
+Due to updates in the underlying driver, there is a fair number of breaking changes in the `Model` trait, as well as the `Model` derive macro. Details can be found in the changelog and the documentation. Furthermore, everything is now async by default. The sync interface is still available, but must be compiled via the `sync` feature switch.
 
 ### items of interest
 - [docs](https://docs.rs/wither): all the good stuff is here.
@@ -31,10 +36,10 @@ Due to updates in the underlying driver, there is a fair number of breaking chan
 To get started, simply derive `Model` on your struct along with a few other serde derivations. Let's step through a full example.
 
 ```rust ,no_run
+use futures::stream::StreamExt;
 use serde::{Serialize, Deserialize};
 use wither::prelude::*;
 use wither::bson::{doc, oid::ObjectId};
-use wither::error::Result;
 use wither::mongodb::Client;
 
 // Now we define our model. Simple as deriving a few traits.
@@ -44,12 +49,12 @@ struct User {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
     pub id: Option<ObjectId>,
-    /// This field has a unique index on it.
+    /// The user's email address.
     pub email: String,
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Connect & sync indexes.
     let db = Client::with_uri_str("mongodb://localhost:27417/").await?.database("mydb");
     User::sync(db.clone()).await?;
@@ -69,6 +74,10 @@ async fn main() -> Result<()> {
     Ok(())
 }
 ```
+
+**PLEASE NOTE:** as of the `0.9.0-alpha.0` release, corresponding to the mongodb `1.0` release, index management has not yet been implemented in the mongodb driver, and thus the index syncing features of `Model::sync` have been temporarily disabled. The hope is that the mongodb team will be able to land their index management code in the driver soon, and then we will be able to re-enable the `Model::sync` functionality.
+
+If this is important to you, please head over to [wither#51](https://github.com/thedodd/wither/issues/51) and let us know!
 
 #### next steps
 And that's all there is to it. Now you are ready to tackle some of the other important parts of the model lifecycle. Some additional items to look into:

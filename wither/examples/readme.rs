@@ -11,14 +11,14 @@ struct User {
     /// The ID of the model.
     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
     pub id: Option<ObjectId>,
-    /// This field has a unique index on it.
+    /// The user's email address.
     pub email: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Connect & sync indexes.
-    let db = Client::with_uri_str("mongodb://localhost:27417/").await?.database("mydb");
+    let db = Client::with_uri_str("mongodb://localhost:27017/").await?.database("mydb");
     User::sync(db.clone()).await?;
 
     // Create a user.

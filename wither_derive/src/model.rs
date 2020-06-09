@@ -110,7 +110,7 @@ impl<'a> MetaModel<'a> {
                 }
 
                 /// All indexes currently on this model.
-                fn indexes() -> Vec<wither::mongodb::options::IndexModel> {
+                fn indexes() -> Vec<wither::IndexModel> {
                     vec![#(#indexes),*]
                 }
             }
@@ -158,7 +158,7 @@ impl<'a> MetaModel<'a> {
                 }
 
                 /// All indexes currently on this model.
-                fn indexes() -> Vec<wither::mongodb::options::IndexModel> {
+                fn indexes() -> Vec<wither::IndexModel> {
                     vec![#(#indexes),*]
                 }
             }
@@ -507,6 +507,6 @@ impl quote::ToTokens for IndexModelTokens {
             None => quote!(None),
         };
         let keys = &self.keys;
-        tokens.extend(quote!(wither::mongodb::options::IndexModel::builder().keys(#keys).options(#options).build()));
+        tokens.extend(quote!(wither::IndexModel::new(#keys, #options)));
     }
 }
