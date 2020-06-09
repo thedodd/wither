@@ -1,7 +1,7 @@
 <h1 align="center">wither</h1>
 <div align="center">
     <strong>
-An ODM for MongoDB built upon the official <a href="https://github.com/mongodb/mongo-rust-driver">MongoDB Rust driver</a>. Please ⭐ on <a href="https://github.com/thedodd/wither">github</a>!
+An ODM for MongoDB built on the official <a href="https://github.com/mongodb/mongo-rust-driver">MongoDB Rust driver</a>. Please ⭐ on <a href="https://github.com/thedodd/wither">github</a>!
     </strong>
 </div>
 <br />
@@ -38,11 +38,11 @@ To get started, simply derive `Model` on your struct along with a few other serd
 ```rust ,no_run
 use futures::stream::StreamExt;
 use serde::{Serialize, Deserialize};
-use wither::prelude::*;
+use wither::{prelude::*, Result};
 use wither::bson::{doc, oid::ObjectId};
 use wither::mongodb::Client;
 
-// Now we define our model. Simple as deriving a few traits.
+// Define a model. Simple as deriving a few traits.
 #[derive(Debug, Model, Serialize, Deserialize)]
 #[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"unique": true}"#))]
 struct User {
@@ -54,9 +54,9 @@ struct User {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     // Connect & sync indexes.
-    let db = Client::with_uri_str("mongodb://localhost:27417/").await?.database("mydb");
+    let db = Client::with_uri_str("mongodb://localhost:27017/").await?.database("mydb");
     User::sync(db.clone()).await?;
 
     // Create a user.
@@ -75,7 +75,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-**PLEASE NOTE:** as of the `0.9.0-alpha.0` release, corresponding to the mongodb `1.0` release, index management has not yet been implemented in the mongodb driver, and thus the index syncing features of `Model::sync` have been temporarily disabled. The hope is that the mongodb team will be able to land their index management code in the driver soon, and then we will be able to re-enable the `Model::sync` functionality.
+**PLEASE NOTE:** as of the `0.9.0-alpha.0` release, corresponding to the mongodb `1.0` release, index management has not yet been implemented in the mongodb driver, and thus the index syncing features of `Model::sync` have been temporarily disabled. The hope is that the mongodb team will be able to land their index management code in the driver soon, at which point we will re-enable the `Model::sync` functionality.
 
 If this is important to you, please head over to [wither#51](https://github.com/thedodd/wither/issues/51) and let us know!
 

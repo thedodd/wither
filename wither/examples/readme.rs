@@ -1,10 +1,10 @@
 use futures::stream::StreamExt;
 use serde::{Serialize, Deserialize};
-use wither::prelude::*;
+use wither::{prelude::*, Result};
 use wither::bson::{doc, oid::ObjectId};
 use wither::mongodb::Client;
 
-// Now we define our model. Simple as deriving a few traits.
+// Define a model. Simple as deriving a few traits.
 #[derive(Debug, Model, Serialize, Deserialize)]
 #[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"unique": true}"#))]
 struct User {
@@ -16,7 +16,7 @@ struct User {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<()> {
     // Connect & sync indexes.
     let db = Client::with_uri_str("mongodb://localhost:27017/").await?.database("mydb");
     User::sync(db.clone()).await?;

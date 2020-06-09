@@ -17,14 +17,16 @@ use crate::common::IndexModel;
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
 ///
 /// Wither models are a thin abstraction over a standard MongoDB collection. Typically, the value
-/// to be derived from using a model-based approach to working with your data will come about when
+/// gained from using a model-based approach to working with your data will come about when
 /// reading from and writing to the model's collection. For everything else, simply call the
 /// `collection` method for direct access to the model's underlying collection handle.
+///
+/// Any `read_concern`, `write_concern` or `selection_criteria` options configured for the model,
+/// either derived or manually, will be used for collection interactions.
 ///
 #[cfg_attr(feature="docinclude", doc(include="../docs/model-derive.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/model-sync.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/logging.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../docs/manually-implementing-model.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/underlying-driver.md"))]
 #[async_trait]
 pub trait Model where Self: Serialize + DeserializeOwned {

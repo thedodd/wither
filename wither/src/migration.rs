@@ -41,11 +41,10 @@ pub trait Migration: Send + Sync {
 ///
 /// This migration type works nicely in environments where multiple instances of the system — in
 /// which this migration is defined — are continuously running, even during deployment cycles.
-/// AKA, highly available systems. With an `IntervalMigration`, each instance will execute the
-/// migration at boottime, until the `threshold` date is passed. This will compensate for
-/// write-heavy workloads, as the final instance to be updated will ensure schema convergence.
-/// As long as you ensure your migrations are idempotent — **WHICH YOU ALWAYS SHOULD** — this
-/// will work quite nicely.
+/// With an `IntervalMigration`, each instance will execute the migration at boottime, until the
+/// `threshold` date is passed. This will compensate for write-heavy workloads, as the final
+/// instance to be updated will ensure schema convergence. As long as you ensure your
+/// migrations are idempotent — **WHICH YOU ALWAYS SHOULD** — this will work quite nicely.
 pub struct IntervalMigration {
     /// The name for this migration. Must be unique per collection.
     pub name: String,

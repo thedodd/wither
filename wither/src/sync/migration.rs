@@ -1,4 +1,4 @@
-#![cfg_attr(feature="docinclude", doc(include="../docs/migrations-overview.md"))]
+#![cfg_attr(feature="docinclude", doc(include="../../docs/migrations-overview.md"))]
 
 use mongodb::bson::{Bson, Document, doc};
 use mongodb::options;
