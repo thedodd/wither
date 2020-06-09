@@ -1,31 +1,62 @@
 #![cfg_attr(feature="docinclude", feature(external_doc))]
 #![cfg_attr(feature="docinclude", doc(include="../README.md"))]
 
-extern crate chrono;
-#[macro_use]
-extern crate log;
-#[macro_use(doc, bson)]
-pub extern crate mongodb;
-extern crate serde;
+// Re-exports //
+pub use mongodb;
+pub use mongodb::bson;
 
-pub mod migration;
-pub mod model;
+pub use wither_derive::Model;
+#[cfg(any(feature="sync"))]
+pub use wither_derive::ModelSync;
 
-// Expose lower symbols in the top level module.
+// Common //
+mod error;
+pub use error::{Result, WitherError};
+mod common;
+pub use common::IndexModel;
+
+// Async //
+mod cursor;
+pub use cursor::ModelCursor;
+
+mod migration;
 pub use migration::{
     IntervalMigration,
     Migration,
 };
-pub use model::{
-    basic_index_options,
-    Model,
-};
+mod model;
+pub use model::Model;
 
+// Sync //
+#[cfg(any(feature="sync"))]
+mod sync;
+#[cfg(any(feature="sync"))]
+pub use sync::ModelCursorSync;
+
+#[cfg(any(feature="sync"))]
+pub use sync::{
+    IntervalMigrationSync,
+    MigrationSync,
+};
+#[cfg(any(feature="sync"))]
+pub use sync::ModelSync;
+
+/// All traits needed for basic usage of the wither system.
 pub mod prelude {
-    //! All traits needed for basic usage of the wither system.
-    pub use ::migration::{
+    pub use crate::migration::{
         Migrating,
         Migration,
     };
-    pub use ::model::Model;
+    pub use crate::model::Model;
+    pub use wither_derive::Model;
+
+    #[cfg(any(feature="sync"))]
+    pub use crate::sync::{
+        MigratingSync,
+        MigrationSync,
+    };
+    #[cfg(any(feature="sync"))]
+    pub use crate::sync::ModelSync;
+    #[cfg(any(feature="sync"))]
+    pub use wither_derive::ModelSync;
 }

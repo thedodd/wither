@@ -1,0 +1,5 @@
+error: wither expected this attribute to be formatted as a meta list, eg: `#[model(...)]`
+ --> $DIR/model-attr-invalid.rs:5:3
+  |
+5 | #[model=""]
+  |   ^^^^^^^^

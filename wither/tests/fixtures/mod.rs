@@ -1,19 +1,33 @@
+#![cfg(not(feature="sync"))]
+
+use std::env;
+
 use chrono::{self, TimeZone};
-use mongodb::{
-    Document,
-    coll::options::IndexModel,
-    oid::ObjectId,
-};
-use wither::{self, prelude::*};
+use lazy_static::lazy_static;
+use serde::{Serialize, Deserialize};
+use wither::bson::doc;
+use wither::bson::oid::ObjectId;
+use wither::mongodb::{Client, Database};
+use wither::prelude::*;
 
-pub mod fixture;
-
-pub use self::fixture::Fixture;
+lazy_static!{
+    static ref HOST: String = {
+        env::var("HOST").expect("environment variable HOST must be defined")
+    };
+    static ref PORT: String = {
+        env::var("PORT").expect("environment variable PORT must be defined")
+    };
+    static ref CONNECTION_STRING: String = {
+        format!("mongodb://{}:{}/", HOST.as_str(), PORT.as_str())
+    };
+}
 
 //////////////////////////////////////////////////////////////////////////////
 // User //////////////////////////////////////////////////////////////////////
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Model, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[model(collection_name="users")]
+#[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"name": "unique-email", "unique": true, "background": true}"#))]
 pub struct User {
     /// The user's unique ID.
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -23,30 +37,8 @@ pub struct User {
     pub email: String,
 }
 
-impl<'a> Model<'a> for User {
-
-    const COLLECTION_NAME: &'static str = "users";
-
-    fn id(&self) -> Option<ObjectId> {
-        return self.id.clone();
-    }
-
-    fn set_id(&mut self, oid: ObjectId) {
-        self.id = Some(oid);
-    }
-
-    fn indexes() -> Vec<IndexModel> {
-        return vec![
-            IndexModel{
-                keys: doc!{"email" => 1},
-                options: wither::basic_index_options("unique-email", true, Some(true), None, None),
-            },
-        ];
-    }
-}
-
-impl<'m> Migrating<'m> for User {
-    fn migrations() -> Vec<Box<wither::Migration>> {
+impl Migrating for User {
+    fn migrations() -> Vec<Box<dyn wither::Migration>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.
             Box::new(wither::IntervalMigration{
@@ -63,7 +55,9 @@ impl<'m> Migrating<'m> for User {
 //////////////////////////////////////////////////////////////////////////////
 // UserModelBadMigrations ////////////////////////////////////////////////////
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Model, Serialize, Deserialize, Debug, Clone)]
+#[model(collection_name="users_bad_migrations")]
+#[model(index(keys=r#"doc!{"email": 1}"#, options=r#"doc!{"name": "unique-email", "unique": true, "background": true}"#))]
 pub struct UserModelBadMigrations {
     /// The user's unique ID.
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
@@ -73,30 +67,8 @@ pub struct UserModelBadMigrations {
     pub email: String,
 }
 
-impl<'a> Model<'a> for UserModelBadMigrations {
-
-    const COLLECTION_NAME: &'static str = "users_bad_migrations";
-
-    fn id(&self) -> Option<ObjectId> {
-        return self.id.clone();
-    }
-
-    fn set_id(&mut self, oid: ObjectId) {
-        self.id = Some(oid);
-    }
-
-    fn indexes() -> Vec<IndexModel> {
-        return vec![
-            IndexModel{
-                keys: doc!{"email" => 1},
-                options: wither::basic_index_options("unique-email", true, Some(true), None, None),
-            },
-        ];
-    }
-}
-
-impl<'m> Migrating<'m> for UserModelBadMigrations {
-    fn migrations() -> Vec<Box<wither::Migration>> {
+impl Migrating for UserModelBadMigrations {
+    fn migrations() -> Vec<Box<dyn wither::Migration>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.
             Box::new(wither::IntervalMigration{
@@ -110,79 +82,53 @@ impl<'m> Migrating<'m> for UserModelBadMigrations {
     }
 }
 
+/// A singular type representing the various fixtures available in this harness.
+///
+/// This type represents some combination of desired states which this system's dependencies must
+/// be in. Generally speaking, this represents the backend database; however it is not necessarily
+/// limited to only the backend database.
+pub struct Fixture {
+    client: Client,
+}
+
 //////////////////////////////////////////////////////////////////////////////
-// Derived Model /////////////////////////////////////////////////////////////
+// Public Builder Interface //////////////////////////////////////////////////
 
-/// This model tests all of the major code generation bits.
-#[derive(Serialize, Deserialize, Model, Default)]
-#[model(collection_name="derivations")]
-pub struct DerivedModel {
-    /// The ID of the model.
-    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<ObjectId>,
+impl Fixture {
+    /// Create a new fixture.
+    pub async fn new() -> Self {
+        let client = Client::with_uri_str(&CONNECTION_STRING)
+            .await
+            .expect("failed to connect to database");
+        Fixture{client}
+    }
 
-    // A field to test base line index options with index of type `asc`.
-    #[model(index(
-        index="asc", name="idx2",
-        background="true", sparse="true", unique="true", expire_after_seconds="15", version="1",
-    ))]
-    pub field0: String,
+    // /// Remove all documents & indexes from the collections of the data models used by this harness.
+    // pub fn with_empty_collections(self) -> Self {
+    //     DB.clone().collection(User::COLLECTION_NAME).drop(None).expect("failed to drop collection");
+    //     DB.clone().collection(UserModelBadMigrations::COLLECTION_NAME).drop(None).expect("failed to drop collection");
+    //     self
+    // }
 
-    // A field to test base line index options with index of type `dsc`.
-    #[model(index(
-        index="dsc", name="idx3",
-        background="false", sparse="false", unique="false",
-        with(field="text_field_a", index="dsc"), with(field="field0", index="asc"),
-    ))]
-    pub field1: String,
+    /// Drop the database which is used by this harness.
+    pub async fn with_dropped_database(self) -> Self {
+        self.get_db().drop(None).await.expect("failed to drop database");
+        self
+    }
 
-    // A field to test index of type `text`.
-    #[model(index(
-        index="text", name="idx4",
-        with(field="text_field_b", index="text"),
-        weight(field="text_field_a", weight="10"), weight(field="text_field_b", weight="5"),
-        text_version="3", default_language="en", language_override="override_field",
-    ))]
-    pub text_field_a: String,
-    pub text_field_b: String,
-
-    // A field to test index of type `hashed`.
-    #[model(index(index="hashed", name="idx5"))]
-    pub hashed_field: String,
+    /// Sync all of the data models used by this harness.
+    pub async fn with_synced_models(self) -> Self {
+        User::sync(self.get_db()).await.expect("failed to sync `User` model");
+        self
+    }
 }
 
-#[derive(Serialize, Deserialize, Model, Default)]
-pub struct Derived2dModel {
-    /// The ID of the model.
-    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<ObjectId>,
+//////////////////////////////////////////////////////////////////////////////
+// Public Dependencies Interface /////////////////////////////////////////////
 
-    // A field to test index of type `2d`.
-    #[model(index(index="2d", with(field="field_2d_filter", index="asc"), min="-180.0", max="180.0", bits="1"))]
-    pub field_2d_a: Vec<f64>,
-    pub field_2d_filter: String,
-}
-
-#[derive(Serialize, Deserialize, Model, Default)]
-pub struct Derived2dsphereModel {
-    /// The ID of the model.
-    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<ObjectId>,
-
-    // A field to test index of type `2dsphere`.
-    #[model(index(index="2dsphere", sphere_version="3", with(field="field_2dsphere_filter", index="asc")))]
-    pub field_2dsphere: Document,
-    pub field_2dsphere_filter: String,
-}
-
-#[derive(Serialize, Deserialize, Model, Default)]
-pub struct DerivedGeoHaystackModel {
-    /// The ID of the model.
-    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-    pub id: Option<ObjectId>,
-
-    // A field to test index of type `geoHaystack`.
-    #[model(index(index="geoHaystack", bucket_size="5", with(field="field_geo_haystack_filter", index="asc")))]
-    pub field_geo_haystack: Document,
-    pub field_geo_haystack_filter: String,
+impl Fixture {
+    /// Get a handle to the database used by this harness.
+    pub fn get_db(&self) -> Database {
+        self.client.database("witherTestDB")
+    }
 }

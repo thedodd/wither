@@ -1,0 +1,5 @@
+error: the serde `rename` attr for wither::Model ID fields should be `rename="_id"`
+ --> $DIR/field-id-incorrect-serde-rename-value.rs:6:13
+  |
+6 |     #[serde(rename="_bad", skip_serializing_if="Option::is_none")]
+  |             ^^^^^^^^^^^^^

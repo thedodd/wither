@@ -1,0 +1,7 @@
+error[E0599]: no function or associated item named `get_selection_criteria` found for struct `BadModel` in the current scope
+ --> $DIR/model-selection-criteria-invalid-fn-path.rs:5:28
+  |
+5 | #[model(selection_criteria="BadModel::get_selection_criteria")]
+  |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ function or associated item not found in `BadModel`
+6 | struct BadModel {
+  | --------------- function or associated item `get_selection_criteria` not found for this

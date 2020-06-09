@@ -1,0 +1,21 @@
+error: malformed attribute
+
+  = help: expected literal
+
+ --> $DIR/model-read-concern-invalid-syntax.rs:5:1
+  |
+5 | #[model(read_concern=ReadConcern::Majority)]
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0599]: no function or associated item named `read_concern` found for struct `DerivedModel` in the current scope
+  --> $DIR/model-read-concern-invalid-syntax.rs:12:27
+   |
+6  | struct DerivedModel {
+   | ------------------- function or associated item `read_concern` not found for this
+...
+12 |     assert!(DerivedModel::read_concern().is_none());
+   |                           ^^^^^^^^^^^^ function or associated item not found in `DerivedModel`
+   |
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `read_concern`, perhaps you need to implement it:
+           candidate #1: `wither::model::Model`

@@ -1,66 +1,35 @@
 //! Model related code.
 
-use std::collections::HashMap;
-use std::error::Error;
+use async_trait::async_trait;
+use mongodb::bson::{doc, from_bson, to_bson};
+use mongodb::bson::{Bson, Document};
+use mongodb::bson::oid::ObjectId;
 
-use mongodb::{
-    Bson, Document,
-    coll::{
-        Collection,
-        options::{
-            CountOptions,
-            FindOneAndDeleteOptions,
-            FindOneAndUpdateOptions,
-            FindOptions,
-            IndexModel,
-            IndexOptions,
-            ReturnDocument,
-        },
-    },
-    common::WriteConcern,
-    db::{Database, ThreadedDatabase},
-    error::{
-        Error::{ArgumentError, DecoderError, DefaultError, OIDError, ResponseError},
-        Result,
-    },
-    oid::ObjectId,
-    to_bson, from_bson,
-};
-use serde::{Serialize, Deserialize};
+use mongodb::{Collection, Database};
+use mongodb::options;
+use mongodb::results::DeleteResult;
+use serde::{Serialize, de::DeserializeOwned};
 
-/// The name of the default index created by MongoDB.
-pub const DEFAULT_INDEX: &str = "_id";
-
-/// A convenience function for basic index options. Everything else will default to `None`.
-pub fn basic_index_options(name: &str, background: bool, unique: Option<bool>, expire_after_seconds: Option<i32>, sparse: Option<bool>) -> IndexOptions {
-    return IndexOptions{
-        name: Some(name.to_owned()),
-        background: Some(background),
-        unique,
-        expire_after_seconds,
-        sparse,
-        storage_engine: None,
-        version: None,
-        default_language: None,
-        language_override: None,
-        text_version: None,
-        weights: None,
-        sphere_version: None,
-        bits: None,
-        max: None,
-        min: None,
-        bucket_size: None,
-    };
-}
+use crate::cursor::ModelCursor;
+use crate::error::{Result, WitherError};
+use crate::common::IndexModel;
 
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
+///
+/// Wither models are a thin abstraction over a standard MongoDB collection. Typically, the value
+/// gained from using a model-based approach to working with your data will come about when
+/// reading from and writing to the model's collection. For everything else, simply call the
+/// `collection` method for direct access to the model's underlying collection handle.
+///
+/// Any `read_concern`, `write_concern` or `selection_criteria` options configured for the model,
+/// either derived or manually, will be used for collection interactions.
 ///
 #[cfg_attr(feature="docinclude", doc(include="../docs/model-derive.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/model-sync.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/logging.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../docs/manually-implementing-model.md"))]
 #[cfg_attr(feature="docinclude", doc(include="../docs/underlying-driver.md"))]
-pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
+#[async_trait]
+pub trait Model where Self: Serialize + DeserializeOwned {
 
     /// The name of the collection where this model's data is stored.
     const COLLECTION_NAME: &'static str;
@@ -69,155 +38,114 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     fn id(&self) -> Option<ObjectId>;
 
     /// Set the ID for this model.
-    fn set_id(&mut self, ObjectId);
+    fn set_id(&mut self, id: ObjectId);
 
     //////////////////////////////////////////////////////////////////////////////////////////////
-    // Write Concern Abstraction /////////////////////////////////////////////////////////////////
+    // ReadConcern, WriteConcern & SelectionCritieria ////////////////////////////////////////////
 
-    /// The model's write concern for database writes.
+    /// The model's read concern.
+    fn read_concern() -> Option<options::ReadConcern> {
+        None
+    }
+
+    /// The model's write concern.
+    fn write_concern() -> Option<options::WriteConcern> {
+        None
+    }
+
+    /// The model's selection criteria.
     ///
-    /// The default implementation ensures that all writes block until they are journaled, which
-    /// ensures that an ObjectId will be returned for the inserted document. For most cases,
-    /// overriding this implementation should be unnecessary.
-    fn model_write_concern() -> WriteConcern {
-        WriteConcern{
-            w: Self::write_concern_w(),
-            w_timeout: Self::write_concern_w_timeout(),
-            j: Self::write_concern_j(),
-            fsync: Self::write_concern_fsync(),
-        }
+    /// When deriving a model, a function or an associated function should be specified which
+    /// should be used to produce the desired value.
+    fn selection_criteria() -> Option<options::SelectionCriteria> {
+        None
     }
 
-    /// The write replication settings for this model. Defaults to `1`.
-    fn write_concern_w() -> i32 {
-        1
-    }
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Static Layer //////////////////////////////////////////////////////////////////////////////
 
-    /// The write concern timeout settings for this model. Defaults to `0`.
-    fn write_concern_w_timeout() -> i32 {
-        0
-    }
-
-    /// The write concern journal settings for this model. Defaults to `true`.
-    fn write_concern_j() -> bool {
-        true
-    }
-
-    /// The write concern fsync settings for this model. Defaults to `false`.
-    fn write_concern_fsync() -> bool {
-        false
-    }
-
-    //////////////////
-    // Static Layer //
-
-    /// Count the number of documents in this model's collection matching the given criteria.
-    fn count(db: Database, filter: Option<Document>, options: Option<CountOptions>) -> Result<i64> {
-        let coll = db.collection(Self::COLLECTION_NAME);
-        coll.count(filter, options)
+    /// Get a handle to this model's collection.
+    ///
+    /// If there are any methods available on the underlying driver's collection object which are
+    /// not available on the model interface, this is how you should access them. Typically,
+    /// only methods which would be modified to deal with a model instance are actually wrapped
+    /// by the model interface. Everything else should be accessed via this collection method.
+    ///
+    /// This method uses the model's `selection_criteria`, `read_concern` & `write_concern` when
+    /// constructing the collection handle.
+    fn collection(db: Database) -> Collection {
+        db.collection_with_options(
+            Self::COLLECTION_NAME,
+            options::CollectionOptions::builder()
+                .selection_criteria(Self::selection_criteria())
+                .read_concern(Self::read_concern())
+                .write_concern(Self::write_concern())
+                .build(),
+        )
     }
 
     /// Find all instances of this model matching the given query.
-    fn find(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> Result<Vec<Self>> {
-        let coll = db.collection(Self::COLLECTION_NAME);
-
-        // Unwrap cursor.
-        let mut cursor = match coll.find(filter, options) {
-            Ok(cursor) => cursor,
-            Err(err) => return Err(err),
-        };
-
-        // Collect all items in the cursor.
-        let bson_docs = match cursor.drain_current_batch() {
-            Ok(docs) => docs,
-            Err(err) => return Err(err),
-        };
-
-        // Deserialize bson docs onto struct models.
-        let mut instances: Vec<Self> = vec![];
-        for doc in bson_docs {
-            let inst = Self::instance_from_document(doc)?;
-            instances.push(inst);
-        }
-        Ok(instances)
-    }
-
-    /// Delete any model instances matching the given query.
-    fn delete_many(db: Database, filter: Document) -> Result<()> {
-        let coll = db.collection(Self::COLLECTION_NAME);
-        coll.delete_many(filter, Some(Self::model_write_concern()))?;
-        Ok(())
+    async fn find<F, O>(db: Database, filter: F, options: O) -> Result<ModelCursor<Self>>
+        where
+            F: Into<Option<Document>> + Send,
+            O: Into<Option<options::FindOptions>> + Send,
+    {
+        Ok(Self::collection(db)
+            .find(filter, options)
+            .await
+            .map(ModelCursor::new)?)
     }
 
     /// Find the one model record matching your query, returning a model instance.
-    fn find_one(db: Database, filter: Option<Document>, options: Option<FindOptions>) -> Result<Option<Self>> {
-        let coll = db.collection(Self::COLLECTION_NAME);
-
-        // Unwrap result.
-        let doc_option = match coll.find_one(filter, options) {
-            Ok(doc_option) => doc_option,
-            Err(err) => return Err(err),
-        };
-
-        // Unwrap option.
-        let doc = match doc_option {
-            Some(doc) => doc,
-            None => return Ok(None),
-        };
-
-        // Deserialize bson onto struct model.
-        let instance = Self::instance_from_document(doc)?;
-        Ok(Some(instance))
+    async fn find_one<F, O>(db: Database, filter: F, options: O) -> Result<Option<Self>>
+        where
+            F: Into<Option<Document>> + Send,
+            O: Into<Option<options::FindOneOptions>> + Send,
+    {
+        Ok(Self::collection(db)
+            .find_one(filter, options)
+            .await?
+            .map(Self::instance_from_document)
+            .transpose()?)
     }
 
     /// Finds a single document and deletes it, returning the original.
-    fn find_one_and_delete(db: Database, filter: Document, options: Option<FindOneAndDeleteOptions>) -> Result<Option<Self>> {
-        db.collection(Self::COLLECTION_NAME).find_one_and_delete(filter, options)
-            .and_then(|docopt| match docopt {
-                Some(doc) => match Self::instance_from_document(doc) {
-                    Ok(model) => Ok(Some(model)),
-                    Err(err) => Err(err),
-                }
-                None => Ok(None),
-            })
+    async fn find_one_and_delete<O>(db: Database, filter: Document, options: O) -> Result<Option<Self>>
+        where O: Into<Option<options::FindOneAndDeleteOptions>> + Send,
+    {
+        Ok(Self::collection(db)
+            .find_one_and_delete(filter, options)
+            .await?
+            .map(Self::instance_from_document)
+            .transpose()?)
     }
 
     /// Finds a single document and replaces it, returning either the original or replaced document.
-    fn find_one_and_replace(db: Database, filter: Document, replacement: Document, options: Option<FindOneAndUpdateOptions>) -> Result<Option<Self>> {
-        db.collection(Self::COLLECTION_NAME).find_one_and_replace(filter, replacement, options)
-            .and_then(|docopt| match docopt {
-                Some(doc) => match Self::instance_from_document(doc) {
-                    Ok(model) => Ok(Some(model)),
-                    Err(err) => Err(err),
-                }
-                None => Ok(None),
-            })
+    async fn find_one_and_replace<O>(db: Database, filter: Document, replacement: Document, options: O) -> Result<Option<Self>>
+        where O: Into<Option<options::FindOneAndReplaceOptions>> + Send,
+    {
+        Ok(Self::collection(db)
+            .find_one_and_replace(filter, replacement, options)
+            .await?
+            .map(Self::instance_from_document)
+            .transpose()?)
     }
 
     /// Finds a single document and updates it, returning either the original or updated document.
-    fn find_one_and_update(db: Database, filter: Document, update: Document, options: Option<FindOneAndUpdateOptions>) -> Result<Option<Self>> {
-        db.collection(Self::COLLECTION_NAME).find_one_and_update(filter, update, options)
-            .and_then(|docopt| match docopt {
-                Some(doc) => match Self::instance_from_document(doc) {
-                    Ok(model) => Ok(Some(model)),
-                    Err(err) => Err(err),
-                }
-                None => Ok(None),
-            })
+    async fn find_one_and_update<U, O>(db: Database, filter: Document, update: U, options: O) -> Result<Option<Self>>
+        where
+            U: Into<options::UpdateModifications> + Send,
+            O: Into<Option<options::FindOneAndUpdateOptions>> + Send,
+    {
+        Ok(Self::collection(db)
+            .find_one_and_update(filter, update, options)
+            .await?
+            .map(Self::instance_from_document)
+            .transpose()?)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Instance Layer ////////////////////////////////////////////////////////////////////////////
-
-    /// Delete this model instance by ID.
-    fn delete(&self, db: Database) -> Result<()> {
-        // Return an error if the instance was never saved.
-        let id = self.id().ok_or(DefaultError("This instance has no ID. Can not be deleted.".to_string()))?;
-
-        let coll = db.collection(Self::COLLECTION_NAME);
-        coll.delete_one(doc!{"_id": id}, Some(Self::model_write_concern()))?;
-        Ok(())
-    }
 
     /// Save the current model instance.
     ///
@@ -231,54 +159,48 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// and the first document matching the filter will be replaced by this instance. This is
     /// useful when the model has unique indexes on fields which need to be the target of the save
     /// operation.
-    fn save(&mut self, db: Database, filter: Option<Document>) -> Result<()> {
-        let coll = db.collection(Self::COLLECTION_NAME);
-        let instance_doc = match to_bson(&self)? {
-            Bson::Document(doc) => doc,
-            _ => return Err(DefaultError("Failed to convert struct to a bson document.".to_string())),
-        };
+    ///
+    /// **NOTE WELL:** in order to ensure needed behavior of this method, it will force `journaled`
+    /// write concern.
+    async fn save(&mut self, db: Database, filter: Option<Document>) -> Result<()> {
+        let coll = Self::collection(db);
+        let instance_doc = Self::document_from_instance(&self)?;
 
         // Ensure that journaling is set to true for this call, as we need to be able to get an ID back.
-        let mut write_concern = Self::model_write_concern();
-        write_concern.j = true;
+        let mut write_concern = Self::write_concern().unwrap_or_default();
+        write_concern.journal = Some(true);
 
         // Handle case where instance already has an ID.
         let mut id_needs_update = false;
-        let _filter = if let Some(id) = self.id() {
-            doc!{"_id": id}
-
-        // Handle case where no filter and no ID exist.
-        } else if filter == None {
-            let new_id = match ObjectId::new() {
-                Ok(new) => new,
-                Err(err) => return Err(OIDError(err)),
-            };
-            self.set_id(new_id.clone());
-            doc!{"_id": new_id}
-
-        // Handle case where no ID exists, and a filter has been provided.
-        } else {
-            id_needs_update = true;
-            filter.unwrap()
+        let filter = match (self.id(), filter) {
+            (Some(id), _) => doc!{"_id": id},
+            (None, None) => {
+                let new_id = ObjectId::new();
+                self.set_id(new_id.clone());
+                doc!{"_id": new_id}
+            }
+            (None, Some(filter)) => {
+                id_needs_update = true;
+                filter
+            }
         };
 
         // Save the record by replacing it entirely, or upserting if it doesn't already exist.
-        let opts = FindOneAndUpdateOptions{upsert: Some(true), write_concern: Some(write_concern), return_document: Some(ReturnDocument::After), sort: None, projection: None, max_time_ms: None};
-        let updated_doc = match coll.find_one_and_replace(_filter, instance_doc, Some(opts))? {
-            Some(doc) => doc,
-            None => return Err(ResponseError("Server failed to return the updated document. Update may have failed.".to_owned())),
-        };
+        let opts = options::FindOneAndReplaceOptions::builder()
+            .upsert(Some(true))
+            .write_concern(Some(write_concern))
+            .return_document(Some(options::ReturnDocument::After))
+            .build();
+        let updated_doc = coll.find_one_and_replace(filter, instance_doc, Some(opts))
+            .await?
+            .ok_or_else(|| WitherError::ServerFailedToReturnUpdatedDoc)?;
 
         // Update instance ID if needed.
         if id_needs_update {
-            let response_id = match updated_doc.get_object_id("_id") {
-                Ok(id) => id,
-                Err(_) => return Err(ResponseError("Server failed to return ObjectId of updated document.".to_owned())),
-            };
+            let response_id = updated_doc.get_object_id("_id").map_err(|_| WitherError::ServerFailedToReturnObjectId)?;
             self.set_id(response_id.clone());
         };
-
-        return Ok(());
+        Ok(())
     }
 
     /// Update the current model instance.
@@ -294,16 +216,9 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     /// concern `journaling` is set to `true`, so that we can receive a complete output document.
     ///
     /// If this model instance was never written to the database, this operation will return an error.
-    fn update(self, db: Database, filter: Option<Document>, update: Document, opts: Option<FindOneAndUpdateOptions>) -> Result<Option<Self>> {
-        let coll = db.collection(Self::COLLECTION_NAME);
-
+    async fn update(self, db: Database, filter: Option<Document>, update: Document, opts: Option<options::FindOneAndUpdateOptions>) -> Result<Self> {
         // Extract model's ID & use as filter for this operation.
-        let id = match self.id() {
-            Some(id) => id,
-            None => {
-                return Err(ArgumentError("Model must have an ObjectId for this operation.".to_owned()));
-            }
-        };
+        let id = self.id().ok_or_else(|| WitherError::ModelIdRequiredForOperation)?;
 
         // Ensure we have a valid filter.
         let filter = match filter {
@@ -319,34 +234,42 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
             Some(mut options) => {
                 options.write_concern = match options.write_concern {
                     Some(mut wc) => {
-                        wc.j = true;
+                        wc.journal = Some(true);
                         Some(wc)
                     },
                     None => {
-                        let mut wc = Self::model_write_concern();
-                        wc.j = true;
+                        let mut wc = Self::write_concern().unwrap_or_default();
+                        wc.journal = Some(true);
                         Some(wc)
                     }
                 };
                 options
             },
             None => {
-                let mut options = FindOneAndUpdateOptions::default();
-                let mut wc = Self::model_write_concern();
-                wc.j = true;
+                let mut options = options::FindOneAndUpdateOptions::default();
+                let mut wc = Self::write_concern().unwrap_or_default();
+                wc.journal = Some(true);
                 options.write_concern = Some(wc);
                 options
             }
         };
 
         // Perform a FindOneAndUpdate operation on this model's document by ID.
-        coll.find_one_and_update(filter, update, Some(options)).and_then(|docopt| match docopt {
-            Some(doc) => match Self::instance_from_document(doc) {
-                Ok(model) => Ok(Some(model)),
-                Err(err) => Err(err),
-            }
-            None => Ok(None),
-        })
+        Ok(Self::collection(db)
+            .find_one_and_update(filter, update, Some(options))
+            .await?
+            .map(Self::instance_from_document)
+            .transpose()?
+            .ok_or_else(|| WitherError::ServerFailedToReturnUpdatedDoc)?)
+    }
+
+    /// Delete this model instance by ID.
+    ///
+    /// Wraps the driver's `Collection.delete_one` method.
+    async fn delete(&self, db: Database) -> Result<DeleteResult> {
+        // Return an error if the instance was never saved.
+        let id = self.id().ok_or_else(|| WitherError::ModelIdRequiredForOperation)?;
+        Ok(Self::collection(db).delete_one(doc!{"_id": id}, None).await?)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,9 +277,14 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
 
     /// Attempt to serialize the given bson document into an instance of this model.
     fn instance_from_document(document: Document) -> Result<Self> {
-        match from_bson::<Self>(Bson::Document(document)) {
-            Ok(inst) => Ok(inst),
-            Err(err) => Err(DecoderError(err)),
+        Ok(from_bson::<Self>(Bson::Document(document))?)
+    }
+
+    /// Attempt to serialize an instance of this model into a bson document.
+    fn document_from_instance(&self) -> Result<Document> {
+        match to_bson(&self)? {
+            Bson::Document(doc) => Ok(doc),
+            bsn => Err(WitherError::ModelSerToDocument(bsn.element_type())),
         }
     }
 
@@ -375,103 +303,9 @@ pub trait Model<'a> where Self: Serialize + Deserialize<'a> {
     ///
     /// This routine will destroy any indexes found on this model's collection which are not
     /// defined in the response from `Self.indexes()`.
-    fn sync(db: Database) -> Result<()> {
-        let coll = db.collection(Self::COLLECTION_NAME);
-        sync_model_indexes(&coll, Self::indexes())?;
+    #[deprecated(since="0.9.0", note="Index management is currently missing in the underlying driver, so this method no longer does anything. We are hoping to re-enable this in a future release.")]
+    async fn sync(_db: Database) -> Result<()> {
+        // NOTE: blocked by https://jira.mongodb.org/projects/RUST/issues/RUST-166
         Ok(())
-    }
-}
-
-fn sync_model_indexes<'a>(coll: &'a Collection, indexes: Vec<IndexModel>) -> Result<()> {
-    info!("Synchronizing indexes for '{}'.", coll.namespace);
-
-    // Fetch current indexes.
-    let _ = coll.db.create_collection(coll.name().as_str(), None); // NOTE: NB: this is account for the mongodb driver bug: #251.
-    let mut current_indexes_map: HashMap<String, Document> = HashMap::new();
-    let indices = coll.list_indexes()
-        .map_err(|err| DefaultError(format!("Error while fetching current indexes for '{}': {:?}", coll.namespace, err.description())))?
-        .filter_map(|doc_res| doc_res.ok());
-    for doc in indices {
-        let idx_keys = doc.get_document("key")
-            .map_err(|err| DefaultError(format!("Error extracting 'key' of index document: {:?}", err.description())))?;
-        let key = idx_keys.keys().fold(String::from(""), |acc, bkey| acc + bkey);
-        current_indexes_map.insert(key, doc.clone());
-    }
-
-    // Fetch target indexes for this model.
-    let mut target_indexes_map: HashMap<String, IndexModel> = HashMap::new();
-    for model in indexes.iter() {
-        // Populate the 'target' indexes map for easy comparison later.
-        let key = model.keys.keys().fold(String::from(""), |acc, bkey| acc + bkey);
-        target_indexes_map.insert(key, model.to_owned());
-    }
-
-    // Determine which indexes must be created on the collection.
-    let mut indexes_to_create = vec![];
-    for (key, index_model) in target_indexes_map.iter() {
-        // Check if key already exists.
-        if !current_indexes_map.contains_key(key) {
-            indexes_to_create.push(index_model)
-        }
-    }
-
-    // Determine which indexes to remove.
-    let mut indexes_to_remove = vec![];
-    for (key, index_doc) in current_indexes_map {
-        // Don't attempt to remove the default index.
-        if &key == DEFAULT_INDEX {
-            continue
-        }
-
-        // Check if key is not present in target indexes map. This means the index needs removal.
-        if !target_indexes_map.contains_key(&key) {
-            indexes_to_remove.push(index_doc);
-        }
-    }
-
-    // Create needed indexes.
-    for model in indexes_to_create {
-        // NOTE: this wraps the native MongoDB `ensureIndex` command. Will not fail if index already exists.
-        coll.create_index_model(model.clone())
-            .map_err(|err| DefaultError(format!("Failed to create index: {}", err.description())))?;
-    }
-
-    // Remove old indexes.
-    for doc in indexes_to_remove {
-        let index_name = String::from(
-            doc.get_str("name").map_err(|err| DefaultError(format!("Failed to get index name: {:?}", err.description())))?
-        );
-        coll.drop_index_string(index_name)
-            .map_err(|err| DefaultError(format!("Failed to remove index: {}", err.description())))?;
-    }
-
-    info!("Finished synchronizing indexes for '{}'.", coll.namespace);
-    Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn basic_index_options_returns_expected_output() {
-        let output = basic_index_options("testing", true, None, None, None);
-
-        assert!(output.name == Some("testing".to_string()));
-        assert!(output.background == Some(true));
-        assert!(output.unique == None);
-        assert!(output.expire_after_seconds == None);
-        assert!(output.sparse == None);
-        assert!(output.storage_engine == None);
-        assert!(output.version == None);
-        assert!(output.default_language == None);
-        assert!(output.language_override == None);
-        assert!(output.text_version == None);
-        assert!(output.weights == None);
-        assert!(output.sphere_version == None);
-        assert!(output.bits == None);
-        assert!(output.max == None);
-        assert!(output.min == None);
-        assert!(output.bucket_size == None);
     }
 }

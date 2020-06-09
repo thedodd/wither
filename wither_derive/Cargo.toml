@@ -4,20 +4,27 @@ categories = ["database", "data-structures"]
 description = "An ODM for MongoDB built upon the mongo rust driver."
 documentation = "https://docs.rs/wither"
 homepage = "https://github.com/thedodd/wither"
-keywords = ["mongodb", "odm", "orm"]
+keywords = ["mongo", "mongodb", "database", "bson", "nosql", "odm", "orm"]
 license = "Apache-2.0"
 name = "wither_derive"
 readme = "README.md"
 repository = "https://github.com/thedodd/wither"
-version = "0.8.0"
+version = "0.9.0-alpha.0"
+edition = "2018"
 
 [lib]
 proc-macro = true
 
 [dependencies]
 Inflector = "0.11"
-mongodb = "0.3"
-proc-macro2 = "0.4"
-quote = "0.6"
-serde = "1"
-syn = { version = "0.15", features = ["extra-traits"] }
+darling = "0.10.2"
+proc-macro2 = "1.0.10"
+quote = "1.0.3"
+serde = { version = "1", features=["derive"] }
+syn = { version = "1.0.17", features = ["extra-traits"] }
+proc-macro-error = "1.0.2"
+async-trait = "0.1.33"
+
+[dev-dependencies]
+trybuild = "1.0.27"
+wither = { path = "../wither" }

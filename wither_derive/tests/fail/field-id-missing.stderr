@@ -1,0 +1,5 @@
+error: wither models must have a field `id` of type `Option<bson::oid::ObjectId>`
+ --> $DIR/field-id-missing.rs:5:8
+  |
+5 | struct BadModel {
+  |        ^^^^^^^^

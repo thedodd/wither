@@ -1,0 +1,5 @@
+error: the serde `skip_serializing_if` attr for wither::Model ID fields should be `skip_serializing_if="Option::is_none"`
+ --> $DIR/field-id-incorrect-serde-skip-value.rs:6:27
+  |
+6 |     #[serde(rename="_id", skip_serializing_if="Option::is_some")]
+  |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

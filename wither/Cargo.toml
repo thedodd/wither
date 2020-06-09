@@ -4,25 +4,32 @@ categories = ["database", "data-structures"]
 description = "An ODM for MongoDB built upon the mongo rust driver."
 documentation = "https://docs.rs/wither"
 homepage = "https://github.com/thedodd/wither"
-keywords = ["mongodb", "odm", "orm"]
+keywords = ["mongo", "mongodb", "database", "bson", "nosql", "odm", "orm"]
 license = "Apache-2.0"
 name = "wither"
 readme = "../README.md"
 repository = "https://github.com/thedodd/wither"
-version = "0.8.0"
+version = "0.9.0-alpha.0"
+edition = "2018"
 
 [dependencies]
 chrono = "0.4"
 log = "0.4"
-mongodb = "0.3"
-serde = "1"
-serde_derive = "1"
+mongodb = { version = "1", default-features=false }
+serde = { version = "1", features=["derive"] }
+wither_derive = { version = "0.9.0-alpha.0", path = "../wither_derive", default-features = false }
+async-trait = "0.1.33"
+futures = "0.3.5"
+thiserror = "1.0.19"
 
 [dev-dependencies]
 lazy_static = "1"
-wither_derive = { version = "0.8.0", path = "../wither_derive" }
+tokio = { version = "0.2.18", features = ["macros"] }
 
 [features]
+default = ["tokio-runtime"]
+tokio-runtime = ["mongodb/tokio-runtime"]
+async-std-runtime = ["mongodb/async-std-runtime"]
 docinclude = [] # Used only for activating `doc(include="...")` on nightly.
 
 [package.metadata.docs.rs]

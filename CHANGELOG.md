@@ -1,6 +1,50 @@
 changelog
 =========
 
+## [unreleased]
+
+### added
+
+### changed
+
+### removed
+
+## 0.9.0-alpha.0
+
+### added
+- Wither is now based on the official [MongoDB Rust driver](https://github.com/mongodb/mongo-rust-driver).
+- Everything is now async. All model methods are now `async`. All synchronous code has been disabled, and will be removed from the tree soon.
+- `Model::read_concern`, `Model::write_concern` & `Model::selection_criteria` match the driver's updated mechanism for specifying these values. They may all be derived, and are always used via `Model::collection` and any of the model methods which interact with a model's collection.
+- Added new `ModelCursor` type which wraps a cursor and yields model instances.
+
+### changed
+- All crates cut over to edition 2018.
+- Updated lots of deps. Importantly:
+    - `mongodb@1.0` and is now a public export of this crate.
+    - `bson@1.0` and is now a public export of this crate.
+- Models are now constrained by `DeserializeOwned`, instead of `Deserialize`. This simplifies some aspects of the `Model` trait.
+- Nearly all `Model` methods which interact with the collection have been updated to match the driver's new collection interface. Lots of good stuff here. Check out the docs.
+
+#### index management
+Index management has not yet been implemented in the mongodb driver as of `1.0`, and thus the index syncing features of `Model::sync` have been temporarily disabled. The hope is that the mongodb team will be able to land their index management code in the driver soon, at which point we will re-enable the `Model::sync` functionality.
+
+If this is important to you, please head over to [wither#51](https://github.com/thedodd/wither/issues/51) and let us know!
+
+Notwithstanding, there are a few other changes to note:
+- we have introduced the `wither::IndexModel` struct as a placeholder. This allows our `Model` interface to stay mostly the same, and allows us to preserve our index derivations using the `#[derive(Model)]` system.
+- `Model::sync` is still present and callable, but has been temporarily deprecated until we are able to figure out the index management story.
+
+#### wither_derive
+The model derivation system has been GREATLY improved. The entire crate has been refactored. The code should be much more approachable to new folks wanting to contribute, and should be easier to maintain going forward.
+
+- Errors are now be reported via `proc-macro-error` and are fully spanned (which means any attribute errors related to the derive system will be highlighted with pin-point accuracy at compile time).
+- We are now using `dtolnay`'s excellent [trybuild](https://github.com/dtolnay/trybuild) for testing the compilation of our derive system. Big win here.
+- Index derivations have also been greatly simplified. Now, indexes are specified on the model-level (instead of the field-level, as they were previously).
+- Indexes are derived using a `keys` field and an `options` field (which is optional). Both are expected to be quoted `doc!{...}` invocations. See the docs for more details.
+
+### removed
+Index management `:'(` ... though this should only be temporary.
+
 ## 0.8
 The core `wither` crate is 100% backwards compatible with this release, but the `Model` trait has received a few additional methods. Namely the `find_one_and_(delete|replace|update)` methods. Came across a use case where I needed them and then realized that I never implemented them. Now they are here. Woot woot!
 
@@ -13,7 +57,7 @@ The only net-new item being added here is that now, within `#[model(index())]`, 
 
 **It is my sincere hope** that this is the last breaking change I will need to make to this crate before promoting this crate to a `1.0.0` release. Let's hope! Please let me know if there are any issues you have with these updates.
 
-#### 0.8.1 (pending)
+#### 0.8.1
 
 - In order to avoid writing `use mongodb::coll::options::IndexModel` explicitly, use the full path of `IndexModel` when sending code back to compiler.
 

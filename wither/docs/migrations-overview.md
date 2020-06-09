@@ -1,40 +1,26 @@
-Interface for schema migrations.
-
 As your system evolves over time, you may find yourself needing to alter the data in your databases in a way which does not fit in with the standard `Model` lifecycle. Using the migration system will keep your database clean, and will allow you to evolve your data at a more rapid and controlled pace.
 
 Migrations are controlled by implementing the [Migrating](./trait.Migrating.html) trait on your `Model`s. This couldn't be more simple, so let's look at an example of an [`IntervalMigration`](./struct.IntervalMigration.html).
 
 ```rust
-# extern crate chrono;
-# #[macro_use]
-# extern crate mongodb;
-# extern crate serde;
-# #[macro_use(Serialize, Deserialize)]
-# extern crate serde_derive;
-# extern crate wither;
-# #[macro_use(Model)]
-# extern crate wither_derive;
+# use chrono::prelude::*;
+# use futures::stream::StreamExt;
+# use serde::{Serialize, Deserialize};
+# use wither::{prelude::*, Result};
+# use wither::bson::{doc, oid::ObjectId};
+# use wither::mongodb::Client;
 #
-# use chrono::offset::TimeZone;
-# use mongodb::{
-#     Client, ThreadedClient,
-#     db::{Database, ThreadedDatabase},
-#     coll::options::IndexModel,
-#     oid::ObjectId,
-# };
-# use wither::prelude::*;
-#
-# #[derive(Serialize, Deserialize, Model)]
-# pub struct User {
+# #[derive(Debug, Model, Serialize, Deserialize)]
+# struct User {
 #     #[serde(rename="_id", skip_serializing_if="Option::is_none")]
-#     pub id: Option<mongodb::oid::ObjectId>,
+#     pub id: Option<ObjectId>,
 # }
 #
-impl<'m> Migrating<'m> for User {
+impl Migrating for User {
     // Define any migrations which your model needs in this method.
     // As this is an interval migration, it will deactivate itself after the given threshold
     // date, so you could leave it in your code for as long as you would like.
-    fn migrations() -> Vec<Box<wither::Migration>> {
+    fn migrations() -> Vec<Box<dyn wither::Migration>> {
         vec![
             Box::new(wither::IntervalMigration{
                 name: "remove-oldfield".to_string(),
@@ -47,17 +33,9 @@ impl<'m> Migrating<'m> for User {
         ]
     }
 }
-
-fn main() {
-    # let db = mongodb::Client::with_uri("mongodb://localhost:27017/").unwrap().db("mydb");
-    // ... get your DB handle and such.
-
-    // All you need to do now is execute your migrations similart to how you execute `sync`.
-    // You should definitely `sync` first, to ensure any needed indexes are present.
-    // You should only have to execute migrations once at boottime.
-    User::migrate(db.clone()).unwrap();
-}
 ```
+
+Then execute `User::migrate` to run the migration.
 
 **Remember, MongoDB is not a SQL based system.** There is no true database level schema enforcement. `IntervalMigration`s bridge this gap quite nicely.
 
