@@ -1,6 +1,6 @@
 contributing
 ============
-This project is currently setup as three different crates.
+This project is currently composed of the following crates:
 
 - `wither`: the main business logic crate.
 - `wither_derive`: the custom derive logic.

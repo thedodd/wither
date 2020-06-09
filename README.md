@@ -15,17 +15,15 @@ An ODM for MongoDB built on the official <a href="https://github.com/mongodb/mon
 ![Crates.io](https://img.shields.io/crates/d/wither.svg)
 
 </div>
+</br>
 
 The primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.6`, `4.0` & `4.2`.
 
-**GREAT NEWS!** Wither is now based on the official [MongoDB Rust driver](https://github.com/mongodb/mongo-rust-driver). Thanks to advancements in the driver, Wither is now fully asynchronous, but optionally exposes the synchronous interface via feature switch. Everything is async by default.
-
-Simply mirroring the features of the underlying MongoDB driver, Wither supports the following runtime models:
+**GREAT NEWS!** Wither is now based on the official [MongoDB Rust driver](https://github.com/mongodb/mongo-rust-driver). Thanks to advancements in the driver, Wither is now fully asynchronous. Simply mirroring the features of the underlying MongoDB driver, Wither supports the following runtimes:
 - `tokio-runtime` (default) activates [the tokio runtime](tokio.rs/).
 - `async-std-runtime` activates [the async-std runtime](https://async.rs/).
-- `sync` activates the synchronous blocking-IO interface.
 
-Due to updates in the underlying driver, there is a fair number of breaking changes in the `Model` trait, as well as the `Model` derive macro. Details can be found in the changelog and the documentation. Furthermore, everything is now async by default. The sync interface is still available, but must be compiled via the `sync` feature switch.
+Due to updates in the underlying driver, there is a fair number of breaking changes in the `Model` trait, as well as the `Model` derive macro. Details can be found in the changelog and the documentation. Furthermore, everything is now async by default. The sync interface has been completely disabled, and is pending removal from the repo. Head over to [wither#52](https://github.com/thedodd/wither/issues/52) and let me know if you still need sync support.
 
 ### items of interest
 - [docs](https://docs.rs/wither): all the good stuff is here.

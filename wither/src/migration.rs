@@ -1,5 +1,3 @@
-#![cfg_attr(feature="docinclude", doc(include="../docs/migrations-overview.md"))]
-
 use async_trait::async_trait;
 use mongodb::bson::{Bson, Document, doc};
 use mongodb::{Collection, Database, options};
@@ -31,6 +29,8 @@ pub trait Migrating: Model {
 }
 
 /// A trait describing objects which encapsulate a schema migration.
+///
+#[cfg_attr(feature="docinclude", doc(include="../docs/migrations-overview.md"))]
 #[async_trait]
 pub trait Migration: Send + Sync {
     /// The function which is to execute this migration.

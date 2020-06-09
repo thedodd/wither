@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         mongo_version: ["mongo:4.2", "mongo:4.0", "mongo:3.6"]
-        features: ["--features=tokio-runtime", "--no-default-features --features=async-std-runtime", "--no-default-features --features=sync"]
+        features: ["--features=tokio-runtime", "--no-default-features --features=async-std-runtime"]
     services:
       mongo:
         image: ${{ matrix.mongo_version }}
@@ -45,14 +45,14 @@ jobs:
     - name: test wither_derive
       run: cd wither_derive; cargo test --tests --lib; cd -
 
-  # doc:
-  #   runs-on: ubuntu-latest
-  #   container: rust:1.44-slim-buster
-  #   steps:
-  #   - uses: actions/checkout@v2
-  #   - name: install nightly
-  #     run: rustup install nightly-2020-05-25
-  #   - name: test wither docs
-  #     run: cd wither && cargo +nightly-2020-05-25 test --features docinclude --doc; cd -
-  #   - name: test wither docs
-  #     run: cd wither_derive && cargo +nightly-2020-05-25 test --doc; cd -
+  doc:
+    runs-on: ubuntu-latest
+    container: rust:1.44-slim-buster
+    steps:
+    - uses: actions/checkout@v2
+    - name: install nightly
+      run: rustup install nightly-2020-05-25
+    - name: test wither docs
+      run: cd wither && cargo +nightly-2020-05-25 test --features docinclude --doc; cd -
+    - name: test wither docs
+      run: cd wither_derive && cargo +nightly-2020-05-25 test --doc; cd -

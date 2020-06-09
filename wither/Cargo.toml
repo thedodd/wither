@@ -30,7 +30,6 @@ tokio = { version = "0.2.18", features = ["macros"] }
 default = ["tokio-runtime"]
 tokio-runtime = ["mongodb/tokio-runtime"]
 async-std-runtime = ["mongodb/async-std-runtime"]
-sync = ["mongodb/sync"]
 docinclude = [] # Used only for activating `doc(include="...")` on nightly.
 
 [package.metadata.docs.rs]

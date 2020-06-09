@@ -117,53 +117,54 @@ impl<'a> MetaModel<'a> {
         }
     }
 
-    /// Expand the model into the full sync model impl output.
-    pub fn expand_sync(&self) -> proc_macro2::TokenStream {
-        let name = self.ident;
-        let collection_name = self.get_collection_name();
-        let read_concern = OptionReadConcern(&self.read_concern);
-        let write_concern = OptionWriteConcern(&self.write_concern);
-        let selection_criteria = OptionSelectionCriteria(&self.selection_criteria);
-        let indexes = &self.indexes;
-        quote! {
-            impl wither::ModelSync for #name {
-                const COLLECTION_NAME: &'static str = #collection_name;
+    // NOTE WELL: this is pending removal per https://github.com/thedodd/wither/issues/52
+    // /// Expand the model into the full sync model impl output.
+    // pub fn expand_sync(&self) -> proc_macro2::TokenStream {
+    //     let name = self.ident;
+    //     let collection_name = self.get_collection_name();
+    //     let read_concern = OptionReadConcern(&self.read_concern);
+    //     let write_concern = OptionWriteConcern(&self.write_concern);
+    //     let selection_criteria = OptionSelectionCriteria(&self.selection_criteria);
+    //     let indexes = &self.indexes;
+    //     quote! {
+    //         impl wither::ModelSync for #name {
+    //             const COLLECTION_NAME: &'static str = #collection_name;
 
-                /// Get a cloned copy of this instance's ID.
-                fn id(&self) -> ::std::option::Option<wither::bson::oid::ObjectId> {
-                    self.id.clone()
-                }
+    //             /// Get a cloned copy of this instance's ID.
+    //             fn id(&self) -> ::std::option::Option<wither::bson::oid::ObjectId> {
+    //                 self.id.clone()
+    //             }
 
-                /// Set this instance's ID.
-                fn set_id(&mut self, oid: wither::bson::oid::ObjectId) {
-                    self.id = Some(oid);
-                }
+    //             /// Set this instance's ID.
+    //             fn set_id(&mut self, oid: wither::bson::oid::ObjectId) {
+    //                 self.id = Some(oid);
+    //             }
 
-                /// The model's read concern.
-                fn read_concern() -> Option<wither::mongodb::options::ReadConcern> {
-                    #read_concern
-                }
+    //             /// The model's read concern.
+    //             fn read_concern() -> Option<wither::mongodb::options::ReadConcern> {
+    //                 #read_concern
+    //             }
 
-                /// The model's write concern.
-                fn write_concern() -> Option<wither::mongodb::options::WriteConcern> {
-                    #write_concern
-                }
+    //             /// The model's write concern.
+    //             fn write_concern() -> Option<wither::mongodb::options::WriteConcern> {
+    //                 #write_concern
+    //             }
 
-                /// The model's selection criteria.
-                ///
-                /// When deriving a model, a function or an associated function should be specified which
-                /// should be used to produce the desired value.
-                fn selection_criteria() -> Option<wither::mongodb::options::SelectionCriteria> {
-                    #selection_criteria
-                }
+    //             /// The model's selection criteria.
+    //             ///
+    //             /// When deriving a model, a function or an associated function should be specified which
+    //             /// should be used to produce the desired value.
+    //             fn selection_criteria() -> Option<wither::mongodb::options::SelectionCriteria> {
+    //                 #selection_criteria
+    //             }
 
-                /// All indexes currently on this model.
-                fn indexes() -> Vec<wither::IndexModel> {
-                    vec![#(#indexes),*]
-                }
-            }
-        }
-    }
+    //             /// All indexes currently on this model.
+    //             fn indexes() -> Vec<wither::IndexModel> {
+    //                 vec![#(#indexes),*]
+    //             }
+    //         }
+    //     }
+    // }
 
     /// Extract any model attrs and bind them to their optional slots.
     fn extract_model_attrs(&mut self) {

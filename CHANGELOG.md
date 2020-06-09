@@ -13,15 +13,15 @@ changelog
 
 ### added
 - Wither is now based on the official [MongoDB Rust driver](https://github.com/mongodb/mongo-rust-driver).
-- Everything is now async by default. All model methods are now `async`. Use the feature `sync` to compile the blocking version of the code.
+- Everything is now async. All model methods are now `async`. All synchronous code has been disabled, and will be removed from the tree soon.
 - `Model::read_concern`, `Model::write_concern` & `Model::selection_criteria` match the driver's updated mechanism for specifying these values. They may all be derived, and are always used via `Model::collection` and any of the model methods which interact with a model's collection.
-- Added new `ModelCursor` type which wraps a cursor and yields model instances. We are no longer forcing collection into a vector.
+- Added new `ModelCursor` type which wraps a cursor and yields model instances.
 
 ### changed
-- Cut all crates over to edition 2018.
+- All crates cut over to edition 2018.
 - Updated lots of deps. Importantly:
     - `mongodb@1.0` and is now a public export of this crate.
-    - `bson@0.14` and is now a public export of this crate.
+    - `bson@1.0` and is now a public export of this crate.
 - Models are now constrained by `DeserializeOwned`, instead of `Deserialize`. This simplifies some aspects of the `Model` trait.
 - Nearly all `Model` methods which interact with the collection have been updated to match the driver's new collection interface. Lots of good stuff here. Check out the docs.
 

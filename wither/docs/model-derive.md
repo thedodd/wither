@@ -41,13 +41,19 @@ This pattern is used to address some of the complexities with deriving all possi
 Index derivations have been GREATLY simplified, and future-proofed, as of `wither@0.9.0`. Now, all indexes are specified using the following pattern.
 
 ```rust ,no_run
-#[derive(Serialize, Deserialize, Model)]
+# use serde::{Serialize, Deserialize};
+# use wither::{prelude::*, Result};
+# use wither::bson::{doc, oid::ObjectId};
+# #[derive(Serialize, Deserialize, Model)]
 #[model(
     index(keys=r#"doc!{"id": 1}"#),
     index(keys=r#"doc!{"id": -1}"#, options=r#"doc!{"unique": true}"#),
     index(keys=r#"doc!{"some.nested.field": 1}"#),
 )]
-struct MyModel { ... }
+struct MyModel {
+#    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
+#    pub id: Option<ObjectId>,
+# }
 ```
 
 This pattern is impervious to any future changes made to the `keys` and `options` documents expected by MongoDB. All values must be quoted, may use `r#` strings (specify any number of `#` symbols after the `r`, followed by `"..."` and a matching number of `#` symbols following the closing quote), and are expected to be `bson::doc!` invocations, providing the compile time BSON validation we all love.
