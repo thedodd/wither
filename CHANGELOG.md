@@ -32,12 +32,12 @@ If this is important to you, please head over to [wither#51](https://github.com/
 
 Notwithstanding, there are a few other changes to note:
 - we have introduced the `wither::IndexModel` struct as a placeholder. This allows our `Model` interface to stay mostly the same, and allows us to preserve our index derivations using the `#[derive(Model)]` system.
-- `Model::sync` is still present and callable, but has been temporarily deprecated until we are able to figure out the index management story.
+- `Model::sync` is still present and callable, but has been temporarily deprecated until we are able to figure out the index management story. I mostly chose to use the deprecation pattern, even if a bit inaccurate, because it guarantees that folks will have a compiler warning letting them know that the functionality has been temporarily disabled.
 
 #### wither_derive
 The model derivation system has been GREATLY improved. The entire crate has been refactored. The code should be much more approachable to new folks wanting to contribute, and should be easier to maintain going forward.
 
-- Errors are now be reported via `proc-macro-error` and are fully spanned (which means any attribute errors related to the derive system will be highlighted with pin-point accuracy at compile time).
+- Errors are now reported via `proc-macro-error` and are fully spanned (which means any attribute errors related to the derive system will be highlighted with pin-point accuracy at compile time).
 - We are now using `dtolnay`'s excellent [trybuild](https://github.com/dtolnay/trybuild) for testing the compilation of our derive system. Big win here.
 - Index derivations have also been greatly simplified. Now, indexes are specified on the model-level (instead of the field-level, as they were previously).
 - Indexes are derived using a `keys` field and an `options` field (which is optional). Both are expected to be quoted `doc!{...}` invocations. See the docs for more details.
