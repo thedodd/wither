@@ -77,7 +77,7 @@ impl<'a> MetaModel<'a> {
         let selection_criteria = OptionSelectionCriteria(&self.selection_criteria);
         let indexes = &self.indexes;
         quote! {
-            #[async_trait::async_trait]
+            #[wither::async_trait]
             impl wither::Model for #name {
                 const COLLECTION_NAME: &'static str = #collection_name;
 

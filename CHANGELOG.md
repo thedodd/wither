@@ -9,6 +9,11 @@ changelog
 
 ### removed
 
+## 0.9.0-alpha.1
+
+### added
+- Adding `async_trait::async_trait` macro as a pub export of the `wither` crate, so that code generated from `wither_derive` can use `#[wither::async_trait]` instead of requiring users to declare `async-trait` as a dependency. This _seems_ like the right thing to do here ... we'll see. If this causes problems for you (which it shouldn't), please open an issue.
+
 ## 0.9.0-alpha.0
 
 ### added
