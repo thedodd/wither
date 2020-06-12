@@ -2,6 +2,7 @@
 #![cfg_attr(feature="docinclude", doc(include="../README.md"))]
 
 // Re-exports //
+pub use async_trait::async_trait;
 pub use mongodb;
 pub use mongodb::bson;
 
