@@ -1,6 +1,6 @@
 use async_trait::async_trait;
-use mongodb::bson::{Bson, Document, doc};
-use mongodb::{Collection, Database, options};
+use mongodb::bson::{doc, Bson, Document};
+use mongodb::{options, Collection, Database};
 
 use crate::error::{Result, WitherError};
 use crate::model::Model;
@@ -29,8 +29,7 @@ pub trait Migrating: Model {
 }
 
 /// A trait describing objects which encapsulate a schema migration.
-///
-#[cfg_attr(feature="docinclude", doc(include="../docs/migrations-overview.md"))]
+#[cfg_attr(feature = "docinclude", doc(include = "../docs/migrations-overview.md"))]
 #[async_trait]
 pub trait Migration: Send + Sync {
     /// The function which is to execute this migration.
@@ -73,7 +72,7 @@ impl Migration for IntervalMigration {
         };
 
         // Build update document.
-        let mut update = doc!{};
+        let mut update = doc! {};
         if self.set.clone().is_none() && self.unset.clone().is_none() {
             return Err(WitherError::MigrationSetOrUnsetRequired);
         };
@@ -87,14 +86,21 @@ impl Migration for IntervalMigration {
         // Build up & execute the migration.
         let options = options::UpdateOptions::builder()
             .upsert(Some(false))
-            .write_concern(Some(options::WriteConcern::builder()
-                .w(Some(options::Acknowledgment::Majority))
-                .journal(Some(true))
-                .build()
+            .write_concern(Some(
+                options::WriteConcern::builder()
+                    .w(Some(options::Acknowledgment::Majority))
+                    .journal(Some(true))
+                    .build(),
             ))
             .build();
         let res = coll.update_many(self.filter.clone(), update, Some(options)).await?;
-        log::info!("Successfully executed migration '{}' against '{}'. {} matched. {} modified.", &self.name, ns, res.matched_count, res.modified_count);
+        log::info!(
+            "Successfully executed migration '{}' against '{}'. {} matched. {} modified.",
+            &self.name,
+            ns,
+            res.matched_count,
+            res.modified_count
+        );
         Ok(())
     }
 }
