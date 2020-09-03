@@ -12,7 +12,7 @@ pub trait Migrating: Model {
     fn migrations() -> Vec<Box<dyn Migration>>;
 
     /// Execute all migrations for this model.
-    async fn migrate(db: Database) -> Result<()> {
+    async fn migrate(db: &Database) -> Result<()> {
         let coll = Self::collection(db);
         let ns = coll.namespace();
         let migrations = Self::migrations();

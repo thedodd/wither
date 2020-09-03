@@ -118,7 +118,7 @@ impl Fixture {
 
     /// Sync all of the data models used by this harness.
     pub async fn with_synced_models(self) -> Self {
-        User::sync(self.get_db()).await.expect("failed to sync `User` model");
+        User::sync(&self.get_db()).await.expect("failed to sync `User` model");
         self
     }
 }

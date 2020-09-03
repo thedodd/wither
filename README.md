@@ -55,17 +55,17 @@ struct User {
 async fn main() -> Result<()> {
     // Connect & sync indexes.
     let db = Client::with_uri_str("mongodb://localhost:27017/").await?.database("mydb");
-    User::sync(db.clone()).await?;
+    User::sync(&db).await?;
 
     // Create a user.
     let mut me = User{id: None, email: String::from("my.email@example.com")};
-    me.save(db.clone(), None).await?;
+    me.save(&db, None).await?;
 
     // Update user's email address.
-    me.update(db.clone(), None, doc!{"$set": doc!{"email": "new.email@example.com"}}, None).await?;
+    me.update(&db, None, doc!{"$set": doc!{"email": "new.email@example.com"}}, None).await?;
 
     // Fetch all users.
-    let mut cursor = User::find(db.clone(), None, None).await?;
+    let mut cursor = User::find(&db, None, None).await?;
     while let Some(user) = cursor.next().await {
         println!("{:?}", user);
     }
