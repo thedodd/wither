@@ -7,7 +7,7 @@ An ODM for MongoDB built on the official <a href="https://github.com/mongodb/mon
 <br />
 <div align="center">
 
-[![Build Status](https://travis-ci.org/thedodd/wither.svg?branch=master)](https://travis-ci.org/thedodd/wither)
+[![Build Status](https://github.com/thedodd/wither/workflows/ci/badge.svg?branch=master)](https://github.com/thedodd/wither/actions)
 [![](https://img.shields.io/badge/tested%20on-mongodb%203.6%2B-brightgreen.svg)](#)
 [![Crates.io](https://img.shields.io/crates/v/wither.svg)](https://crates.io/crates/wither)
 [![docs.rs](https://docs.rs/wither/badge.svg)](https://docs.rs/wither)
