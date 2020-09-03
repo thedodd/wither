@@ -23,7 +23,7 @@ The primary goal of this project is to provide a simple, sane & predictable inte
 - `tokio-runtime` (default) activates [the tokio runtime](tokio.rs/).
 - `async-std-runtime` activates [the async-std runtime](https://async.rs/).
 
-Due to updates in the underlying driver, there is a fair number of breaking changes in the `Model` trait, as well as the `Model` derive macro. Details can be found in the changelog and the documentation. Furthermore, everything is now async by default. The sync interface has been completely disabled, and is pending removal from the repo. Head over to [wither#52](https://github.com/thedodd/wither/issues/52) and let me know if you still need sync support.
+Due to updates in the underlying driver, there is a fair number of breaking changes in the `Model` trait, as well as the `Model` derive macro. Details can be found in the changelog and the documentation. Furthermore, everything is now async by default, and the synchronous interface has been completely removed from the repo.
 
 ### items of interest
 - [docs](https://docs.rs/wither): all the good stuff is here.
