@@ -3,11 +3,9 @@ changelog
 
 ## [unreleased]
 
-### added
-
+## 0.9.0-alpha.2
 ### changed
-
-### removed
+- All Model trait methods have been updated to take a reference to a `mongodb::Database` instance, no more `db.clone()` required. Thanks to @mehmetsefabalik for pointing out that this is now possible with the 1.x version of the driver.
 
 ## 0.9.0-alpha.1
 

@@ -9,7 +9,7 @@ license = "Apache-2.0"
 name = "wither"
 readme = "../README.md"
 repository = "https://github.com/thedodd/wither"
-version = "0.9.0-alpha.1"
+version = "0.9.0-alpha.2"
 edition = "2018"
 
 [dependencies]
@@ -17,7 +17,7 @@ chrono = "0.4"
 log = "0.4"
 mongodb = { version = "1", default-features=false }
 serde = { version = "1", features=["derive"] }
-wither_derive = { version = "0.9.0-alpha.1", path = "../wither_derive", default-features = false }
+wither_derive = { version = "0.9.0-alpha.2", path = "../wither_derive", default-features = false }
 async-trait = "0.1.33"
 futures = "0.3.5"
 thiserror = "1.0.19"
