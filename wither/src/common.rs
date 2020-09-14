@@ -13,6 +13,6 @@ pub struct IndexModel {
 impl IndexModel {
     /// Construct a new instance.
     pub fn new(keys: Document, options: Option<Document>) -> Self {
-        Self{keys, options}
+        Self { keys, options }
     }
 }

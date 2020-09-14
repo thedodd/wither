@@ -1,11 +1,11 @@
-#![cfg(not(feature="sync"))]
+#![cfg(not(feature = "sync"))]
 
 mod fixtures;
 
 use futures::stream::StreamExt;
-use wither::prelude::*;
 use wither::bson::doc;
 use wither::mongodb::options::{FindOneAndReplaceOptions, FindOneAndUpdateOptions, ReturnDocument};
+use wither::prelude::*;
 
 use fixtures::{Fixture, User};
 
@@ -16,14 +16,13 @@ use fixtures::{Fixture, User};
 async fn model_find_should_find_all_instances_of_model_with_no_filter_or_options() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
     user.save(&db, None).await.expect("Expected a successful save operation.");
 
-    let mut users_from_db: Vec<_> = User::find(&db, None, None)
-        .await
-        .expect("Expected a successful lookup.")
-        .collect()
-        .await;
+    let mut users_from_db: Vec<_> = User::find(&db, None, None).await.expect("Expected a successful lookup.").collect().await;
 
     assert_eq!(users_from_db.len(), 1);
     let userdb = users_from_db.pop().unwrap();
@@ -37,12 +36,16 @@ async fn model_find_should_find_all_instances_of_model_with_no_filter_or_options
 async fn model_find_should_find_instances_of_model_matching_filter() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
     user.save(&db, None).await.expect("Expected a successful save operation.");
-    let doc = doc!{"_id": (user.id.clone().unwrap())};
+    let doc = doc! {"_id": (user.id.clone().unwrap())};
 
     let mut users_from_db: Vec<_> = User::find(&db, Some(doc), None)
-        .await.expect("Expected a successful lookup.")
+        .await
+        .expect("Expected a successful lookup.")
         .collect()
         .await;
 
@@ -61,13 +64,17 @@ async fn model_find_should_find_instances_of_model_matching_filter() {
 async fn model_find_one_should_fetch_the_model_instance_matching_given_filter() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
 
-    let doc = doc!{"_id": (user.id.clone().unwrap())};
+    let doc = doc! {"_id": (user.id.clone().unwrap())};
     let user_from_db = User::find_one(&db, Some(doc), None)
-        .await.expect("Expected a successful lookup.")
+        .await
+        .expect("Expected a successful lookup.")
         .expect("Expected a populated value from backend.");
 
     assert_eq!(&user_from_db.id, &user.id);
@@ -81,13 +88,21 @@ async fn model_find_one_should_fetch_the_model_instance_matching_given_filter() 
 async fn model_find_one_and_delete_should_delete_the_target_doc() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
     user2.save(&db, None).await.expect("Expected a successful save operation.");
-    let output = User::find_one_and_delete(&db, doc!{"email": "test@test.com"}, None)
-        .await.expect("Expected a operation.").unwrap();
+    let output = User::find_one_and_delete(&db, doc! {"email": "test@test.com"}, None)
+        .await
+        .expect("Expected a operation.")
+        .unwrap();
 
     assert_eq!(&output.email, &user.email);
 }
@@ -99,19 +114,23 @@ async fn model_find_one_and_delete_should_delete_the_target_doc() {
 async fn model_find_one_and_replace_should_replace_the_target_doc_and_return_new_doc() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndReplaceOptions::builder().build();
     opts.return_document = Some(ReturnDocument::After);
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
     user2.save(&db, None).await.expect("Expected a successful save operation.");
-    let output = User::find_one_and_replace(
-        &db,
-        doc!{"email": "test@test.com"},
-        doc!{"email": "test3@test.com"},
-        Some(opts),
-    ).await.expect("Expected a operation.").unwrap();
+    let output = User::find_one_and_replace(&db, doc! {"email": "test@test.com"}, doc! {"email": "test3@test.com"}, Some(opts))
+        .await
+        .expect("Expected a operation.")
+        .unwrap();
 
     assert_eq!(&output.email, "test3@test.com");
 }
@@ -120,19 +139,23 @@ async fn model_find_one_and_replace_should_replace_the_target_doc_and_return_new
 async fn model_find_one_and_replace_should_replace_the_target_doc_and_return_old_doc() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndReplaceOptions::builder().build();
     opts.return_document = Some(ReturnDocument::Before);
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
     user2.save(&db, None).await.expect("Expected a successful save operation.");
-    let output = User::find_one_and_replace(
-        &db,
-        doc!{"email": "test@test.com"},
-        doc!{"email": "test3@test.com"},
-        Some(opts),
-    ).await.expect("Expected a operation.").unwrap();
+    let output = User::find_one_and_replace(&db, doc! {"email": "test@test.com"}, doc! {"email": "test3@test.com"}, Some(opts))
+        .await
+        .expect("Expected a operation.")
+        .unwrap();
 
     assert_eq!(&output.email, "test@test.com");
 }
@@ -144,8 +167,14 @@ async fn model_find_one_and_replace_should_replace_the_target_doc_and_return_old
 async fn model_find_one_and_update_should_update_target_document_and_return_new() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndUpdateOptions::builder().build();
     opts.return_document = Some(ReturnDocument::After);
 
@@ -153,10 +182,13 @@ async fn model_find_one_and_update_should_update_target_document_and_return_new(
     user2.save(&db, None).await.expect("Expected a successful save operation.");
     let output = User::find_one_and_update(
         &db,
-        doc!{"email": "test@test.com"},
-        doc!{"$set": doc!{"email": "test3@test.com"}},
+        doc! {"email": "test@test.com"},
+        doc! {"$set": doc!{"email": "test3@test.com"}},
         Some(opts),
-    ).await.expect("Expected a operation.").unwrap();
+    )
+    .await
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test3@test.com");
 }
@@ -165,8 +197,14 @@ async fn model_find_one_and_update_should_update_target_document_and_return_new(
 async fn model_find_one_and_update_should_update_target_document_and_return_old() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
-    let mut user2 = User{id: None, email: "test2@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
     let mut opts = FindOneAndUpdateOptions::builder().build();
     opts.return_document = Some(ReturnDocument::Before);
 
@@ -174,10 +212,13 @@ async fn model_find_one_and_update_should_update_target_document_and_return_old(
     user2.save(&db, None).await.expect("Expected a successful save operation.");
     let output = User::find_one_and_update(
         &db,
-        doc!{"email": "test@test.com"},
-        doc!{"$set": doc!{"email": "test3@test.com"}},
+        doc! {"email": "test@test.com"},
+        doc! {"$set": doc!{"email": "test3@test.com"}},
         Some(opts),
-    ).await.expect("Expected a operation.").unwrap();
+    )
+    .await
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test@test.com");
 }
@@ -189,7 +230,10 @@ async fn model_find_one_and_update_should_update_target_document_and_return_old(
 async fn model_save_should_save_model_instance_and_add_id() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
 
     let precount = User::collection(&db).count_documents(None, None).await.unwrap();
     user.save(&db, None).await.expect("Expected a successful save operation.");
@@ -208,14 +252,19 @@ async fn model_save_should_save_model_instance_and_add_id() {
 async fn model_update_should_perform_expected_updates_against_self() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
     user.save(&db, None).await.expect("Expected a successful save operation.");
-    let update_doc = doc!{"$set": doc!{"email": "new@test.com"}};
+    let update_doc = doc! {"$set": doc!{"email": "new@test.com"}};
     let mut opts = FindOneAndUpdateOptions::default();
     opts.return_document = Some(ReturnDocument::After);
 
-    let user = user.update(&db, None, update_doc, Some(opts))
-        .await.expect("Expected a successful update operation.");
+    let user = user
+        .update(&db, None, update_doc, Some(opts))
+        .await
+        .expect("Expected a successful update operation.");
 
     assert_eq!(user.email, String::from("new@test.com"));
 }
@@ -224,25 +273,35 @@ async fn model_update_should_perform_expected_updates_against_self() {
 async fn model_update_should_return_error_with_invalid_update_document() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
     user.save(&db, None).await.expect("Expected a successful save operation.");
-    let update_doc = doc!{"invalid_update_key": "should_fail"};
+    let update_doc = doc! {"invalid_update_key": "should_fail"};
 
-    let err = user.update(&db, None, update_doc, None)
+    let err = user
+        .update(&db, None, update_doc, None)
         .await
         .expect_err("Expected an errored update operation.");
 
-    assert_eq!(err.to_string(), "An invalid argument was provided to a database operation: update document must have first key starting with '$");
+    assert_eq!(
+        err.to_string(),
+        "An invalid argument was provided to a database operation: update document must have first key starting with '$"
+    );
 }
 
 #[tokio::test]
 async fn model_update_should_noop_where_filter_selects_on_nonextant_field() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
     user.save(&db, None).await.expect("Expected a successful save operation.");
-    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": true}});
-    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
+    let filter_doc = Some(doc! {"nonextant_field": doc!{"$exists": true}});
+    let update_doc = doc! {"$set": doc!{"email": "test2@test.com"}};
 
     let res = user.update(&db, filter_doc, update_doc, None).await;
 
@@ -253,15 +312,20 @@ async fn model_update_should_noop_where_filter_selects_on_nonextant_field() {
 async fn model_update_should_perform_expected_update_with_added_filters() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: String::from("test@test.com")};
+    let mut user = User {
+        id: None,
+        email: String::from("test@test.com"),
+    };
     user.save(&db, None).await.expect("Expected a successful save operation.");
-    let filter_doc = Some(doc!{"nonextant_field": doc!{"$exists": false}});
-    let update_doc = doc!{"$set": doc!{"email": "test2@test.com"}};
+    let filter_doc = Some(doc! {"nonextant_field": doc!{"$exists": false}});
+    let update_doc = doc! {"$set": doc!{"email": "test2@test.com"}};
     let mut opts = FindOneAndUpdateOptions::default();
     opts.return_document = Some(ReturnDocument::After);
 
-    let user = user.update(&db, filter_doc, update_doc, Some(opts))
-        .await.expect("Expected a successful update operation.");
+    let user = user
+        .update(&db, filter_doc, update_doc, Some(opts))
+        .await
+        .expect("Expected a successful update operation.");
 
     assert_eq!(user.email, String::from("test2@test.com"));
 }
@@ -273,7 +337,10 @@ async fn model_update_should_perform_expected_update_with_added_filters() {
 async fn model_delete_should_delete_model_instance() {
     let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
     let db = fixture.get_db();
-    let mut user = User{id: None, email: "test@test.com".to_string()};
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
 
     let presave = User::collection(&db).count_documents(None, None).await.unwrap();
     user.save(&db, None).await.expect("Expected a successful save operation.");

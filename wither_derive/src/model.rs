@@ -9,7 +9,7 @@ const MODEL_HELPER_ATTR: &str = "model";
 /// An error message indicating the existence of a duplicate attr.
 const DUPLICATE_ATTR_SPEC: &str = "duplicate attr specification";
 /// An error message describing the correct form expected for an attribute.
-const META_MUST_BE_KV_PAIR: &str =  "this attribute must be specified as a `key=value` pair";
+const META_MUST_BE_KV_PAIR: &str = "this attribute must be specified as a `key=value` pair";
 
 /// A meta representation of the `Model` derivation target.
 pub(crate) struct MetaModel<'a> {
@@ -47,7 +47,7 @@ impl<'a> MetaModel<'a> {
             },
             _ => abort!(&input, "only structs can be used as wither models"),
         };
-        let mut inst = Self{
+        let mut inst = Self {
             ident,
             attrs: input.attrs.as_slice(),
             fields: vec![],
@@ -172,7 +172,9 @@ impl<'a> MetaModel<'a> {
         // Parse over the internals of our `model` attrs. At this point, we are dealing with
         // individual elements inside of the various `model(...)` attrs.
         for attr_meta in attrs {
-            let ident = attr_meta.path().get_ident()
+            let ident = attr_meta
+                .path()
+                .get_ident()
                 .unwrap_or_else(|| abort!(attr_meta, "malformed wither model attribute, please review the wither docs"));
             let ident_str = ident.to_string();
             match ident_str.as_str() {
@@ -193,7 +195,7 @@ impl<'a> MetaModel<'a> {
             syn::Meta::NameValue(val) => match &val.lit {
                 syn::Lit::Str(inner) => inner.value(),
                 lit => abort!(lit, "this must be a string literal"),
-            }
+            },
             _ => abort!(meta, META_MUST_BE_KV_PAIR),
         };
         if name.is_empty() {
@@ -232,7 +234,7 @@ impl<'a> MetaModel<'a> {
             syn::Meta::NameValue(val) => match syn::Path::from_value(&val.lit) {
                 Ok(path) => path,
                 Err(err) => abort!(val, "this must be a string literal"; hint=err),
-            }
+            },
             _ => abort!(meta, META_MUST_BE_KV_PAIR),
         };
         if self.selection_criteria.is_some() {
@@ -245,7 +247,7 @@ impl<'a> MetaModel<'a> {
     fn extract_skip_serde_checks(&mut self, meta: &syn::Meta) {
         match meta {
             syn::Meta::Path(path) if path.is_ident("skip_serde_checks") => (),
-            _ => abort!(meta, "this attribute must be specified simply as `#[model(skip_serde_checks)]`")
+            _ => abort!(meta, "this attribute must be specified simply as `#[model(skip_serde_checks)]`"),
         }
         if self.skip_serde_checks.is_some() {
             abort!(meta, DUPLICATE_ATTR_SPEC);
@@ -278,7 +280,9 @@ impl<'a> MetaModel<'a> {
 
     /// Get collection name which is to be used for this model.
     fn get_collection_name(&self) -> String {
-        self.collection_name.as_ref().cloned()
+        self.collection_name
+            .as_ref()
+            .cloned()
             .unwrap_or_else(|| self.ident.to_string().to_table_case().to_plural())
     }
 
@@ -316,7 +320,9 @@ impl<'a> MetaModel<'a> {
     fn check_id_field(&self) {
         // Unpack the struct fields.
         // Look for the model's ID field.
-        let id_field = self.fields.iter()
+        let id_field = self
+            .fields
+            .iter()
             .find(|field| match &field.field.ident {
                 Some(ident) => ident == "id",
                 None => false,
@@ -341,9 +347,13 @@ impl<'a> MetaModel<'a> {
                 found_rename = true;
             }
             if attr.path().is_ident("skip_serializing_if") {
-                let model = SerdeIdSkip::from_meta(attr).unwrap_or_else(|err| abort!(attr, "failed to parse serde skip_serializing_if attr"; hint=err));
+                let model =
+                    SerdeIdSkip::from_meta(attr).unwrap_or_else(|err| abort!(attr, "failed to parse serde skip_serializing_if attr"; hint=err));
                 if model.0 != "Option::is_none" {
-                    abort!(attr, r#"the serde `skip_serializing_if` attr for wither::Model ID fields should be `skip_serializing_if="Option::is_none"`"#);
+                    abort!(
+                        attr,
+                        r#"the serde `skip_serializing_if` attr for wither::Model ID fields should be `skip_serializing_if="Option::is_none"`"#
+                    );
                 }
                 found_skip = true
             }
@@ -353,7 +363,10 @@ impl<'a> MetaModel<'a> {
         }
         // If no serde attrs were found on the ID field, display error with expections.
         if !(found_rename && found_skip) {
-            abort!(id_field.field.ident, r#"the ID field of wither::Models must have the attribute `#[serde(rename="_id", skip_serializing_if="Option::is_none")]`"#)
+            abort!(
+                id_field.field.ident,
+                r#"the ID field of wither::Models must have the attribute `#[serde(rename="_id", skip_serializing_if="Option::is_none")]`"#
+            )
         }
     }
 }
@@ -437,7 +450,7 @@ impl quote::ToTokens for OptionWriteConcern<'_> {
                         Acknowledgment::Nodes(val) => quote!(Some(wither::mongodb::options::Acknowledgment::Nodes(#val))),
                         Acknowledgment::Majority => quote!(Some(wither::mongodb::options::Acknowledgment::Majority)),
                         Acknowledgment::Custom(val) => quote!(Some(wither::mongodb::options::Acknowledgment::Custom(String::from(#val)))),
-                    }
+                    },
                     None => quote!(None),
                 };
                 let w_timeout = match &wc.w_timeout {
@@ -463,7 +476,7 @@ impl quote::ToTokens for OptionSelectionCriteria<'_> {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
         match self.0 {
             None => tokens.extend(quote!(None)),
-            Some(path) => tokens.extend(quote!(Some(#path())))
+            Some(path) => tokens.extend(quote!(Some(#path()))),
         }
     }
 }
@@ -484,12 +497,10 @@ pub struct RawIndexModel {
 impl From<RawIndexModel> for IndexModelTokens {
     fn from(src: RawIndexModel) -> Self {
         let keys = syn::parse_str(&src.keys).unwrap_or_else(|err| abort!(src.keys.span(), "error parsing keys, must be valid Rust code"; hint=err));
-        let options = src.options.as_ref().as_ref()
-            .map(|opts| {
-                syn::parse_str(opts.as_ref())
-                    .unwrap_or_else(|err| abort!(src.options.span(), "error parsing options, must be valid Rust code"; hint=err))
-            });
-        Self{keys, options}
+        let options = src.options.as_ref().as_ref().map(|opts| {
+            syn::parse_str(opts.as_ref()).unwrap_or_else(|err| abort!(src.options.span(), "error parsing options, must be valid Rust code"; hint=err))
+        });
+        Self { keys, options }
     }
 }
 

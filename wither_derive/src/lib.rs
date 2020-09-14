@@ -1,6 +1,6 @@
 //! Wither's custom derive module.
 
-#![recursion_limit="200"]
+#![recursion_limit = "200"]
 
 mod model;
 
