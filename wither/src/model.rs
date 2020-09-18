@@ -1,18 +1,18 @@
 //! Model related code.
 
 use async_trait::async_trait;
+use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, from_bson, to_bson};
 use mongodb::bson::{Bson, Document};
-use mongodb::bson::oid::ObjectId;
 
-use mongodb::{Collection, Database};
 use mongodb::options;
 use mongodb::results::DeleteResult;
-use serde::{Serialize, de::DeserializeOwned};
+use mongodb::{Collection, Database};
+use serde::{de::DeserializeOwned, Serialize};
 
+use crate::common::IndexModel;
 use crate::cursor::ModelCursor;
 use crate::error::{Result, WitherError};
-use crate::common::IndexModel;
 
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
 ///
@@ -24,13 +24,15 @@ use crate::common::IndexModel;
 /// Any `read_concern`, `write_concern` or `selection_criteria` options configured for the model,
 /// either derived or manually, will be used for collection interactions.
 ///
-#[cfg_attr(feature="docinclude", doc(include="../docs/model-derive.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../docs/model-sync.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../docs/logging.md"))]
-#[cfg_attr(feature="docinclude", doc(include="../docs/underlying-driver.md"))]
+#[cfg_attr(feature = "docinclude", doc(include = "../docs/model-derive.md"))]
+#[cfg_attr(feature = "docinclude", doc(include = "../docs/model-sync.md"))]
+#[cfg_attr(feature = "docinclude", doc(include = "../docs/logging.md"))]
+#[cfg_attr(feature = "docinclude", doc(include = "../docs/underlying-driver.md"))]
 #[async_trait]
-pub trait Model where Self: Serialize + DeserializeOwned {
-
+pub trait Model
+where
+    Self: Serialize + DeserializeOwned,
+{
     /// The name of the collection where this model's data is stored.
     const COLLECTION_NAME: &'static str;
 
@@ -86,21 +88,18 @@ pub trait Model where Self: Serialize + DeserializeOwned {
 
     /// Find all instances of this model matching the given query.
     async fn find<F, O>(db: &Database, filter: F, options: O) -> Result<ModelCursor<Self>>
-        where
-            F: Into<Option<Document>> + Send,
-            O: Into<Option<options::FindOptions>> + Send,
+    where
+        F: Into<Option<Document>> + Send,
+        O: Into<Option<options::FindOptions>> + Send,
     {
-        Ok(Self::collection(db)
-            .find(filter, options)
-            .await
-            .map(ModelCursor::new)?)
+        Ok(Self::collection(db).find(filter, options).await.map(ModelCursor::new)?)
     }
 
     /// Find the one model record matching your query, returning a model instance.
     async fn find_one<F, O>(db: &Database, filter: F, options: O) -> Result<Option<Self>>
-        where
-            F: Into<Option<Document>> + Send,
-            O: Into<Option<options::FindOneOptions>> + Send,
+    where
+        F: Into<Option<Document>> + Send,
+        O: Into<Option<options::FindOneOptions>> + Send,
     {
         Ok(Self::collection(db)
             .find_one(filter, options)
@@ -111,7 +110,8 @@ pub trait Model where Self: Serialize + DeserializeOwned {
 
     /// Finds a single document and deletes it, returning the original.
     async fn find_one_and_delete<O>(db: &Database, filter: Document, options: O) -> Result<Option<Self>>
-        where O: Into<Option<options::FindOneAndDeleteOptions>> + Send,
+    where
+        O: Into<Option<options::FindOneAndDeleteOptions>> + Send,
     {
         Ok(Self::collection(db)
             .find_one_and_delete(filter, options)
@@ -122,7 +122,8 @@ pub trait Model where Self: Serialize + DeserializeOwned {
 
     /// Finds a single document and replaces it, returning either the original or replaced document.
     async fn find_one_and_replace<O>(db: &Database, filter: Document, replacement: Document, options: O) -> Result<Option<Self>>
-        where O: Into<Option<options::FindOneAndReplaceOptions>> + Send,
+    where
+        O: Into<Option<options::FindOneAndReplaceOptions>> + Send,
     {
         Ok(Self::collection(db)
             .find_one_and_replace(filter, replacement, options)
@@ -133,9 +134,9 @@ pub trait Model where Self: Serialize + DeserializeOwned {
 
     /// Finds a single document and updates it, returning either the original or updated document.
     async fn find_one_and_update<U, O>(db: &Database, filter: Document, update: U, options: O) -> Result<Option<Self>>
-        where
-            U: Into<options::UpdateModifications> + Send,
-            O: Into<Option<options::FindOneAndUpdateOptions>> + Send,
+    where
+        U: Into<options::UpdateModifications> + Send,
+        O: Into<Option<options::FindOneAndUpdateOptions>> + Send,
     {
         Ok(Self::collection(db)
             .find_one_and_update(filter, update, options)
@@ -173,11 +174,11 @@ pub trait Model where Self: Serialize + DeserializeOwned {
         // Handle case where instance already has an ID.
         let mut id_needs_update = false;
         let filter = match (self.id(), filter) {
-            (Some(id), _) => doc!{"_id": id},
+            (Some(id), _) => doc! {"_id": id},
             (None, None) => {
                 let new_id = ObjectId::new();
                 self.set_id(new_id.clone());
-                doc!{"_id": new_id}
+                doc! {"_id": new_id}
             }
             (None, Some(filter)) => {
                 id_needs_update = true;
@@ -191,7 +192,8 @@ pub trait Model where Self: Serialize + DeserializeOwned {
             .write_concern(Some(write_concern))
             .return_document(Some(options::ReturnDocument::After))
             .build();
-        let updated_doc = coll.find_one_and_replace(filter, instance_doc, Some(opts))
+        let updated_doc = coll
+            .find_one_and_replace(filter, instance_doc, Some(opts))
             .await?
             .ok_or_else(|| WitherError::ServerFailedToReturnUpdatedDoc)?;
 
@@ -226,7 +228,7 @@ pub trait Model where Self: Serialize + DeserializeOwned {
                 doc.insert("_id", id);
                 doc
             }
-            None => doc!{"_id": id},
+            None => doc! {"_id": id},
         };
 
         // Ensure that journaling is set to true for this call for full output document.
@@ -236,7 +238,7 @@ pub trait Model where Self: Serialize + DeserializeOwned {
                     Some(mut wc) => {
                         wc.journal = Some(true);
                         Some(wc)
-                    },
+                    }
                     None => {
                         let mut wc = Self::write_concern().unwrap_or_default();
                         wc.journal = Some(true);
@@ -244,7 +246,7 @@ pub trait Model where Self: Serialize + DeserializeOwned {
                     }
                 };
                 options
-            },
+            }
             None => {
                 let mut options = options::FindOneAndUpdateOptions::default();
                 let mut wc = Self::write_concern().unwrap_or_default();
@@ -269,7 +271,7 @@ pub trait Model where Self: Serialize + DeserializeOwned {
     async fn delete(&self, db: &Database) -> Result<DeleteResult> {
         // Return an error if the instance was never saved.
         let id = self.id().ok_or_else(|| WitherError::ModelIdRequiredForOperation)?;
-        Ok(Self::collection(db).delete_one(doc!{"_id": id}, None).await?)
+        Ok(Self::collection(db).delete_one(doc! {"_id": id}, None).await?)
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,7 +305,10 @@ pub trait Model where Self: Serialize + DeserializeOwned {
     ///
     /// This routine will destroy any indexes found on this model's collection which are not
     /// defined in the response from `Self.indexes()`.
-    #[deprecated(since="0.9.0", note="Index management is currently missing in the underlying driver, so this method no longer does anything. We are hoping to re-enable this in a future release.")]
+    #[deprecated(
+        since = "0.9.0",
+        note = "Index management is currently missing in the underlying driver, so this method no longer does anything. We are hoping to re-enable this in a future release."
+    )]
     async fn sync(_db: &Database) -> Result<()> {
         // NOTE: blocked by https://jira.mongodb.org/projects/RUST/issues/RUST-166
         Ok(())

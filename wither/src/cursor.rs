@@ -15,7 +15,10 @@ pub struct ModelCursor<T> {
 
 impl<T: Model> ModelCursor<T> {
     pub(crate) fn new(cursor: Cursor) -> Self {
-        Self{cursor, marker: std::marker::PhantomData}
+        Self {
+            cursor,
+            marker: std::marker::PhantomData,
+        }
     }
 }
 

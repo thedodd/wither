@@ -4,10 +4,10 @@ error[E0308]: mismatched types
 4 | #[derive(Serialize, Deserialize, Model)]
   |                                  ^^^^^
   |                                  |
-  |                                  expected struct `bson::oid::ObjectId`, found struct `std::string::String`
-  |                                  expected `std::option::Option<bson::oid::ObjectId>` because of return type
+  |                                  expected struct `wither::bson::oid::ObjectId`, found struct `std::string::String`
+  |                                  expected `std::option::Option<wither::bson::oid::ObjectId>` because of return type
   |
-  = note: expected enum `std::option::Option<bson::oid::ObjectId>`
+  = note: expected enum `std::option::Option<wither::bson::oid::ObjectId>`
              found enum `std::option::Option<std::string::String>`
   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
 
@@ -17,7 +17,7 @@ error[E0308]: mismatched types
 4 | #[derive(Serialize, Deserialize, Model)]
   |                                  ^^^^^
   |                                  |
-  |                                  expected struct `std::string::String`, found struct `bson::oid::ObjectId`
+  |                                  expected struct `std::string::String`, found struct `wither::bson::oid::ObjectId`
   |                                  help: try using a conversion method: `Model.to_string()`
   |
   = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
