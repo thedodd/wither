@@ -1,5 +1,7 @@
 //! Model related code.
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, from_bson, to_bson};
@@ -13,7 +15,6 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::common::IndexModel;
 use crate::cursor::ModelCursor;
 use crate::error::{Result, WitherError};
-use std::collections::HashMap;
 
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
 ///
@@ -24,6 +25,7 @@ use std::collections::HashMap;
 ///
 /// Any `read_concern`, `write_concern` or `selection_criteria` options configured for the model,
 /// either derived or manually, will be used for collection interactions.
+///
 #[cfg_attr(feature = "docinclude", doc(include = "../docs/model-derive.md"))]
 #[cfg_attr(feature = "docinclude", doc(include = "../docs/model-sync.md"))]
 #[cfg_attr(feature = "docinclude", doc(include = "../docs/logging.md"))]
