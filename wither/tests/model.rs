@@ -403,9 +403,7 @@ async fn model_delete_many_should_delete_all_filtered_documents() {
     user.save(&db, None).await.expect("Expected a successful save operation.");
     user2.save(&db, None).await.expect("Expected a successful save operation.");
     let postsave = User::collection(&db).count_documents(None, None).await.unwrap();
-    let delete_result = User::delete_many(&db, doc! { "email": "test@test.com".to_string() }, None)
-        .await
-        .unwrap();
+    let delete_result = User::delete_many(&db, doc! { "email": "test@test.com".to_string() }, None).await.unwrap();
     let postdelete = User::collection(&db).count_documents(None, None).await.unwrap();
 
     let mut remaining_users_from_db: Vec<_> = User::find(&db, None, None).await.expect("Expected a successful lookup.").collect().await;
