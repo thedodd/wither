@@ -355,6 +355,74 @@ async fn model_delete_should_delete_model_instance() {
     assert!(postsave != postdelete);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+// Model.delete_many //////////////////////////////////////////////////////////////
+
+#[tokio::test]
+async fn model_delete_many_should_delete_all_documents() {
+    let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
+    let db = fixture.get_db();
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
+
+    let presave = User::collection(&db).count_documents(None, None).await.unwrap();
+    user.save(&db, None).await.expect("Expected a successful save operation.");
+    user2.save(&db, None).await.expect("Expected a successful save operation.");
+    let postsave = User::collection(&db).count_documents(None, None).await.unwrap();
+    let delete_result = User::delete_many(&db, doc! {}, None).await.unwrap();
+    let postdelete = User::collection(&db).count_documents(None, None).await.unwrap();
+
+    assert_eq!(presave, 0);
+    assert_eq!(postsave, 2);
+    assert_eq!(postdelete, 0);
+    assert_eq!(delete_result.deleted_count, 2);
+    assert!(presave != postsave);
+    assert!(postsave != postdelete);
+}
+
+#[tokio::test]
+async fn model_delete_many_should_delete_all_filtered_documents() {
+    let fixture = Fixture::new().await.with_dropped_database().await.with_synced_models().await;
+    let db = fixture.get_db();
+    let mut user = User {
+        id: None,
+        email: "test@test.com".to_string(),
+    };
+    let mut user2 = User {
+        id: None,
+        email: "test2@test.com".to_string(),
+    };
+
+    let presave = User::collection(&db).count_documents(None, None).await.unwrap();
+    user.save(&db, None).await.expect("Expected a successful save operation.");
+    user2.save(&db, None).await.expect("Expected a successful save operation.");
+    let postsave = User::collection(&db).count_documents(None, None).await.unwrap();
+    let delete_result = User::delete_many(&db, doc! { "email": "test@test.com".to_string() }, None)
+        .await
+        .unwrap();
+    let postdelete = User::collection(&db).count_documents(None, None).await.unwrap();
+
+    let mut remaining_users_from_db: Vec<_> = User::find(&db, None, None).await.expect("Expected a successful lookup.").collect().await;
+    let remaining_user_from_db = remaining_users_from_db.pop().unwrap();
+    assert!(remaining_user_from_db.is_ok());
+
+    let remaining_user_from_db = remaining_user_from_db.unwrap();
+
+    assert_eq!(presave, 0);
+    assert_eq!(postsave, 2);
+    assert_eq!(postdelete, 1);
+    assert_eq!(delete_result.deleted_count, 1);
+    assert!(presave != postsave);
+    assert!(postsave != postdelete);
+    assert_eq!(user2.email, remaining_user_from_db.email);
+}
+
 // //////////////////////////////////////////////////////////////////////////////
 // // Model::sync ///////////////////////////////////////////////////////////////
 
