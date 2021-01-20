@@ -3,6 +3,11 @@ changelog
 
 ## [unreleased]
 
+## 0.9.0-alpha.3
+
+## added
+- Added the `delete_many` method.
+
 ## 0.9.0-alpha.2
 ### changed
 - All Model trait methods have been updated to take a reference to a `mongodb::Database` instance, no more `db.clone()` required. Thanks to @mehmetsefabalik for pointing out that this is now possible with the 1.x version of the driver.
