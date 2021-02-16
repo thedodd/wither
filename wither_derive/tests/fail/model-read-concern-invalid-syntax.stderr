@@ -18,4 +18,4 @@ error[E0599]: no function or associated item named `read_concern` found for stru
    |
    = help: items from traits can only be used if the trait is implemented and in scope
    = note: the following trait defines an item `read_concern`, perhaps you need to implement it:
-           candidate #1: `wither::Model`
+           candidate #1: `Model`

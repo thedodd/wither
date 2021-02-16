@@ -3,6 +3,10 @@ changelog
 
 ## [unreleased]
 
+## 0.9.0-alpha.3
+### added
+- I am happy to announce that index management via `Model::sync` is back! This has taken much longer than intended, but it is finally back. It also has a few improvements where index options are diffed in order to ensure that subtle updates to an index are observed and indexes are re-created as needed. This closes [#51](https://github.com/thedodd/wither/issues/51).
+
 ## 0.9.0-alpha.2
 ### changed
 - All Model trait methods have been updated to take a reference to a `mongodb::Database` instance, no more `db.clone()` required. Thanks to @mehmetsefabalik for pointing out that this is now possible with the 1.x version of the driver.
@@ -29,6 +33,8 @@ changelog
 - Nearly all `Model` methods which interact with the collection have been updated to match the driver's new collection interface. Lots of good stuff here. Check out the docs.
 
 #### index management
+**UPDATE:** index management is back as of 0.9.0-alpha.3!
+
 Index management has not yet been implemented in the mongodb driver as of `1.0`, and thus the index syncing features of `Model::sync` have been temporarily disabled. The hope is that the mongodb team will be able to land their index management code in the driver soon, at which point we will re-enable the `Model::sync` functionality.
 
 If this is important to you, please head over to [wither#51](https://github.com/thedodd/wither/issues/51) and let us know!

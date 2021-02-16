@@ -13,9 +13,9 @@ use wither::mongodb::{Client, Database};
 use wither::prelude::*;
 
 lazy_static! {
-    static ref HOST: String = { env::var("HOST").expect("environment variable HOST must be defined") };
-    static ref PORT: String = { env::var("PORT").expect("environment variable PORT must be defined") };
-    static ref CONNECTION_STRING: String = { format!("mongodb://{}:{}/", HOST.as_str(), PORT.as_str()) };
+    static ref HOST: String = env::var("HOST").expect("environment variable HOST must be defined");
+    static ref PORT: String = env::var("PORT").expect("environment variable PORT must be defined");
+    static ref CONNECTION_STRING: String = format!("mongodb://{}:{}/", HOST.as_str(), PORT.as_str());
 }
 
 //////////////////////////////////////////////////////////////////////////////

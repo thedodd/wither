@@ -17,7 +17,7 @@ An ODM for MongoDB built on the official <a href="https://github.com/mongodb/mon
 </div>
 </br>
 
-The primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.6`, `4.0` & `4.2`.
+The primary goal of this project is to provide a simple, sane & predictable interface into MongoDB based on data models. If at any point this system might get in your way, you have direct access to the underlying driver. This project is tested against MongoDB `3.6`, `4.0`, `4.2` & `4.4`.
 
 **GREAT NEWS!** Wither is now based on the official [MongoDB Rust driver](https://github.com/mongodb/mongo-rust-driver). Thanks to advancements in the driver, Wither is now fully asynchronous. Simply mirroring the features of the underlying MongoDB driver, Wither supports the following runtimes:
 - `tokio-runtime` (default) activates [the tokio runtime](tokio.rs/).
@@ -72,10 +72,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 ```
-
-**PLEASE NOTE:** as of the `0.9.0-alpha.0` release, corresponding to the mongodb `1.0` release, index management has not yet been implemented in the mongodb driver, and thus the index syncing features of `Model::sync` have been temporarily disabled. The hope is that the mongodb team will be able to land their index management code in the driver soon, at which point we will re-enable the `Model::sync` functionality.
-
-If this is important to you, please head over to [wither#51](https://github.com/thedodd/wither/issues/51) and let us know!
 
 #### next steps
 And that's all there is to it. Now you are ready to tackle some of the other important parts of the model lifecycle. Some additional items to look into:
