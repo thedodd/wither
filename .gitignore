@@ -3,3 +3,6 @@
 
 # File Ignores #
 **/*.rs.bk
+
+# VSCode files
+.vscode/

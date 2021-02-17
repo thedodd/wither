@@ -1,6 +1,7 @@
 use crate::bson::Document;
 
-/// A placeholder for the standard `IndexModel`, which is currently not present in the mongodb driver.
+/// A placeholder for the standard `IndexModel`, which is currently not present in the mongodb
+/// driver.
 #[derive(Debug, Clone, PartialEq)]
 #[non_exhaustive]
 pub struct IndexModel {

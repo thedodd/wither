@@ -16,7 +16,8 @@ pub(crate) struct MetaModel<'a> {
     ident: &'a syn::Ident,
     attrs: &'a [syn::Attribute],
     fields: Vec<FieldWithFilteredAttrs<'a>>,
-    /// The model's collection name; will default to a formatted and pluralized form of the struct's name.
+    /// The model's collection name; will default to a formatted and pluralized form of the struct's
+    /// name.
     collection_name: Option<String>,
     /// A flag to configure if serde checks should be skipped.
     skip_serde_checks: Option<()>,
@@ -30,7 +31,8 @@ pub(crate) struct MetaModel<'a> {
     pub read_concern: Option<ReadConcern>,
     /// The model's write concern; will default to None if not specified.
     pub write_concern: Option<WriteConcern>,
-    /// The function which should be called to get the model's selection criteria; will default to None if not specified.
+    /// The function which should be called to get the model's selection criteria; will default to
+    /// None if not specified.
     pub selection_criteria: Option<syn::Path>,
 }
 
@@ -152,8 +154,8 @@ impl<'a> MetaModel<'a> {
 
     //             /// The model's selection criteria.
     //             ///
-    //             /// When deriving a model, a function or an associated function should be specified which
-    //             /// should be used to produce the desired value.
+    //             /// When deriving a model, a function or an associated function should be specified
+    // which             /// should be used to produce the desired value.
     //             fn selection_criteria() -> Option<wither::mongodb::options::SelectionCriteria> {
     //                 #selection_criteria
     //             }
@@ -286,7 +288,8 @@ impl<'a> MetaModel<'a> {
             .unwrap_or_else(|| self.ident.to_string().to_table_case().to_plural())
     }
 
-    /// Parse the given slice of attrs and return an accumulation of each individual attr within the parent `#[model(...)]` list.
+    /// Parse the given slice of attrs and return an accumulation of each individual attr within the
+    /// parent `#[model(...)]` list.
     fn parse_attrs(attrs: &[syn::Attribute], container_name: &str) -> Vec<syn::Meta> {
         attrs.iter()
             // Only process attrs matching the given container name.

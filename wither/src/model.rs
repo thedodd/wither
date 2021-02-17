@@ -1,10 +1,11 @@
 //! Model related code.
 
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, from_bson, to_bson};
 use mongodb::bson::{Bson, Document};
-
 use mongodb::options;
 use mongodb::results::DeleteResult;
 use mongodb::{Collection, Database};
@@ -13,6 +14,9 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::common::IndexModel;
 use crate::cursor::ModelCursor;
 use crate::error::{Result, WitherError};
+
+const MONGO_ID_INDEX_NAME: &str = "_id_";
+const MONGO_DIFF_INDEX_BLACKLIST: [&str; 3] = ["v", "ns", "key"];
 
 /// This trait provides data modeling behaviors for interacting with MongoDB database collections.
 ///
@@ -23,7 +27,6 @@ use crate::error::{Result, WitherError};
 ///
 /// Any `read_concern`, `write_concern` or `selection_criteria` options configured for the model,
 /// either derived or manually, will be used for collection interactions.
-///
 #[cfg_attr(feature = "docinclude", doc(include = "../docs/model-derive.md"))]
 #[cfg_attr(feature = "docinclude", doc(include = "../docs/model-sync.md"))]
 #[cfg_attr(feature = "docinclude", doc(include = "../docs/logging.md"))]
@@ -195,7 +198,7 @@ where
         let updated_doc = coll
             .find_one_and_replace(filter, instance_doc, Some(opts))
             .await?
-            .ok_or_else(|| WitherError::ServerFailedToReturnUpdatedDoc)?;
+            .ok_or(WitherError::ServerFailedToReturnUpdatedDoc)?;
 
         // Update instance ID if needed.
         if id_needs_update {
@@ -214,13 +217,15 @@ where
     /// This method will consume `self`, and will return a new instance of `Self` based on the given
     /// return options (`ReturnDocument::Before | ReturnDocument:: After`).
     ///
-    /// In order to provide consistent behavior, this method will also ensure that the operation's write
-    /// concern `journaling` is set to `true`, so that we can receive a complete output document.
+    /// In order to provide consistent behavior, this method will also ensure that the operation's
+    /// write concern `journaling` is set to `true`, so that we can receive a complete output
+    /// document.
     ///
-    /// If this model instance was never written to the database, this operation will return an error.
+    /// If this model instance was never written to the database, this operation will return an
+    /// error.
     async fn update(self, db: &Database, filter: Option<Document>, update: Document, opts: Option<options::FindOneAndUpdateOptions>) -> Result<Self> {
         // Extract model's ID & use as filter for this operation.
-        let id = self.id().ok_or_else(|| WitherError::ModelIdRequiredForOperation)?;
+        let id = self.id().ok_or(WitherError::ModelIdRequiredForOperation)?;
 
         // Ensure we have a valid filter.
         let filter = match filter {
@@ -262,7 +267,7 @@ where
             .await?
             .map(Self::instance_from_document)
             .transpose()?
-            .ok_or_else(|| WitherError::ServerFailedToReturnUpdatedDoc)?)
+            .ok_or(WitherError::ServerFailedToReturnUpdatedDoc)?)
     }
 
     /// Delete this model instance by ID.
@@ -270,7 +275,7 @@ where
     /// Wraps the driver's `Collection.delete_one` method.
     async fn delete(&self, db: &Database) -> Result<DeleteResult> {
         // Return an error if the instance was never saved.
-        let id = self.id().ok_or_else(|| WitherError::ModelIdRequiredForOperation)?;
+        let id = self.id().ok_or(WitherError::ModelIdRequiredForOperation)?;
         Ok(Self::collection(db).delete_one(doc! {"_id": id}, None).await?)
     }
 
@@ -304,13 +309,199 @@ where
     /// any indexes defined on this model with the backend.
     ///
     /// This routine will destroy any indexes found on this model's collection which are not
-    /// defined in the response from `Self.indexes()`.
-    #[deprecated(
-        since = "0.9.0",
-        note = "Index management is currently missing in the underlying driver, so this method no longer does anything. We are hoping to re-enable this in a future release."
-    )]
-    async fn sync(_db: &Database) -> Result<()> {
-        // NOTE: blocked by https://jira.mongodb.org/projects/RUST/issues/RUST-166
+    /// defined in this model's `indexes` method.
+    async fn sync(db: &Database) -> Result<()> {
+        let coll = Self::collection(db);
+        let current_indexes = get_current_indexes(&db, &coll).await?;
+        sync_model_indexes(db, &coll, Self::indexes(), current_indexes).await?;
         Ok(())
     }
+
+    /// Get current collection indexes, if any.
+    async fn get_current_indexes(db: &Database) -> Result<HashMap<String, IndexModel>> {
+        let coll = Self::collection(db);
+        get_current_indexes(db, &coll).await
+    }
+}
+
+/// Get current collection indexes, if any.
+async fn get_current_indexes(db: &Database, coll: &Collection) -> Result<HashMap<String, IndexModel>> {
+    let list_indexes = match db.run_command(doc! {"listIndexes": coll.name()}, None).await {
+        Ok(list_indexes) => list_indexes,
+        Err(err) => match err.kind.as_ref() {
+            // The DB & or collection does not yet exist. Move on.
+            mongodb::error::ErrorKind::CommandError(err) if err.code == 26 => doc! {},
+            _ => return Err(err.into()),
+        },
+    };
+    Ok(build_index_map(list_indexes))
+}
+
+/// Generate an index name from the keys of the given document, matching the behavior of the
+/// index management spec.
+///
+/// https://github.com/mongodb/specifications/blob/master/source/index-management.rst#index-name-generation
+fn generate_index_name_from_keys(keys: &Document) -> String {
+    let mut key = keys.iter().fold(String::from(""), |mut acc, (key, value)| {
+        acc.push_str(&format!("{}_{}_", key, value.as_i32().unwrap_or(0)));
+        acc
+    });
+    // Remove last underscore
+    key.pop();
+    key
+}
+
+/// Build a mapping of index names to their index models.
+///
+/// NOTE: this algorithm is sub-optimal and does not account for every possible error which may
+/// arise during index processing. We would like to see the MongoDB team add the index management
+/// commands back into their client, however this will do the trick for now. The only real concern
+/// there is that the algorithm is not resilient to unexpected schema changes coming from the mongo
+/// server. These changes are unlikely, but we are just documenting this fact here for posterity.
+fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
+    // Unpack the cursor.
+    let cursor = match list_index.get("cursor") {
+        Some(cursor) => cursor,
+        None => return Default::default(),
+    };
+    let doc = match cursor.as_document() {
+        Some(doc) => doc,
+        None => return Default::default(),
+    };
+    // https://docs.mongodb.com/manual/reference/limits/#Number-of-Indexes-per-Collection
+    // We have a maximum of 64 indexes per collection, the firstBatch contains them all based on our tests.
+    let first_batch = match doc.get_array("firstBatch").ok() {
+        Some(first_batch) => first_batch,
+        None => return Default::default(),
+    };
+
+    let index_map = first_batch
+        .iter()
+        // Extract documents.
+        .filter_map(|bson| bson.as_document().cloned())
+        // Filter out default index.
+        .filter(|doc| {
+            match doc.get_str("name").ok() {
+                Some(name) if name == MONGO_ID_INDEX_NAME => false, // Filter out.
+                Some(_) => true, // Include.
+                None => false, // Filter out.
+            }
+        })
+        .fold(HashMap::new(), |mut acc, doc| {
+            // Extract document keys & generate index name based on keys.
+            let idx_keys = match doc.get_document("key").ok() {
+                Some(idx_keys) => idx_keys,
+                None => return acc,
+            };
+            let index_name = generate_index_name_from_keys(idx_keys);
+
+            // Build index model, filtering out blacklisted keys.
+            let mut options = Document::new();
+            doc.iter().for_each(|(b_key, b_value)| {
+                if !MONGO_DIFF_INDEX_BLACKLIST.contains(&b_key.as_str()) {
+                    options.insert(b_key.to_string(), b_value);
+                }
+            });
+            let model = IndexModel::new(idx_keys.clone(), Some(options));
+
+            acc.insert(index_name, model);
+            acc
+        });
+    index_map
+}
+
+async fn sync_model_indexes<'a>(
+    db: &'a Database, coll: &'a Collection, model_indexes: Vec<IndexModel>, current_indexes_map: HashMap<String, IndexModel>,
+) -> Result<()> {
+    log::info!("Synchronizing indexes for '{}'.", coll.namespace());
+
+    // Build a mapping of aspired indexes based on the model's declared indexes.
+    let aspired_indexes_map = model_indexes.iter().fold(HashMap::new(), |mut acc, model| {
+        let mut target_model = model.clone();
+        // Populate the 'target' indexes map for easy comparison later.
+        let key = generate_index_name_from_keys(&model.keys);
+
+        // Ensure we have an options object with at least the index name.
+        match &mut target_model.options {
+            Some(options) => {
+                if options.get_str("name").ok().is_none() {
+                    options.insert("name", key.clone());
+                }
+            }
+            // If no options are present, then add a default options doc with the index name.
+            None => {
+                let options = doc! { "name": key.clone() };
+                target_model.options = Some(options);
+            }
+        }
+        acc.insert(key, target_model);
+        acc
+    });
+
+    // For any current index which does not exist in the model's aspired indexes
+    // list, add it to the drop list.
+    let mut indexes_to_drop = current_indexes_map.iter().fold(vec![], |mut acc, (key, _)| {
+        if !aspired_indexes_map.contains_key(key) {
+            acc.push(key);
+        }
+        acc
+    });
+
+    // Diff aspired indexes with current indexes, and update our lists of indexes to create and
+    // drop based on diffing the options of each index model. This is based purely on the
+    // implementation of PartialEq on the bson::Document type.
+    let mut indexes_to_create: HashMap<String, IndexModel> = HashMap::new();
+    for (aspired_index_name, aspired_index) in aspired_indexes_map.iter() {
+        // Unpack the corresponding current index by name if it exists, else prep it for creation.
+        let current_index = match current_indexes_map.get(aspired_index_name) {
+            Some(current_index) => current_index,
+            // If the aspired index does not exist by name on the collection,
+            // then we need to create it.
+            None => {
+                indexes_to_create.insert(aspired_index_name.clone(), aspired_index.clone());
+                continue;
+            }
+        };
+
+        // If the options of the two index models do not match, then we need to drop the existing
+        // and create an updated version.
+        if aspired_index.options != current_index.options {
+            indexes_to_drop.push(aspired_index_name);
+            indexes_to_create.insert(aspired_index_name.clone(), aspired_index.clone());
+        }
+    }
+
+    // Drop indexes which have been flagged for dropping.
+    for index_name in indexes_to_drop {
+        let drop_command = doc! {
+            "dropIndexes": coll.name(),
+            "index": index_name,
+        };
+        db.run_command(drop_command, None).await?;
+    }
+
+    // Create any indexes which have been flagged for creation.
+    let indexes_to_create = indexes_to_create.into_iter().fold(vec![], |mut acc, (_, index_model)| {
+        let mut index_doc = Document::new();
+        index_doc.insert("key", index_model.keys);
+        if let Some(options) = index_model.options {
+            index_doc.extend(options);
+        }
+        acc.push(index_doc);
+        acc
+    });
+    if !indexes_to_create.is_empty() {
+        db.run_command(
+            doc! {
+                "createIndexes": coll.name(),
+                "indexes": indexes_to_create,
+            },
+            None,
+        )
+        .await?;
+    }
+
+    log::info!("Synchronized indexes for '{}'.", coll.namespace());
+
+    Ok(())
 }
