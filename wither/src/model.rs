@@ -195,7 +195,7 @@ where
         let updated_doc = coll
             .find_one_and_replace(filter, instance_doc, Some(opts))
             .await?
-            .ok_or_else(|| WitherError::ServerFailedToReturnUpdatedDoc)?;
+            .ok_or(WitherError::ServerFailedToReturnUpdatedDoc)?;
 
         // Update instance ID if needed.
         if id_needs_update {
@@ -220,7 +220,7 @@ where
     /// If this model instance was never written to the database, this operation will return an error.
     async fn update(self, db: &Database, filter: Option<Document>, update: Document, opts: Option<options::FindOneAndUpdateOptions>) -> Result<Self> {
         // Extract model's ID & use as filter for this operation.
-        let id = self.id().ok_or_else(|| WitherError::ModelIdRequiredForOperation)?;
+        let id = self.id().ok_or(WitherError::ModelIdRequiredForOperation)?;
 
         // Ensure we have a valid filter.
         let filter = match filter {
@@ -262,7 +262,7 @@ where
             .await?
             .map(Self::instance_from_document)
             .transpose()?
-            .ok_or_else(|| WitherError::ServerFailedToReturnUpdatedDoc)?)
+            .ok_or(WitherError::ServerFailedToReturnUpdatedDoc)?)
     }
 
     /// Delete this model instance by ID.
@@ -270,7 +270,7 @@ where
     /// Wraps the driver's `Collection.delete_one` method.
     async fn delete(&self, db: &Database) -> Result<DeleteResult> {
         // Return an error if the instance was never saved.
-        let id = self.id().ok_or_else(|| WitherError::ModelIdRequiredForOperation)?;
+        let id = self.id().ok_or(WitherError::ModelIdRequiredForOperation)?;
         Ok(Self::collection(db).delete_one(doc! {"_id": id}, None).await?)
     }
 
