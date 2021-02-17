@@ -19,5 +19,16 @@ jobs:
           profile: minimal
           override: true
 
+      - name: Setup | Create Release Log
+        run: cat CHANGELOG.md | tail -n +7 | head -n 25 > RELEASE_LOG.md
+
+      - name: Build | Publish Pre-Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_LOG.md
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build | Publish Wither
         run: cd wither && cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
