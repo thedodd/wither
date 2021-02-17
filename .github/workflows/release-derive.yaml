@@ -1,0 +1,23 @@
+name: Release Wither Derive
+on:
+  push:
+    tags:
+      - "wither-derive-v*"
+
+jobs:
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup | Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build | Publish Wither Derive
+        run: cd wither_derive && cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}

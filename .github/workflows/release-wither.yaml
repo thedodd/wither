@@ -1,0 +1,23 @@
+name: Release Wither
+on:
+  push:
+    tags:
+      - "wither-v*"
+
+jobs:
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup | Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build | Publish Wither
+        run: cd wither && cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}

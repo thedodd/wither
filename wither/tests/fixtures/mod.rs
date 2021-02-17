@@ -1,4 +1,6 @@
-#![cfg(not(feature="sync"))]
+#![cfg(not(feature = "sync"))]
+
+pub mod models;
 
 use std::env;
 
@@ -11,9 +13,9 @@ use wither::mongodb::{Client, Database};
 use wither::prelude::*;
 
 lazy_static! {
-    static ref HOST: String = { env::var("HOST").expect("environment variable HOST must be defined") };
-    static ref PORT: String = { env::var("PORT").expect("environment variable PORT must be defined") };
-    static ref CONNECTION_STRING: String = { format!("mongodb://{}:{}/", HOST.as_str(), PORT.as_str()) };
+    static ref HOST: String = env::var("HOST").expect("environment variable HOST must be defined");
+    static ref PORT: String = env::var("PORT").expect("environment variable PORT must be defined");
+    static ref CONNECTION_STRING: String = format!("mongodb://{}:{}/", HOST.as_str(), PORT.as_str());
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -104,8 +106,8 @@ impl Fixture {
     // /// Remove all documents & indexes from the collections of the data models used by this harness.
     // pub fn with_empty_collections(self) -> Self {
     //     DB.clone().collection(User::COLLECTION_NAME).drop(None).expect("failed to drop collection");
-    //     DB.clone().collection(UserModelBadMigrations::COLLECTION_NAME).drop(None).expect("failed to drop collection");
-    //     self
+    //     DB.clone().collection(UserModelBadMigrations::COLLECTION_NAME).drop(None).expect("failed to
+    // drop collection");     self
     // }
 
     /// Drop the database which is used by this harness.

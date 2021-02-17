@@ -6,11 +6,7 @@ This project is currently composed of the following crates:
 - `wither_derive`: the custom derive logic.
 
 ### publishing
-To publish a new version of `wither` or `wither_derive`, execute the following command: `cargo publish --manifest-path $TARGET_DIR/Cargo.toml`, where `$TARGET_DIR` is the directory of the crate which is to be released.
-
-Keep in mind that we need to keep the major and minor versions of these two crates in sync. Else, it could cause some serious confusion.
-
-**Don't forget to tag the release in git.**
+Just publish a tag for the corresponding crate to publish: `wither-v*` for `wither` and `wither-derive-v*` for `wither-derive`.
 
 ### development
 #### tests

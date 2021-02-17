@@ -18,4 +18,4 @@ error[E0599]: no function or associated item named `write_concern` found for str
    |
    = help: items from traits can only be used if the trait is implemented and in scope
    = note: the following trait defines an item `write_concern`, perhaps you need to implement it:
-           candidate #1: `wither::Model`
+           candidate #1: `Model`
