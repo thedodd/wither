@@ -279,6 +279,16 @@ where
         Ok(Self::collection(db).delete_one(doc! {"_id": id}, None).await?)
     }
 
+    /// Deletes all documents stored in the collection matching filter.
+    ///
+    /// Wraps the driver's `Collection.delete_many` method.
+    async fn delete_many<O>(db: &Database, filter: Document, options: O) -> Result<DeleteResult>
+    where
+        O: Into<Option<options::DeleteOptions>> + Send,
+    {
+        Ok(Self::collection(db).delete_many(filter, options).await?)
+    }
+
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Convenience Methods ///////////////////////////////////////////////////////////////////////
 

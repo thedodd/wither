@@ -6,6 +6,7 @@ changelog
 ## 0.9.0-alpha.3
 ### added
 - I am happy to announce that index management via `Model::sync` is back! This has taken much longer than intended, but it is finally back. It also has a few improvements where index options are diffed in order to ensure that subtle updates to an index are observed and indexes are re-created as needed. This closes [#51](https://github.com/thedodd/wither/issues/51).
+- Added the `delete_many` method.
 
 ## 0.9.0-alpha.2
 ### changed
