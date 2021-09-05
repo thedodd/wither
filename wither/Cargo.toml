@@ -34,7 +34,7 @@ default = ["tokio-runtime"]
 tokio-runtime = ["mongodb/tokio-runtime"]
 async-std-runtime = ["mongodb/async-std-runtime"]
 tokio-beta-runtime = ["mongodb_beta/tokio-runtime"]
-async-beta-std-runtime = ["mongodb_beta/async-std-runtime"]
+async-std-beta-runtime = ["mongodb_beta/async-std-runtime"]
 docinclude = [] # Used only for activating `doc(include="...")` on nightly.
 
 [package.metadata.docs.rs]
