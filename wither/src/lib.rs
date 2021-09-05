@@ -3,8 +3,17 @@
 
 // Re-exports //
 pub use async_trait::async_trait;
+
+#[cfg(any(feature = "tokio-runtime", feature = "async-std-runtime"))]
 pub use mongodb;
+#[cfg(any(feature = "tokio-runtime", feature = "async-std-runtime"))]
 pub use mongodb::bson;
+
+#[cfg(any(feature = "tokio-beta-runtime", feature = "async-beta-std-runtime"))]
+pub use mongodb_beta;
+#[cfg(any(feature = "tokio-beta-runtime", feature = "async-beta-std-runtime"))]
+pub use mongodb_beta::bson;
+
 
 pub use wither_derive::Model;
 #[cfg(any(feature = "sync"))]

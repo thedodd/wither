@@ -3,12 +3,13 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use mongodb::bson::oid::ObjectId;
-use mongodb::bson::{doc, from_bson, to_bson};
-use mongodb::bson::{Bson, Document};
-use mongodb::options;
-use mongodb::results::DeleteResult;
-use mongodb::{Collection, Database};
+
+#[cfg(any(feature = "tokio-runtime", feature = "async-std-runtime"))]
+use mongodb::{Collection, Database, bson::{Bson, Document, doc, from_bson, oid::ObjectId, to_bson}, options, results::DeleteResult};
+
+#[cfg(any(feature = "tokio-beta-runtime", feature = "async-beta-std-runtime"))]
+use mongodb_beta::{Collection, Database, bson::{Bson, Document, doc, from_bson, oid::ObjectId, to_bson}, options, results::DeleteResult};
+
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::common::IndexModel;

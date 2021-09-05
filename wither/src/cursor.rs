@@ -2,7 +2,12 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures::stream::Stream;
+
+#[cfg(any(feature = "tokio-runtime", feature = "async-std-runtime"))]
 use mongodb::Cursor;
+
+#[cfg(any(feature = "tokio-beta-runtime", feature = "async-beta-std-runtime"))]
+use mongodb_beta::Cursor;
 
 use crate::error::{Result, WitherError};
 use crate::Model;

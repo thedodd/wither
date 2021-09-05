@@ -1,6 +1,10 @@
 use async_trait::async_trait;
-use mongodb::bson::{doc, Bson, Document};
-use mongodb::{options, Collection, Database};
+
+#[cfg(any(feature = "tokio-runtime", feature = "async-std-runtime"))]
+use mongodb::{Collection, Database, bson::{doc, Bson, Document}, options};
+
+#[cfg(any(feature = "tokio-beta-runtime", feature = "async-beta-std-runtime"))]
+use mongodb_beta::{Collection, Database, bson::{doc, Bson, Document}, options};
 
 use crate::error::{Result, WitherError};
 use crate::model::Model;

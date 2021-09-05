@@ -45,7 +45,7 @@ jobs:
     strategy:
       matrix:
         mongo_version: ["mongo:4.4", "mongo:4.2", "mongo:4.0", "mongo:3.6"]
-        features: ["--features=tokio-runtime", "--no-default-features --features=async-std-runtime"]
+        features: ["--features=tokio-runtime", "--no-default-features --features=async-std-runtime", "--no-default-features --features=tokio-beta-runtime", "--no-default-features --features=async-std-beta-runtime"]
     services:
       mongo:
         image: ${{ matrix.mongo_version }}

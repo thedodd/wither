@@ -15,7 +15,10 @@ edition = "2018"
 [dependencies]
 chrono = "0.4"
 log = "0.4"
-mongodb = { version = "1", default-features=false }
+
+mongodb = { version = "1", default-features=false, optional=true }
+mongodb_beta = { version = "2.0.0-beta.3", default-features=false, optional=true, package="mongodb" }
+
 serde = { version = "1", features=["derive"] }
 wither_derive = { version = "0.9.0", path = "../wither_derive", default-features = false }
 async-trait = "0.1"
@@ -30,6 +33,8 @@ tokio = { version = "0.2.18", features = ["macros"] }
 default = ["tokio-runtime"]
 tokio-runtime = ["mongodb/tokio-runtime"]
 async-std-runtime = ["mongodb/async-std-runtime"]
+tokio-beta-runtime = ["mongodb_beta/tokio-runtime"]
+async-beta-std-runtime = ["mongodb_beta/async-std-runtime"]
 docinclude = [] # Used only for activating `doc(include="...")` on nightly.
 
 [package.metadata.docs.rs]
