@@ -12,6 +12,7 @@ use wither::bson::oid::ObjectId;
 use wither::mongodb::{Client, Database};
 use wither::prelude::*;
 
+// TODO: use static const
 lazy_static! {
     static ref HOST: String = env::var("HOST").expect("environment variable HOST must be defined");
     static ref PORT: String = env::var("PORT").expect("environment variable PORT must be defined");
@@ -99,7 +100,7 @@ pub struct Fixture {
 impl Fixture {
     /// Create a new fixture.
     pub async fn new() -> Self {
-        let client = Client::with_uri_str(&CONNECTION_STRING)
+        let client = Client::with_uri_str(&*CONNECTION_STRING)
             .await
             .expect("failed to connect to database");
         Fixture { client }
