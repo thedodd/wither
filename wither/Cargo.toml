@@ -15,7 +15,7 @@ edition = "2018"
 [dependencies]
 chrono = "0.4"
 log = "0.4"
-mongodb = { version = "1", default-features=false }
+mongodb = { version = "2", default-features=false }
 serde = { version = "1", features=["derive"] }
 wither_derive = { version = "0.9.0", path = "../wither_derive", default-features = false }
 async-trait = "0.1"
@@ -24,7 +24,7 @@ thiserror = "1"
 
 [dev-dependencies]
 lazy_static = "1"
-tokio = { version = "0.2.18", features = ["macros"] }
+tokio = { version = "1", features = ["macros"] }
 
 [features]
 default = ["tokio-runtime"]
