@@ -78,7 +78,7 @@ where
     ///
     /// This method uses the model's `selection_criteria`, `read_concern` & `write_concern` when
     /// constructing the collection handle.
-    fn collection(db: &Database) -> Collection {
+    fn collection(db: &Database) -> Collection<Document> {
         db.collection_with_options(
             Self::COLLECTION_NAME,
             options::CollectionOptions::builder()
@@ -202,7 +202,9 @@ where
 
         // Update instance ID if needed.
         if id_needs_update {
-            let response_id = updated_doc.get_object_id("_id").map_err(|_| WitherError::ServerFailedToReturnObjectId)?;
+            let response_id = updated_doc
+                .get_object_id("_id")
+                .map_err(|_| WitherError::ServerFailedToReturnObjectId)?;
             self.set_id(response_id.clone());
         };
         Ok(())
@@ -335,12 +337,12 @@ where
 }
 
 /// Get current collection indexes, if any.
-async fn get_current_indexes(db: &Database, coll: &Collection) -> Result<HashMap<String, IndexModel>> {
+async fn get_current_indexes(db: &Database, coll: &Collection<Document>) -> Result<HashMap<String, IndexModel>> {
     let list_indexes = match db.run_command(doc! {"listIndexes": coll.name()}, None).await {
         Ok(list_indexes) => list_indexes,
         Err(err) => match err.kind.as_ref() {
             // The DB & or collection does not yet exist. Move on.
-            mongodb::error::ErrorKind::CommandError(err) if err.code == 26 => doc! {},
+            mongodb::error::ErrorKind::Command(err) if err.code == 26 => doc! {},
             _ => return Err(err.into()),
         },
     };
@@ -379,7 +381,8 @@ fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
         None => return Default::default(),
     };
     // https://docs.mongodb.com/manual/reference/limits/#Number-of-Indexes-per-Collection
-    // We have a maximum of 64 indexes per collection, the firstBatch contains them all based on our tests.
+    // We have a maximum of 64 indexes per collection, the firstBatch contains them all based on our
+    // tests.
     let first_batch = match doc.get_array("firstBatch").ok() {
         Some(first_batch) => first_batch,
         None => return Default::default(),
@@ -421,7 +424,7 @@ fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
 }
 
 async fn sync_model_indexes<'a>(
-    db: &'a Database, coll: &'a Collection, model_indexes: Vec<IndexModel>, current_indexes_map: HashMap<String, IndexModel>,
+    db: &'a Database, coll: &'a Collection<Document>, model_indexes: Vec<IndexModel>, current_indexes_map: HashMap<String, IndexModel>,
 ) -> Result<()> {
     log::info!("Synchronizing indexes for '{}'.", coll.namespace());
 

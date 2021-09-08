@@ -2,6 +2,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures::stream::Stream;
+use mongodb::bson::Document;
 use mongodb::Cursor;
 
 use crate::error::{Result, WitherError};
@@ -9,16 +10,13 @@ use crate::Model;
 
 /// A cursor of model documents.
 pub struct ModelCursor<T> {
-    cursor: Cursor,
+    cursor: Cursor<Document>,
     marker: std::marker::PhantomData<T>,
 }
 
 impl<T: Model> ModelCursor<T> {
-    pub(crate) fn new(cursor: Cursor) -> Self {
-        Self {
-            cursor,
-            marker: std::marker::PhantomData,
-        }
+    pub(crate) fn new(cursor: Cursor<Document>) -> Self {
+        Self { cursor, marker: std::marker::PhantomData }
     }
 }
 
