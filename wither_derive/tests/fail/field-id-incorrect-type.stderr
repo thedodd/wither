@@ -1,5 +1,5 @@
 error[E0308]: mismatched types
-Error:  --> $DIR/field-id-incorrect-type.rs:4:34
+ --> $DIR/field-id-incorrect-type.rs:4:34
   |
 4 | #[derive(Serialize, Deserialize, Model)]
   |                                  ^^^^^
@@ -12,7 +12,7 @@ Error:  --> $DIR/field-id-incorrect-type.rs:4:34
   = note: this error originates in the derive macro `Model` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0308]: mismatched types
-Error:  --> $DIR/field-id-incorrect-type.rs:4:34
+ --> $DIR/field-id-incorrect-type.rs:4:34
   |
 4 | #[derive(Serialize, Deserialize, Model)]
   |                                  ^^^^^
