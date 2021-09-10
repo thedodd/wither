@@ -436,7 +436,7 @@ pub struct WriteConcern {
 /// A type wrapper around the `mongodb::options::Acknowledgment` type.
 #[derive(FromMeta)]
 pub enum Acknowledgment {
-    Nodes(i32),
+    Nodes(u32),
     Majority,
     Custom(String),
 }
