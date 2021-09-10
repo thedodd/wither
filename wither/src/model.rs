@@ -168,7 +168,7 @@ where
     /// write concern.
     async fn save(&mut self, db: &Database, filter: Option<Document>) -> Result<()> {
         let coll = Self::collection(db);
-        let instance_doc = Self::document_from_instance(&self)?;
+        let instance_doc = Self::document_from_instance(self)?;
 
         // Ensure that journaling is set to true for this call, as we need to be able to get an ID back.
         let mut write_concern = Self::write_concern().unwrap_or_default();
@@ -180,7 +180,7 @@ where
             (Some(id), _) => doc! {"_id": id},
             (None, None) => {
                 let new_id = ObjectId::new();
-                self.set_id(new_id.clone());
+                self.set_id(new_id);
                 doc! {"_id": new_id}
             }
             (None, Some(filter)) => {
@@ -205,7 +205,7 @@ where
             let response_id = updated_doc
                 .get_object_id("_id")
                 .map_err(|_| WitherError::ServerFailedToReturnObjectId)?;
-            self.set_id(response_id.clone());
+            self.set_id(response_id);
         };
         Ok(())
     }
@@ -324,7 +324,7 @@ where
     /// defined in this model's `indexes` method.
     async fn sync(db: &Database) -> Result<()> {
         let coll = Self::collection(db);
-        let current_indexes = get_current_indexes(&db, &coll).await?;
+        let current_indexes = get_current_indexes(db, &coll).await?;
         sync_model_indexes(db, &coll, Self::indexes(), current_indexes).await?;
         Ok(())
     }

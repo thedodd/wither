@@ -34,7 +34,7 @@ async fn model_find_should_find_all_instances_of_model_with_no_filter_or_options
     let userdb = users_from_db.pop().unwrap();
     assert!(userdb.is_ok());
     let userdb = userdb.unwrap();
-    user.id = userdb.id.clone();
+    user.id = userdb.id;
     assert_eq!(userdb, user);
 }
 
@@ -49,7 +49,7 @@ async fn model_find_should_find_instances_of_model_matching_filter() {
     let db = fixture.get_db();
     let mut user = User { id: None, email: "test@test.com".to_string() };
     user.save(&db, None).await.expect("Expected a successful save operation.");
-    let doc = doc! {"_id": (user.id.clone().unwrap())};
+    let doc = doc! {"_id": (user.id.unwrap())};
 
     let mut users_from_db: Vec<_> = User::find(&db, Some(doc), None)
         .await
@@ -61,7 +61,7 @@ async fn model_find_should_find_instances_of_model_matching_filter() {
     let userdb = users_from_db.pop().unwrap();
     assert!(userdb.is_ok());
     let userdb = userdb.unwrap();
-    user.id = userdb.id.clone();
+    user.id = userdb.id;
     assert_eq!(userdb, user);
 }
 
@@ -81,7 +81,7 @@ async fn model_find_one_should_fetch_the_model_instance_matching_given_filter() 
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
 
-    let doc = doc! {"_id": (user.id.clone().unwrap())};
+    let doc = doc! {"_id": (user.id.unwrap())};
     let user_from_db = User::find_one(&db, Some(doc), None)
         .await
         .expect("Expected a successful lookup.")
