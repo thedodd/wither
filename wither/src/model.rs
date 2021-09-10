@@ -27,10 +27,10 @@ const MONGO_DIFF_INDEX_BLACKLIST: [&str; 3] = ["v", "ns", "key"];
 ///
 /// Any `read_concern`, `write_concern` or `selection_criteria` options configured for the model,
 /// either derived or manually, will be used for collection interactions.
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/model-derive.md"))]
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/model-sync.md"))]
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/logging.md"))]
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/underlying-driver.md"))]
+#[doc = include_str!("../docs/model-derive.md")]
+#[doc = include_str!("../docs/model-sync.md")]
+#[doc = include_str!("../docs/logging.md")]
+#[doc = include_str!("../docs/underlying-driver.md")]
 #[async_trait]
 pub trait Model
 where
