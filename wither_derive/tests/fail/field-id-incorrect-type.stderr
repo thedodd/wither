@@ -21,4 +21,3 @@ Error:  --> $DIR/field-id-incorrect-type.rs:4:34
   |                                  help: try using a conversion method: `Model.to_string()`
   |
   = note: this error originates in the derive macro `Model` (in Nightly builds, run with -Z macro-backtrace for more info)
-  
