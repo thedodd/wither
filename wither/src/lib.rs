@@ -1,5 +1,4 @@
 #[doc = include_str!("../README.md")]
-
 // Re-exports //
 pub use async_trait::async_trait;
 pub use mongodb;
