@@ -34,7 +34,7 @@ pub trait Migrating: Model {
 #[async_trait]
 pub trait Migration: Send + Sync {
     /// The function which is to execute this migration.
-    async fn execute<'c>(&self, coll: &'c Collection) -> Result<()>;
+    async fn execute<'c>(&self, coll: &'c Collection<Document>) -> Result<()>;
 }
 
 /// A migration type which allows execution until the specifed `threshold` date. Then will no-op.
@@ -62,7 +62,7 @@ pub struct IntervalMigration {
 
 #[async_trait]
 impl Migration for IntervalMigration {
-    async fn execute<'c>(&self, coll: &'c Collection) -> Result<()> {
+    async fn execute<'c>(&self, coll: &'c Collection<Document>) -> Result<()> {
         let ns = coll.namespace();
         log::info!("Executing migration '{}' against '{}'.", &self.name, ns);
 
