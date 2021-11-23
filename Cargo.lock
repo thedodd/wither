@@ -1766,6 +1766,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70e992e41e0d2fb9f755b37446f20900f64446ef54874f40a60c78f021ac6144"
 dependencies = [
  "autocfg",
+ "num_cpus",
  "pin-project-lite 0.2.7",
  "tokio-macros 1.6.0",
 ]
