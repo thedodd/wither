@@ -308,7 +308,7 @@ async fn model_update_should_return_error_with_invalid_update_document() {
 
     assert_eq!(
         err.to_string(),
-        "An invalid argument was provided to a database operation: update document must have first key starting with '$"
+        "An invalid argument was provided: update document must have first key starting with '$"
     );
 }
 
