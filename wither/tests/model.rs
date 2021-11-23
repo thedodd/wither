@@ -34,7 +34,7 @@ async fn model_find_should_find_all_instances_of_model_with_no_filter_or_options
     let userdb = users_from_db.pop().unwrap();
     assert!(userdb.is_ok());
     let userdb = userdb.unwrap();
-    user.id = userdb.id.clone();
+    user.id = userdb.id;
     assert_eq!(userdb, user);
 }
 
@@ -49,7 +49,7 @@ async fn model_find_should_find_instances_of_model_matching_filter() {
     let db = fixture.get_db();
     let mut user = User { id: None, email: "test@test.com".to_string() };
     user.save(&db, None).await.expect("Expected a successful save operation.");
-    let doc = doc! {"_id": (user.id.clone().unwrap())};
+    let doc = doc! {"_id": (user.id.unwrap())};
 
     let mut users_from_db: Vec<_> = User::find(&db, Some(doc), None)
         .await
@@ -61,7 +61,7 @@ async fn model_find_should_find_instances_of_model_matching_filter() {
     let userdb = users_from_db.pop().unwrap();
     assert!(userdb.is_ok());
     let userdb = userdb.unwrap();
-    user.id = userdb.id.clone();
+    user.id = userdb.id;
     assert_eq!(userdb, user);
 }
 
@@ -81,7 +81,7 @@ async fn model_find_one_should_fetch_the_model_instance_matching_given_filter() 
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
 
-    let doc = doc! {"_id": (user.id.clone().unwrap())};
+    let doc = doc! {"_id": (user.id)};
     let user_from_db = User::find_one(&db, Some(doc), None)
         .await
         .expect("Expected a successful lookup.")
@@ -135,10 +135,15 @@ async fn model_find_one_and_replace_should_replace_the_target_doc_and_return_new
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
     user2.save(&db, None).await.expect("Expected a successful save operation.");
-    let output = User::find_one_and_replace(&db, doc! {"email": "test@test.com"}, doc! {"email": "test3@test.com"}, Some(opts))
-        .await
-        .expect("Expected a operation.")
-        .unwrap();
+    let output = User::find_one_and_replace(
+        &db,
+        doc! {"email": "test@test.com"},
+        &User { id: None, email: "test3@test.com".to_owned() },
+        Some(opts),
+    )
+    .await
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test3@test.com");
 }
@@ -159,10 +164,15 @@ async fn model_find_one_and_replace_should_replace_the_target_doc_and_return_old
 
     user.save(&db, None).await.expect("Expected a successful save operation.");
     user2.save(&db, None).await.expect("Expected a successful save operation.");
-    let output = User::find_one_and_replace(&db, doc! {"email": "test@test.com"}, doc! {"email": "test3@test.com"}, Some(opts))
-        .await
-        .expect("Expected a operation.")
-        .unwrap();
+    let output = User::find_one_and_replace(
+        &db,
+        doc! {"email": "test@test.com"},
+        &User { id: None, email: "test3@test.com".to_owned() },
+        Some(opts),
+    )
+    .await
+    .expect("Expected a operation.")
+    .unwrap();
 
     assert_eq!(&output.email, "test@test.com");
 }
