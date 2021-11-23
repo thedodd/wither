@@ -29,7 +29,6 @@ pub trait Migrating: Model {
 }
 
 /// A trait describing objects which encapsulate a schema migration.
-///
 #[cfg_attr(feature = "docinclude", doc(include = "../docs/migrations-overview.md"))]
 #[async_trait]
 pub trait Migration: Send + Sync {

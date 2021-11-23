@@ -202,7 +202,9 @@ where
 
         // Update instance ID if needed.
         if id_needs_update {
-            let response_id = updated_doc.get_object_id("_id").map_err(|_| WitherError::ServerFailedToReturnObjectId)?;
+            let response_id = updated_doc
+                .get_object_id("_id")
+                .map_err(|_| WitherError::ServerFailedToReturnObjectId)?;
             self.set_id(response_id.clone());
         };
         Ok(())
@@ -379,7 +381,8 @@ fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
         None => return Default::default(),
     };
     // https://docs.mongodb.com/manual/reference/limits/#Number-of-Indexes-per-Collection
-    // We have a maximum of 64 indexes per collection, the firstBatch contains them all based on our tests.
+    // We have a maximum of 64 indexes per collection, the firstBatch contains them all based on our
+    // tests.
     let first_batch = match doc.get_array("firstBatch").ok() {
         Some(first_batch) => first_batch,
         None => return Default::default(),
