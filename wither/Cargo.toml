@@ -24,7 +24,7 @@ thiserror = "1"
 
 [dev-dependencies]
 lazy_static = "1"
-tokio = { version = "0.2.18", features = ["macros"] }
+tokio = { version = "1", features = ["macros"] }
 
 [features]
 default = ["tokio-runtime"]
