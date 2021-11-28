@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mongo_version: ["mongo:4.4", "mongo:4.2", "mongo:4.0", "mongo:3.6"]
+        mongo_version: ["mongo:5.0", "mongo:4.4", "mongo:4.2", "mongo:4.0", "mongo:3.6"]
         features: ["--features=tokio-runtime", "--no-default-features --features=async-std-runtime"]
     services:
       mongo:

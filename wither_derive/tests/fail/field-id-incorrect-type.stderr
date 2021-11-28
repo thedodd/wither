@@ -1,5 +1,5 @@
 error[E0308]: mismatched types
- --> $DIR/field-id-incorrect-type.rs:4:34
+ --> tests/fail/field-id-incorrect-type.rs:4:34
   |
 4 | #[derive(Serialize, Deserialize, Model)]
   |                                  ^^^^^
@@ -9,15 +9,14 @@ error[E0308]: mismatched types
   |
   = note: expected enum `std::option::Option<wither::bson::oid::ObjectId>`
              found enum `std::option::Option<std::string::String>`
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the derive macro `Model` (in Nightly builds, run with -Z macro-backtrace for more info)
 
 error[E0308]: mismatched types
- --> $DIR/field-id-incorrect-type.rs:4:34
+ --> tests/fail/field-id-incorrect-type.rs:4:34
   |
 4 | #[derive(Serialize, Deserialize, Model)]
-  |                                  ^^^^^
+  |                                  ^^^^^- help: try using a conversion method: `.to_string()`
   |                                  |
   |                                  expected struct `std::string::String`, found struct `wither::bson::oid::ObjectId`
-  |                                  help: try using a conversion method: `Model.to_string()`
   |
-  = note: this error originates in a derive macro (in Nightly builds, run with -Z macro-backtrace for more info)
+  = note: this error originates in the derive macro `Model` (in Nightly builds, run with -Z macro-backtrace for more info)

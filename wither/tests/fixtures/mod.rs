@@ -37,7 +37,7 @@ pub struct User {
 }
 
 impl Migrating for User {
-    fn migrations() -> Vec<Box<dyn wither::Migration>> {
+    fn migrations() -> Vec<Box<dyn wither::Migration<Self>>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.
             Box::new(wither::IntervalMigration {
@@ -70,7 +70,7 @@ pub struct UserModelBadMigrations {
 }
 
 impl Migrating for UserModelBadMigrations {
-    fn migrations() -> Vec<Box<dyn wither::Migration>> {
+    fn migrations() -> Vec<Box<dyn wither::Migration<Self>>> {
         vec![
             // This migration doesn't really do much. Just exercises the system.
             Box::new(wither::IntervalMigration {
@@ -99,7 +99,9 @@ pub struct Fixture {
 impl Fixture {
     /// Create a new fixture.
     pub async fn new() -> Self {
-        let client = Client::with_uri_str(&CONNECTION_STRING).await.expect("failed to connect to database");
+        let client = Client::with_uri_str(CONNECTION_STRING.as_str())
+            .await
+            .expect("failed to connect to database");
         Fixture { client }
     }
 

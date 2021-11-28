@@ -170,7 +170,7 @@ impl<'a> MetaModel<'a> {
 
     /// Extract any model attrs and bind them to their optional slots.
     fn extract_model_attrs(&mut self) {
-        let attrs = Self::parse_attrs(&self.attrs, MODEL_HELPER_ATTR);
+        let attrs = Self::parse_attrs(self.attrs, MODEL_HELPER_ATTR);
         // Parse over the internals of our `model` attrs. At this point, we are dealing with
         // individual elements inside of the various `model(...)` attrs.
         for attr_meta in attrs {
@@ -436,7 +436,7 @@ pub struct WriteConcern {
 /// A type wrapper around the `mongodb::options::Acknowledgment` type.
 #[derive(FromMeta)]
 pub enum Acknowledgment {
-    Nodes(i32),
+    Nodes(u32),
     Majority,
     Custom(String),
 }
