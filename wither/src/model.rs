@@ -34,6 +34,7 @@ const MONGO_DIFF_INDEX_BLACKLIST: [&str; 3] = ["v", "ns", "key"];
 #[async_trait]
 pub trait Model
 where
+    // Unpin + Send + Sync are required to create a mongodb Cursor for the Model.
     Self: Serialize + DeserializeOwned + Unpin + Send + Sync,
 {
     /// The name of the collection where this model's data is stored.
