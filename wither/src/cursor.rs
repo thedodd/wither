@@ -10,12 +10,11 @@ use crate::Model;
 /// A cursor of model documents.
 pub struct ModelCursor<T: Model> {
     cursor: Cursor<T>,
-    marker: std::marker::PhantomData<T>,
 }
 
 impl<T: Model> ModelCursor<T> {
     pub(crate) fn new(cursor: Cursor<T>) -> Self {
-        Self { cursor, marker: std::marker::PhantomData }
+        Self { cursor }
     }
 }
 
