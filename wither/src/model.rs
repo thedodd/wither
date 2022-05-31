@@ -416,7 +416,17 @@ async fn sync_model_indexes<'a, T>(
     let aspired_indexes_map = model_indexes.iter().fold(HashMap::new(), |mut acc, model| {
         let mut target_model = model.clone();
         // Populate the 'target' indexes map for easy comparison later.
-        let key = generate_index_name_from_keys(&model.keys);
+        let key = {
+            if let Some(options) = &target_model.options {
+                if let Ok(index_name) = options.get_str("name") {
+                    index_name.to_owned()
+                }else{
+                    generate_index_name_from_keys(&model.keys)
+                }
+            }else{
+                generate_index_name_from_keys(&model.keys)
+            }
+        };
 
         // Ensure we have an options object with at least the index name.
         match &mut target_model.options {
@@ -435,14 +445,22 @@ async fn sync_model_indexes<'a, T>(
         acc
     });
 
+
+
     // For any current index which does not exist in the model's aspired indexes
     // list, add it to the drop list.
-    let mut indexes_to_drop = current_indexes_map.iter().fold(vec![], |mut acc, (key, _)| {
-        if !aspired_indexes_map.contains_key(key) {
-            acc.push(key);
+    let mut indexes_to_drop = current_indexes_map.iter().fold(vec![], |mut acc, (key, im)| {
+        let index_name = 
+            im.options.as_ref()
+            .and_then(|o| o.get_str("name").ok())
+            .unwrap_or(&*key);
+        
+        if !aspired_indexes_map.contains_key(index_name) {
+            acc.push(index_name);
         }
         acc
     });
+
 
     // Diff aspired indexes with current indexes, and update our lists of indexes to create and
     // drop based on diffing the options of each index model. This is based purely on the
@@ -467,6 +485,9 @@ async fn sync_model_indexes<'a, T>(
             indexes_to_create.insert(aspired_index_name.clone(), aspired_index.clone());
         }
     }
+
+
+
 
     // Drop indexes which have been flagged for dropping.
     for index_name in indexes_to_drop {

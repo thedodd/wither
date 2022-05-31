@@ -49,6 +49,7 @@ Index derivations have been GREATLY simplified, and future-proofed, as of `withe
     index(keys=r#"doc!{"id": 1}"#),
     index(keys=r#"doc!{"id": -1}"#, options=r#"doc!{"unique": true}"#),
     index(keys=r#"doc!{"some.nested.field": 1}"#),
+    index(keys=r#"doc!{"some.text.field": "text"}"#)
 )]
 struct MyModel {
 #    #[serde(rename="_id", skip_serializing_if="Option::is_none")]
