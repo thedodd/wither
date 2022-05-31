@@ -29,7 +29,8 @@ async fn main() -> Result<()> {
     me.save(&db, None).await?;
 
     // Update user's email address.
-    me.update(&db, None, doc! {"$set": doc!{"email": "new.email@example.com"}}, None).await?;
+    me.update(&db, None, doc! {"$set": doc!{"email": "new.email@example.com"}}, None)
+        .await?;
 
     // Fetch all users.
     let mut cursor = User::find(&db, None, None).await?;

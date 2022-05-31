@@ -1,5 +1,4 @@
-#![cfg_attr(feature = "docinclude", feature(external_doc))]
-#![cfg_attr(feature = "docinclude", doc(include = "../README.md"))]
+#![cfg_attr(feature = "docinclude", doc = include_str!("../README.md"))]
 
 // Re-exports //
 pub use async_trait::async_trait;
