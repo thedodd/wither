@@ -18,5 +18,11 @@ error[E0308]: mismatched types
   |                                  ^^^^^- help: try using a conversion method: `.to_string()`
   |                                  |
   |                                  expected struct `std::string::String`, found struct `wither::bson::oid::ObjectId`
+  |                                  arguments to this enum variant are incorrect
   |
+note: tuple variant defined here
+ --> $RUST/core/src/option.rs
+  |
+  |     Some(#[stable(feature = "rust1", since = "1.0.0")] T),
+  |     ^^^^
   = note: this error originates in the derive macro `Model` (in Nightly builds, run with -Z macro-backtrace for more info)

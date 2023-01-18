@@ -1,17 +1,17 @@
 error: malformed attribute
 
-  = help: expected literal
+         = help: expected literal
 
- --> $DIR/model-read-concern-invalid-syntax.rs:5:1
+ --> tests/fail/model-read-concern-invalid-syntax.rs:5:1
   |
 5 | #[model(read_concern=ReadConcern::Majority)]
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 error[E0599]: no function or associated item named `read_concern` found for struct `DerivedModel` in the current scope
-  --> $DIR/model-read-concern-invalid-syntax.rs:12:27
+  --> tests/fail/model-read-concern-invalid-syntax.rs:12:27
    |
 6  | struct DerivedModel {
-   | ------------------- function or associated item `read_concern` not found for this
+   | ------------------- function or associated item `read_concern` not found for this struct
 ...
 12 |     assert!(DerivedModel::read_concern().is_none());
    |                           ^^^^^^^^^^^^ function or associated item not found in `DerivedModel`

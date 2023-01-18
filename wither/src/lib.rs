@@ -4,6 +4,7 @@
 pub use async_trait::async_trait;
 pub use mongodb;
 pub use mongodb::bson;
+pub use mongodb::IndexModel;
 
 pub use wither_derive::Model;
 #[cfg(any(feature = "sync"))]
@@ -12,8 +13,6 @@ pub use wither_derive::ModelSync;
 // Common //
 mod error;
 pub use error::{Result, WitherError};
-mod common;
-pub use common::IndexModel;
 
 // Async //
 mod cursor;
