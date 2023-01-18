@@ -517,11 +517,14 @@ pub struct IndexModelTokens {
 
 impl quote::ToTokens for IndexModelTokens {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let options = match &self.options {
-            Some(opts) => quote!(Some(#opts)),
-            None => quote!(None),
-        };
         let keys = &self.keys;
-        tokens.extend(quote!(wither::IndexModel::new(#keys, #options)));
+        match &self.options {
+            Some(opts) => {
+                tokens.extend(quote!(wither::IndexModel::builder().keys(#keys).options(wither::mongodb::bson::from_document::<wither::mongodb::options::IndexOptions>(#opts).unwrap()).build()));
+            }
+            None => {
+                tokens.extend(quote!(wither::IndexModel::builder().keys(#keys).build()));
+            }
+        };
     }
 }

@@ -488,11 +488,10 @@ async fn model_sync_should_create_expected_indices_on_collection() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_1");
 }
@@ -529,11 +528,10 @@ async fn model_sync_should_not_modify_indexes() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_1");
 
@@ -558,11 +556,10 @@ async fn model_sync_should_not_modify_indexes() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_1");
 }
@@ -599,11 +596,10 @@ async fn model_sync_should_modify_indexes_v1_to_v2() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_1");
 
@@ -628,11 +624,10 @@ async fn model_sync_should_modify_indexes_v1_to_v2() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 }
@@ -669,11 +664,10 @@ async fn model_sync_should_modify_indexes_v2_to_v3() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 
@@ -698,22 +692,19 @@ async fn model_sync_should_modify_indexes_v2_to_v3() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 
     let option_unique_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("unique")
-        .expect("Should have unique option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .unique
+        .expect("Should have unique option");
 
     assert!(option_unique_value);
 }
@@ -750,22 +741,19 @@ async fn model_sync_should_modify_indexes_v3_to_v4() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 
     let option_unique_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("unique")
-        .expect("Should have unique option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .unique
+        .expect("Should have unique option");
 
     assert!(option_unique_value);
 
@@ -790,33 +778,28 @@ async fn model_sync_should_modify_indexes_v3_to_v4() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 
     let option_unique_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("unique")
-        .expect("Should have unique option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .unique
+        .expect("Should have unique option");
 
     assert!(option_unique_value);
 
     let option_background_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("background")
-        .expect("Should have background option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .background
+        .expect("Should have background option");
 
     assert!(option_background_value);
 }
@@ -847,33 +830,28 @@ async fn model_sync_should_modify_indexes_v4_to_v5() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 
     let option_unique_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("unique")
-        .expect("Should have unique option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .unique
+        .expect("Should have unique option");
 
     assert!(option_unique_value);
 
     let option_background_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("background")
-        .expect("Should have background option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .background
+        .expect("Should have background option");
 
     assert!(option_background_value);
     IndexTestV4::sync(&db)
@@ -897,33 +875,28 @@ async fn model_sync_should_modify_indexes_v4_to_v5() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 
     let option_unique_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("unique")
-        .expect("Should have unique option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .unique
+        .expect("Should have unique option");
 
     assert!(option_unique_value);
 
     let option_background_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("background")
-        .expect("Should have background option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .background
+        .expect("Should have background option");
 
     assert!(option_background_value);
 }
@@ -954,33 +927,28 @@ async fn model_sync_should_modify_indexes_v5_to_v6() {
     let option_name_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("name")
-        .expect("Should have name option")
-        .as_str()
-        .expect("Should be a valid string");
+        .expect("options should not be None")
+        .name
+        .as_ref()
+        .expect("Should have name option");
 
     assert_eq!(option_name_value, "i_-1");
 
     let option_unique_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("unique")
-        .expect("Should have unique option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .unique
+        .expect("Should have unique option");
 
     assert!(option_unique_value);
 
     let option_background_value = index_model
         .options
         .as_ref()
-        .expect("options should not be empty")
-        .get("background")
-        .expect("Should have background option")
-        .as_bool()
-        .expect("Should be a valid boolean");
+        .expect("options should not be None")
+        .background
+        .expect("Should have background option");
 
     assert!(option_background_value);
 

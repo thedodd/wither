@@ -2,18 +2,17 @@
 
 use std::collections::HashMap;
 
+use crate::cursor::ModelCursor;
+use crate::error::{Result, WitherError};
 use async_trait::async_trait;
 use mongodb::bson::oid::ObjectId;
 use mongodb::bson::{doc, from_bson, to_bson};
 use mongodb::bson::{Bson, Document};
-use mongodb::options;
+use mongodb::options::{self, IndexOptions};
 use mongodb::results::DeleteResult;
+use mongodb::IndexModel;
 use mongodb::{Collection, Database};
 use serde::{de::DeserializeOwned, Serialize};
-
-use crate::common::IndexModel;
-use crate::cursor::ModelCursor;
-use crate::error::{Result, WitherError};
 
 const MONGO_ID_INDEX_NAME: &str = "_id_";
 const MONGO_DIFF_INDEX_BLACKLIST: [&str; 3] = ["v", "ns", "key"];
@@ -27,10 +26,10 @@ const MONGO_DIFF_INDEX_BLACKLIST: [&str; 3] = ["v", "ns", "key"];
 ///
 /// Any `read_concern`, `write_concern` or `selection_criteria` options configured for the model,
 /// either derived or manually, will be used for collection interactions.
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/model-derive.md"))]
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/model-sync.md"))]
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/logging.md"))]
-#[cfg_attr(feature = "docinclude", doc(include = "../docs/underlying-driver.md"))]
+#[doc = include_str!("../docs/model-derive.md")]
+#[doc = include_str!("../docs/model-sync.md")]
+#[doc = include_str!("../docs/logging.md")]
+#[doc = include_str!("../docs/underlying-driver.md")]
 #[async_trait]
 pub trait Model
 where
@@ -399,7 +398,9 @@ fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
                     options.insert(b_key.to_string(), b_value);
                 }
             });
-            let model = IndexModel::new(idx_keys.clone(), Some(options));
+
+            let options: IndexOptions = mongodb::bson::from_document(options).unwrap(); // FIXME: throw error
+            let model = IndexModel::builder().keys(idx_keys.clone()).options(options).build();
 
             acc.insert(index_name, model);
             acc
@@ -421,14 +422,13 @@ async fn sync_model_indexes<'a, T>(
         // Ensure we have an options object with at least the index name.
         match &mut target_model.options {
             Some(options) => {
-                if options.get_str("name").ok().is_none() {
-                    options.insert("name", key.clone());
+                if options.name.is_none() {
+                    options.name = Some(key.clone());
                 }
             }
             // If no options are present, then add a default options doc with the index name.
             None => {
-                let options = doc! { "name": key.clone() };
-                target_model.options = Some(options);
+                target_model.options = Some(IndexOptions::builder().name(key.clone()).build());
             }
         }
         acc.insert(key, target_model);
@@ -462,7 +462,10 @@ async fn sync_model_indexes<'a, T>(
 
         // If the options of the two index models do not match, then we need to drop the existing
         // and create an updated version.
-        if aspired_index.options != current_index.options {
+        let aspired_index_options_doc = mongodb::bson::to_document(&aspired_index.options)?;
+        let current_index_options_doc = mongodb::bson::to_document(&current_index.options)?;
+
+        if aspired_index_options_doc != current_index_options_doc {
             indexes_to_drop.push(aspired_index_name);
             indexes_to_create.insert(aspired_index_name.clone(), aspired_index.clone());
         }
@@ -470,32 +473,14 @@ async fn sync_model_indexes<'a, T>(
 
     // Drop indexes which have been flagged for dropping.
     for index_name in indexes_to_drop {
-        let drop_command = doc! {
-            "dropIndexes": coll.name(),
-            "index": index_name,
-        };
-        db.run_command(drop_command, None).await?;
+        coll.drop_index(index_name, None).await?;
     }
 
     // Create any indexes which have been flagged for creation.
-    let indexes_to_create = indexes_to_create.into_iter().fold(vec![], |mut acc, (_, index_model)| {
-        let mut index_doc = Document::new();
-        index_doc.insert("key", index_model.keys);
-        if let Some(options) = index_model.options {
-            index_doc.extend(options);
-        }
-        acc.push(index_doc);
-        acc
-    });
+    let indexes_to_create: Vec<_> = indexes_to_create.into_iter().map(|(_, im)| im).collect();
+
     if !indexes_to_create.is_empty() {
-        db.run_command(
-            doc! {
-                "createIndexes": coll.name(),
-                "indexes": indexes_to_create,
-            },
-            None,
-        )
-        .await?;
+        coll.create_indexes(indexes_to_create, None).await?;
     }
 
     log::info!("Synchronized indexes for '{}'.", coll.namespace());
