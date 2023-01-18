@@ -3,6 +3,11 @@ changelog
 
 ## [unreleased]
 
+## 0.10.0
+### changed
+- Updated dependencies. 
+- `mongodb::IndexModel` is finally here, so `wither::IndexModel` is now a re-export of `mongodb::IndexModel` and the placeholder is removed. The `wither_derive` macro and the tests have been updated to use the new re-export, as the new `IndexModel` has a different API to instantiate the struct (`new` method vs `builder`) and has a different options field (`Option<Document>` vs `Option<IndexOptions>`). 
+
 ## 0.9.0
 Now that `Model::sync` index management is back, we are finally ready to release an official `0.9.0`. All of the changes released so far as part of the various `0.9.0-alpha.*` releases are included as part of this release. Big shoutout to @simoneromano96 for all of their hard work on the updates to `Model::sync`, thank you!
 
