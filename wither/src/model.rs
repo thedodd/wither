@@ -329,7 +329,7 @@ async fn get_current_indexes<T>(db: &Database, coll: &Collection<T>) -> Result<H
             _ => return Err(err.into()),
         },
     };
-    Ok(build_index_map(list_indexes))
+    build_index_map(list_indexes)
 }
 
 /// Generate an index name from the keys of the given document, matching the behavior of the
@@ -353,25 +353,27 @@ fn generate_index_name_from_keys(keys: &Document) -> String {
 /// commands back into their client, however this will do the trick for now. The only real concern
 /// there is that the algorithm is not resilient to unexpected schema changes coming from the mongo
 /// server. These changes are unlikely, but we are just documenting this fact here for posterity.
-fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
+fn build_index_map(list_index: Document) -> Result<HashMap<String, IndexModel>> {
     // Unpack the cursor.
     let cursor = match list_index.get("cursor") {
         Some(cursor) => cursor,
-        None => return Default::default(),
+        None => return Ok(Default::default()),
     };
     let doc = match cursor.as_document() {
         Some(doc) => doc,
-        None => return Default::default(),
+        None => return Ok(Default::default()),
     };
     // https://docs.mongodb.com/manual/reference/limits/#Number-of-Indexes-per-Collection
     // We have a maximum of 64 indexes per collection, the firstBatch contains them all based on our
     // tests.
     let first_batch = match doc.get_array("firstBatch").ok() {
         Some(first_batch) => first_batch,
-        None => return Default::default(),
+        None => return Ok(Default::default()),
     };
 
-    let index_map = first_batch
+    let mut index_map: HashMap<String, IndexModel> = HashMap::new();
+
+    for doc in first_batch
         .iter()
         // Extract documents.
         .filter_map(|bson| bson.as_document().cloned())
@@ -382,12 +384,11 @@ fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
                 Some(_) => true, // Include.
                 None => false, // Filter out.
             }
-        })
-        .fold(HashMap::new(), |mut acc, doc| {
+        }) {
             // Extract document keys & generate index name based on keys.
             let idx_keys = match doc.get_document("key").ok() {
                 Some(idx_keys) => idx_keys,
-                None => return acc,
+                None => continue,
             };
             let index_name = generate_index_name_from_keys(idx_keys);
 
@@ -399,13 +400,13 @@ fn build_index_map(list_index: Document) -> HashMap<String, IndexModel> {
                 }
             });
 
-            let options: IndexOptions = mongodb::bson::from_document(options).unwrap(); // FIXME: throw error
+            let options: IndexOptions = mongodb::bson::from_document(options).map_err(|e| WitherError::BsonDe(e))?;
             let model = IndexModel::builder().keys(idx_keys.clone()).options(options).build();
 
-            acc.insert(index_name, model);
-            acc
-        });
-    index_map
+            index_map.insert(index_name, model);
+        }
+
+    Ok(index_map)
 }
 
 async fn sync_model_indexes<'a, T>(
